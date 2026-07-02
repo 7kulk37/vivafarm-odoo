@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_farm_input_log_user,farm.input.log.user,model_farm_input_log,base.group_user,1,1,1,0
+access_farm_input_log_manager,farm.input.log.manager,model_farm_input_log,base.group_system,1,1,1,1
+access_farm_worker_log_user,farm.worker.log.user,model_farm_worker_log,base.group_user,1,1,1,0
+access_farm_worker_log_manager,farm.worker.log.manager,model_farm_worker_log,base.group_system,1,1,1,1
