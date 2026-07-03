@@ -14,8 +14,8 @@
                     <field name="lot_id"/>
                     <field name="ec_value"/>
                     <field name="ph_value"/>
-                    <field name="adjustment_type"/>
-                    <field name="adjustment_amount" optional="show"/>
+                    <field name="nutrient_adjustment"/>
+                    <field name="acid_adjustment"/>
                     <field name="state" widget="badge" decoration-success="state == 'confirmed'"/>
                     <button name="action_confirm" type="object"
                             string="Confirm"
@@ -52,10 +52,8 @@
                             <group>
                                 <field name="ec_value"/>
                                 <field name="ph_value"/>
-                                <field name="adjustment_type"/>
-                                <field name="adjustment_amount"
-                                       invisible="adjustment_type == 'none'"
-                                       required="adjustment_type != 'none'"/>
+                                <field name="nutrient_adjustment"/>
+                                <field name="acid_adjustment"/>
                             </group>
                         </group>
                         <group>
@@ -97,14 +95,12 @@
             </field>
         </record>
 
-        <!-- Menu -->
+        <!-- Menu - top level under VivaFarm -->
         <menuitem id="menu_farm_root" name="VivaFarm"
                   sequence="90" web_icon="stock,static/description/icon.png"/>
-        <menuitem id="menu_farm_logs" name="Farm Logs"
-                  parent="menu_farm_root" sequence="10"/>
         <menuitem id="menu_farm_input_log"
                   name="Input Logs (EC/pH)"
-                  parent="menu_farm_logs"
+                  parent="menu_farm_root"
                   action="action_farm_input_log"
                   sequence="10"/>
 

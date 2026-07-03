@@ -48,20 +48,17 @@ class FarmInputLog(models.Model):
         digits=(3, 1),
         help='pH reading',
     )
-    adjustment_type = fields.Selection(
-        [
-            ('none', 'No adjustment'),
-            ('nutrient', 'Nutrient added'),
-            ('acid', 'Acid added'),
-        ],
-        string='Adjustment',
-        default='none',
-        required=True,
-    )
-    adjustment_amount = fields.Float(
-        string='Adjustment Amount',
+    nutrient_adjustment = fields.Float(
+        string='Nutrient (g)',
         digits=(6, 1),
-        help='Amount in grams (nutrient) or ml (acid)',
+        default=0.0,
+        help='Nutrient powder added in grams',
+    )
+    acid_adjustment = fields.Float(
+        string='Acid (ml)',
+        digits=(6, 1),
+        default=0.0,
+        help='Nitric acid added in ml',
     )
     notes = fields.Text(string='Notes')
     state = fields.Selection(

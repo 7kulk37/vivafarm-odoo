@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Farm Logs',
-    'version': '1.0.0',
+    'version': '1.1.0',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Daily farm input logs and worker logs for hydroponic GAP compliance',
     'description': """

@@ -89,10 +89,10 @@
             </field>
         </record>
 
-        <!-- Menu -->
+        <!-- Menu - top level under VivaFarm -->
         <menuitem id="menu_farm_worker_log"
                   name="Worker Logs"
-                  parent="menu_farm_logs"
+                  parent="vivafarm_farm_logs.menu_farm_root"
                   action="action_farm_worker_log"
                   sequence="20"/>
 

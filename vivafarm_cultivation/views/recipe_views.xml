@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- List View -->
+        <record id="vivafarm_recipe_list" model="ir.ui.view">
+            <field name="name">vivafarm.recipe.list</field>
+            <field name="model">vivafarm.recipe</field>
+            <field name="arch" type="xml">
+                <list string="Recipes" default_order="name asc">
+                    <field name="name"/>
+                    <field name="seed_product_id"/>
+                    <field name="crop_id"/>
+                    <field name="packed_product_id"/>
+                    <field name="grams_to_sow"/>
+                    <field name="target_plant_count"/>
+                    <field name="transplant_amount"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="vivafarm_recipe_form" model="ir.ui.view">
+            <field name="name">vivafarm.recipe.form</field>
+            <field name="model">vivafarm.recipe</field>
+            <field name="arch" type="xml">
+                <form string="Recipe">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" placeholder="e.g. Green Oak Standard"/></h1>
+                        </div>
+                        <group>
+                            <group string="Products">
+                                <field name="seed_product_id"
+                                       options="{'no_create': True}"/>
+                                <field name="crop_id"
+                                       options="{'no_create': True}"/>
+                                <field name="packed_product_id"
+                                       options="{'no_create': True}"/>
+                                <field name="nutrient_product_id"
+                                       options="{'no_create': True}"/>
+                                <field name="acid_product_id"
+                                       options="{'no_create': True}"/>
+                            </group>
+                            <group string="Defaults">
+                                <field name="grams_to_sow"/>
+                                <field name="target_plant_count"/>
+                                <field name="transplant_amount"/>
+                                <field name="nursery_id"
+                                       options="{'no_create': True}"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="notes" nolabel="1" placeholder="Notes about this recipe..."/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="vivafarm_recipe_search" model="ir.ui.view">
+            <field name="name">vivafarm.recipe.search</field>
+            <field name="model">vivafarm.recipe</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="crop_id"/>
+                    <field name="active"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_vivafarm_recipe" model="ir.actions.act_window">
+            <field name="name">Recipes</field>
+            <field name="res_model">vivafarm.recipe</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="vivafarm_recipe_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create cultivation recipes to speed up batch creation.
+                </p>
+                <p>
+                    A recipe bundles seed product, crop, packed product, nutrient/acid products,
+                    and default quantities. When creating a cultivation, pick a recipe to auto-fill
+                    all fields. You can still adjust before germinating.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu - top level under VivaFarm -->
+        <menuitem id="menu_vivafarm_recipe"
+                  name="Recipes"
+                  parent="vivafarm_farm_logs.menu_farm_root"
+                  action="action_vivafarm_recipe"
+                  sequence="3"/>
+
+    </data>
+</odoo>
