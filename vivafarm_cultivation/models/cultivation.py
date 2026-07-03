@@ -64,8 +64,7 @@ class Cultivation(models.Model):
     crop_id = fields.Many2one(
         'product.product', string='Crop',
         domain="[('name', 'ilike', '(Live)')]")
-    live_lot_name = fields.Char(string='Live Lot', readonly=True)
-    live_lot_id = fields.Many2one('stock.lot', string='Live Lot (ref)', readonly=True)
+    live_lot_id = fields.Many2one('stock.lot', string='Live Lot', readonly=True)
     target_plant_count = fields.Integer(string='Target Plants', default=240)
     plant_count = fields.Integer(string='Plants Created', readonly=True)
 
@@ -118,20 +117,19 @@ class Cultivation(models.Model):
 
     @api.onchange('seed_lot_id')
     def _onchange_seed_lot(self):
-        """Auto-fill crop and packed product from seed lot."""
+        """Auto-fill crop and packed product from seed lot by name derivation."""
         if self.seed_lot_id and self.seed_lot_id.product_id:
             seed_name = self.seed_lot_id.product_id.name
-            mapping = {
-                'Seeds - Green Oak': ('Green Oak (Live)', 'Green Oak (Packed)'),
-                'Seeds - Red Oak': ('Red Oak (Live)', 'Red Oak (Packed)'),
-                'Seeds - Green Cos': ('Green Cos (Live)', 'Green Cos (Packed)'),
-            }
-            pair = mapping.get(seed_name)
-            if pair:
-                live = self.env['product.product'].search([('name', '=', pair[0])], limit=1)
+            # Derive crop and packed names from seed name
+            # e.g. "Seeds - Green Oak" → "Green Oak (Live)" / "Green Oak (Packed)"
+            if seed_name and seed_name.startswith('Seeds - '):
+                base = seed_name.replace('Seeds - ', '')
+                live_name = f'{base} (Live)'
+                packed_name = f'{base} (Packed)'
+                live = self.env['product.product'].search([('name', '=', live_name)], limit=1)
                 if live:
                     self.crop_id = live
-                packed = self.env['product.product'].search([('name', '=', pair[1])], limit=1)
+                packed = self.env['product.product'].search([('name', '=', packed_name)], limit=1)
                 if packed:
                     self.packed_product_id = packed
 
@@ -315,16 +313,12 @@ class Cultivation(models.Model):
             'move_ids': [(0, 0, seed_move_vals), (0, 0, live_move_vals)],
         })
 
-        # Create live lot (bypass Odoo's unique constraint for live crops)
-        # Use SQL directly since Odoo's _check_unique_lot blocks duplicates
-        self.env.cr.execute("""
-            INSERT INTO stock_lot (name, product_id, company_id, create_uid, create_date, write_uid, write_date)
-            VALUES (%s, %s, %s, %s, NOW(), %s, NOW())
-            RETURNING id
-        """, (live_lot_name, self.crop_id.id, self.env.company.id,
-              self.env.uid, self.env.uid))
-        live_lot_id = self.env.cr.fetchone()[0]
-        live_lot = self.env['stock.lot'].browse(live_lot_id)
+        # Create live lot using standard Odoo create (unique constraint already dropped)
+        live_lot = self.env['stock.lot'].create({
+            'name': live_lot_name,
+            'product_id': self.crop_id.id,
+            'company_id': self.env.company.id,
+        })
         # Set x_seed_lot after creation
         live_lot.write({'x_seed_lot': seed_lot.name})
 
@@ -347,7 +341,6 @@ class Cultivation(models.Model):
         self.write({
             'state': 'germinated',
             'name': self._next_reference(),
-            'live_lot_name': live_lot_name,
             'live_lot_id': live_lot.id,
             'grams_consumed': self.grams_to_sow,
             'plant_count': self.target_plant_count,
@@ -364,6 +357,8 @@ class Cultivation(models.Model):
             raise UserError('Can only grow from Germinated state.')
         if not self.bench_id:
             raise UserError('Select a bench location.')
+        if not self.transplant_amount or self.transplant_amount <= 0:
+            raise UserError('Transplant amount must be greater than 0.')
 
         prod_loc = self._get_production_loc()
 
@@ -551,15 +546,12 @@ class Cultivation(models.Model):
 
         picking.button_validate()
 
-        # Create packed lot (bypass Odoo's unique constraint)
-        self.env.cr.execute("""
-            INSERT INTO stock_lot (name, product_id, company_id, create_uid, create_date, write_uid, write_date)
-            VALUES (%s, %s, %s, %s, NOW(), %s, NOW())
-            RETURNING id
-        """, (packed_lot_name, self.packed_product_id.id, self.env.company.id,
-              self.env.uid, self.env.uid))
-        packed_lot_id = self.env.cr.fetchone()[0]
-        packed_lot = self.env['stock.lot'].browse(packed_lot_id)
+        # Create packed lot using standard Odoo create (unique constraint already dropped)
+        packed_lot = self.env['stock.lot'].create({
+            'name': packed_lot_name,
+            'product_id': self.packed_product_id.id,
+            'company_id': self.env.company.id,
+        })
 
         self.write({
             'state': 'done',
@@ -614,6 +606,15 @@ class Cultivation(models.Model):
         })
 
         return self._reopen()
+
+    def unlink(self):
+        """Block deletion of non-draft cultivations."""
+        for record in self:
+            if record.state != 'draft':
+                raise UserError(
+                    f'Cannot delete cultivation {record.name or "Draft"} '
+                    f'in state "{record.state}". Cancel it first.')
+        return super(Cultivation, self).unlink()
 
     def _reopen(self):
         return {

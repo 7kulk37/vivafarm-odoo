@@ -16,7 +16,7 @@
                     <field name="crop_id"/>
                     <field name="nursery_id"/>
                     <field name="bench_id"/>
-                    <field name="live_lot_name"/>
+                    <field name="live_lot_id"/>
                     <field name="harvest_date"/>
                     <field name="packed_lot_id"/>
                 </list>
@@ -72,11 +72,11 @@
                                        options="{'no_create': True}"
                                        readonly="state != 'draft'"
                                        domain="[('product_id.product_tmpl_id.name', 'ilike', 'Seeds -')]"/>
-                                <field name="grams_to_sow" readonly="1"/>
+                                <field name="grams_to_sow" readonly="state != 'draft'"/>
                                 <field name="target_plant_count"
                                        readonly="state not in ('draft', 'germinated')"/>
-                                <field name="nursery_id" readonly="1"/>
-                                <field name="live_lot_name" invisible="state == 'draft'"/>
+                                <field name="nursery_id" readonly="state != 'draft'"/>
+                                <field name="live_lot_id" invisible="state == 'draft'"/>
                             </group>
                         </group>
                         <group>
@@ -90,7 +90,7 @@
                                        readonly="state not in ('draft', 'germinated')"/>
                             </group>
                             <group string="Harvest">
-                                <field name="target_harvest_date"/>
+                                <field name="target_harvest_date" readonly="1"/>
                                 <field name="harvest_date"
                                        readonly="state not in ('transplanted', 'harvested')"/>
                                 <field name="packed_kg"
