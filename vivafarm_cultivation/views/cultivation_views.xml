@@ -92,7 +92,8 @@
                                 <field name="harvest_date"
                                        readonly="state not in ('transplanted', 'harvested')"/>
                                 <field name="packed_kg"
-                                       readonly="state not in ('transplanted', 'harvested')"/>
+                                       readonly="state not in ('transplanted', 'harvested')"
+                                       invisible="state == 'done'"/>
                                 <field name="spoilage_units"
                                        readonly="state not in ('transplanted', 'harvested')"/>
                             </group>
@@ -107,6 +108,7 @@
                             </group>
                             <group string="Summary" invisible="state == 'draft'">
                                 <field name="packed_lot_id" invisible="state != 'done'"/>
+                                <field name="packed_kg" string="Harvest Kg" readonly="1"/>
                                 <field name="grams_consumed" invisible="state == 'draft'"/>
                                 <field name="total_nutrient_consumed" invisible="state == 'draft'"/>
                                 <field name="total_acid_consumed" invisible="state == 'draft'"/>
