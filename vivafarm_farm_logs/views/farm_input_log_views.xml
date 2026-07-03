@@ -102,7 +102,7 @@
                   name="Input Logs (EC/pH)"
                   parent="menu_farm_root"
                   action="action_farm_input_log"
-                  sequence="10"/>
+                  sequence="20"/>
 
     </data>
 </odoo>

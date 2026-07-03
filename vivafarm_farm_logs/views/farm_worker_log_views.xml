@@ -94,7 +94,7 @@
                   name="Worker Logs"
                   parent="vivafarm_farm_logs.menu_farm_root"
                   action="action_farm_worker_log"
-                  sequence="20"/>
+                  sequence="30"/>
 
     </data>
 </odoo>

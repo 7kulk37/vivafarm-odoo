@@ -138,6 +138,6 @@
                   name="Cultivation"
                   parent="vivafarm_farm_logs.menu_farm_root"
                   action="action_vivafarm_cultivation"
-                  sequence="5"/>
+                  sequence="10"/>
     </data>
 </odoo>

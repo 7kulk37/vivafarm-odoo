@@ -98,7 +98,7 @@
                   name="Recipes"
                   parent="vivafarm_farm_logs.menu_farm_root"
                   action="action_vivafarm_recipe"
-                  sequence="3"/>
+                  sequence="40"/>
 
     </data>
 </odoo>
