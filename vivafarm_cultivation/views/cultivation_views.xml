@@ -70,9 +70,11 @@
                                 <field name="plant_date" readonly="state != 'draft'"/>
                                 <field name="seed_lot_id"
                                        options="{'no_create': True}"
-                                       readonly="state != 'draft'"/>
+                                       readonly="state != 'draft'"
+                                       domain="[('product_id.name', 'ilike', 'Seeds -')]"/>
                                 <field name="grams_to_sow" readonly="1"/>
-                                <field name="target_plant_count" readonly="1"/>
+                                <field name="target_plant_count"
+                                       readonly="state not in ('draft', 'germinated')"/>
                                 <field name="nursery_id" readonly="1"/>
                                 <field name="live_lot_name" invisible="state == 'draft'"/>
                             </group>
