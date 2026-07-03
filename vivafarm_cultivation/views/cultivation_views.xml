@@ -55,7 +55,7 @@
                             <h1><field name="name" readonly="1" invisible="state == 'draft'"/></h1>
                         </div>
                         <group>
-                            <group string="Germinate">
+                            <group string="Information">
                                 <field name="recipe_id"
                                        options="{'no_create': True}"
                                        readonly="state != 'draft'"
@@ -68,18 +68,18 @@
                                 <field name="grams_to_sow" readonly="1"/>
                                 <field name="grams_consumed" invisible="state == 'draft'"/>
                                 <field name="nursery_id" readonly="1"/>
-                                <field name="target_transplant_date"/>
                                 <field name="nutrient_product_id" readonly="1"/>
                                 <field name="acid_product_id" readonly="1"/>
-                            </group>
-                            <group string="Crop">
                                 <field name="crop_id" readonly="1"/>
                                 <field name="target_plant_count" readonly="1"/>
+                            </group>
+                            <group string="Crop">
                                 <field name="live_lot_name" invisible="state == 'draft'"/>
                             </group>
                         </group>
                         <group>
                             <group string="Transplant">
+                                <field name="target_transplant_date" readonly="1"/>
                                 <field name="bench_id"
                                        readonly="state not in ('draft', 'germinated')"/>
                                 <field name="transplanted_date"
