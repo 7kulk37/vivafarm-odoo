@@ -60,18 +60,18 @@
                                        options="{'no_create': True}"
                                        readonly="state != 'draft'"
                                        placeholder="Select recipe to auto-fill..."/>
-                                <field name="plant_date" readonly="state != 'draft'"/>
-                                <field name="seed_lot_id"
-                                       options="{'no_create': True}"
-                                       readonly="state != 'draft'"/>
                                 <field name="seed_product_id"/>
-                                <field name="grams_to_sow" readonly="1"/>
                                 <field name="nutrient_product_id" readonly="1"/>
                                 <field name="acid_product_id" readonly="1"/>
                                 <field name="crop_id" readonly="1"/>
                                 <field name="packed_product_id" readonly="1"/>
                             </group>
                             <group string="Germinate">
+                                <field name="plant_date" readonly="state != 'draft'"/>
+                                <field name="seed_lot_id"
+                                       options="{'no_create': True}"
+                                       readonly="state != 'draft'"/>
+                                <field name="grams_to_sow" readonly="1"/>
                                 <field name="target_plant_count" readonly="1"/>
                                 <field name="nursery_id" readonly="1"/>
                                 <field name="live_lot_name" invisible="state == 'draft'"/>
