@@ -92,8 +92,7 @@
                                 <field name="harvest_date"
                                        readonly="state not in ('transplanted', 'harvested')"/>
                                 <field name="packed_kg"
-                                       readonly="state not in ('transplanted', 'harvested')"
-                                       invisible="state == 'done'"/>
+                                       readonly="state not in ('transplanted', 'harvested')"/>
                                 <field name="spoilage_units"
                                        readonly="state not in ('transplanted', 'harvested')"/>
                             </group>
