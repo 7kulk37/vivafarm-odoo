@@ -10,6 +10,8 @@
                     <field name="name"/>
                     <field name="state" widget="badge"/>
                     <field name="plant_date"/>
+                    <field name="target_transplant_date"/>
+                    <field name="target_harvest_date"/>
                     <field name="seed_lot_id"/>
                     <field name="crop_id"/>
                     <field name="nursery_id"/>
@@ -66,6 +68,7 @@
                                 <field name="grams_to_sow" readonly="1"/>
                                 <field name="grams_consumed" invisible="state == 'draft'"/>
                                 <field name="nursery_id" readonly="1"/>
+                                <field name="target_transplant_date"/>
                                 <field name="nutrient_product_id" readonly="1"/>
                                 <field name="acid_product_id" readonly="1"/>
                             </group>
@@ -85,6 +88,7 @@
                                        readonly="state not in ('draft', 'germinated')"/>
                             </group>
                             <group string="Harvest">
+                                <field name="target_harvest_date"/>
                                 <field name="harvest_date"
                                        readonly="state not in ('transplanted', 'harvested')"/>
                                 <field name="packed_product_id" readonly="1"/>
@@ -109,6 +113,10 @@
                                 <field name="plant_picking_id"/>
                                 <field name="harvest_picking_id" invisible="state in ('draft', 'germinated', 'transplanted')"/>
                             </group>
+                        </group>
+                        <group string="Notes">
+                            <field name="notes" nolabel="1"
+                                   placeholder="Log observations that vary from recipe..."/>
                         </group>
                     </sheet>
                 </form>

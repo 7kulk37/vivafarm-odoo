@@ -37,6 +37,14 @@ class Recipe(models.Model):
     target_plant_count = fields.Integer(string='Target Plants', default=240, required=True)
     transplant_amount = fields.Integer(string='Transplant Amount', default=240, required=True)
 
+    # Durations (ideal days)
+    germinate_duration = fields.Integer(
+        string='Germinate Duration (days)', default=7,
+        help='Ideal days in Germinate phase. Used to calculate target transplant date.')
+    total_grow_duration = fields.Integer(
+        string='Total Grow Duration (days)', default=28,
+        help='Ideal total days from plant date to harvest. Used to calculate target harvest date.')
+
     # Default nursery
     nursery_id = fields.Many2one(
         'stock.location', string='Default Nursery',

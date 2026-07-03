@@ -1,6 +1,6 @@
 from odoo import fields, models, api
 from odoo.exceptions import UserError
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Cultivation(models.Model):
@@ -24,6 +24,14 @@ class Cultivation(models.Model):
     recipe_id = fields.Many2one(
         'vivafarm.recipe', string='Recipe',
         help='Select a recipe to auto-fill defaults')
+    target_transplant_date = fields.Date(
+        string='Target Transplant Date', readonly=True, store=True,
+        compute='_compute_target_dates',
+        help='Calculated from plant_date + recipe germinate_duration')
+    target_harvest_date = fields.Date(
+        string='Target Harvest Date', readonly=True, store=True,
+        compute='_compute_target_dates',
+        help='Calculated from plant_date + recipe total_grow_duration')
     plant_date = fields.Date(string='Plant Date', required=True)
     seed_lot_id = fields.Many2one('stock.lot', string='Seed Lot')
     seed_product_id = fields.Many2one(
@@ -91,6 +99,9 @@ class Cultivation(models.Model):
     plant_picking_id = fields.Many2one('stock.picking', string='Plant Picking', readonly=True)
     harvest_picking_id = fields.Many2one('stock.picking', string='Harvest Picking', readonly=True)
 
+    # Observations log
+    notes = fields.Text(string='Notes / Observations')
+
     # No constraints — duplicate live lot names allowed (trace by packed lot)
 
     @api.model
@@ -151,6 +162,19 @@ class Cultivation(models.Model):
             ], order='id asc', limit=1)
             if lot:
                 self.seed_lot_id = lot.id
+
+    @api.depends('plant_date', 'recipe_id')
+    def _compute_target_dates(self):
+        """Calculate target transplant and harvest dates from recipe durations."""
+        for record in self:
+            if not record.plant_date or not record.recipe_id:
+                record.target_transplant_date = False
+                record.target_harvest_date = False
+                continue
+            record.target_transplant_date = record.plant_date + timedelta(
+                days=record.recipe_id.germinate_duration or 0)
+            record.target_harvest_date = record.plant_date + timedelta(
+                days=record.recipe_id.total_grow_duration or 0)
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -47,6 +47,8 @@
                                 <field name="grams_to_sow"/>
                                 <field name="target_plant_count"/>
                                 <field name="transplant_amount"/>
+                                <field name="germinate_duration"/>
+                                <field name="total_grow_duration"/>
                                 <field name="nursery_id"
                                        options="{'no_create': True}"/>
                                 <field name="active"/>
