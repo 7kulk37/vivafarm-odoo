@@ -1,5 +1,5 @@
 {
-    'name': 'VivaFarm Cultivation',
+    'name': 'Hydroponic Cultivation',
     'version': '1.1.0',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Cultivation cycle management - seed to harvest in one record',

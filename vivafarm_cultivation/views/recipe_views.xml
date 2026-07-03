@@ -93,7 +93,7 @@
             </field>
         </record>
 
-        <!-- Menu - top level under VivaFarm -->
+        <!-- Menu - top level under Hydroponic -->
         <menuitem id="menu_vivafarm_recipe"
                   name="Recipes"
                   parent="vivafarm_farm_logs.menu_farm_root"

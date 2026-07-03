@@ -1,5 +1,5 @@
 {
-    'name': 'VivaFarm Farm Logs',
+    'name': 'Hydroponic Farm Logs',
     'version': '1.1.0',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Daily farm input logs and worker logs for hydroponic GAP compliance',
@@ -10,7 +10,7 @@
         - Farm Worker Log: worker activity records with safety briefing
         - Seed Lot tracking on stock lots for full seed-to-sale traceability
 
-        Part of the VivaFarm infrastructure for Thai GAP compliance.
+        Part of the Hydroponic infrastructure for Thai GAP compliance.
     """,
     'depends': ['stock'],
     'data': [
