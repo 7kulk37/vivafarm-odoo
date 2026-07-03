@@ -69,9 +69,10 @@
                                 <field name="nutrient_product_id" readonly="1"/>
                                 <field name="acid_product_id" readonly="1"/>
                                 <field name="crop_id" readonly="1"/>
-                                <field name="target_plant_count" readonly="1"/>
+                                <field name="packed_product_id" readonly="1"/>
                             </group>
                             <group string="Germinate">
+                                <field name="target_plant_count" readonly="1"/>
                                 <field name="nursery_id" readonly="1"/>
                                 <field name="live_lot_name" invisible="state == 'draft'"/>
                             </group>
@@ -90,12 +91,10 @@
                                 <field name="target_harvest_date"/>
                                 <field name="harvest_date"
                                        readonly="state not in ('transplanted', 'harvested')"/>
-                                <field name="packed_product_id" readonly="1"/>
                                 <field name="packed_kg"
                                        readonly="state not in ('transplanted', 'harvested')"/>
                                 <field name="spoilage_units"
                                        readonly="state not in ('transplanted', 'harvested')"/>
-                                <field name="packed_lot_id" invisible="state != 'done'"/>
                             </group>
                         </group>
                         <group>
@@ -107,6 +106,7 @@
                                 <field name="canceled_date" invisible="state != 'canceled'"/>
                             </group>
                             <group string="Summary" invisible="state == 'draft'">
+                                <field name="packed_lot_id" invisible="state != 'done'"/>
                                 <field name="grams_consumed" invisible="state == 'draft'"/>
                                 <field name="total_nutrient_consumed" invisible="state == 'draft'"/>
                                 <field name="total_acid_consumed" invisible="state == 'draft'"/>
