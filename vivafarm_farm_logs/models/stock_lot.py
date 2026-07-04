@@ -81,6 +81,17 @@ class StockLot(models.Model):
         Param.set_param(key, format(next_val, 'X'))
         return f'{prefix}-{format(next_val, "03X")}'
 
+    def _check_unique_lot(self):
+        """Override: skip uniqueness check for live crop products (allow duplicate YY-WW lots)."""
+        live_products = self.filtered(lambda l: l.product_id and 'live' in l.product_id.name.lower())
+        if live_products:
+            # Skip validation for live crop products — duplicates allowed
+            other = self - live_products
+            if other:
+                super(StockLot, other)._check_unique_lot()
+            return
+        return super()._check_unique_lot()
+
 
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'

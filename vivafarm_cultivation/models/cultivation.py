@@ -233,6 +233,11 @@ class Cultivation(models.Model):
             loc = self.env['stock.location'].search([('usage', '=', 'production')], limit=1)
         return loc
 
+    def _get_stock_loc(self):
+        return self.env['stock.location'].search([
+            ('name', '=', 'Stock'),
+        ], limit=1)
+
     def _get_spoilage_loc(self):
         return self.env['stock.location'].search([
             ('name', '=', 'Spoilage'),
@@ -272,12 +277,12 @@ class Cultivation(models.Model):
 
         prod_loc = self._get_production_loc()
 
-        # 1. Consume seeds: Nursery → Production
+        # 1. Consume seeds: Stock → Production
         seed_move_vals = {
             'product_id': seed_lot.product_id.id,
             'product_uom_qty': self.grams_to_sow,
             'product_uom': seed_lot.product_id.uom_id.id,
-            'location_id': self.nursery_id.id,
+            'location_id': self._get_stock_loc().id,
             'location_dest_id': prod_loc.id,
             'company_id': self.env.company.id,
             'date': fields.Datetime.now(),
@@ -287,7 +292,7 @@ class Cultivation(models.Model):
                 'lot_id': seed_lot.id,
                 'quantity': self.grams_to_sow,
                 'product_uom_id': seed_lot.product_id.uom_id.id,
-                'location_id': self.nursery_id.id,
+                'location_id': self._get_stock_loc().id,
                 'location_dest_id': prod_loc.id,
             })],
         }
