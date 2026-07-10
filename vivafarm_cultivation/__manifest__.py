@@ -1,6 +1,6 @@
 {
     'name': 'Hydroponic',
-    'version': '1.5.0',
+    'version': '1.7.0',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Hydroponic farm management - cultivation, recipes, logs, and material transformation',
     'description': """\
@@ -17,6 +17,7 @@
     'depends': ['stock'],
     'data': [
         'security/ir.model.access.csv',
+        'data/sequences.xml',
         'views/cultivation_views.xml',
         'views/recipe_views.xml',
         'views/consumable_recipe_views.xml',
@@ -24,6 +25,7 @@
         'views/farm_input_log_views.xml',
         'views/farm_worker_log_views.xml',
         'views/stock_lot_views.xml',
+        'views/farm_location_views.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,

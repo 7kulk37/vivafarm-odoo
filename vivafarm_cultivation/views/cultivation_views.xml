@@ -67,7 +67,7 @@
                                        options="{'no_create': True}"
                                        readonly="state != 'draft'"
                                        placeholder="Select recipe to auto-fill..."/>
-                                <field name="seed_product_id"/>
+                                <field name="seed_product_id" readonly="1"/>
                                 <field name="crop_id" readonly="1"/>
                                 <field name="packed_product_id" readonly="1"/>
                             </group>
@@ -76,7 +76,8 @@
                                 <field name="seed_lot_id"
                                        options="{'no_create': True}"
                                        readonly="state != 'draft'"
-                                       domain="[('product_id.product_tmpl_id.name', 'ilike', 'Seeds -')]"/>
+                                       domain="[('product_id', '=', seed_product_id)]"
+                                       context="{'default_product_id': seed_product_id}"/>
                                 <field name="grams_to_sow" readonly="state != 'draft'"/>
                                 <field name="target_plant_count"
                                        readonly="state not in ('draft', 'germinated')"/>

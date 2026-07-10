@@ -70,6 +70,12 @@ class FarmWorkerLog(models.Model):
         string='Company',
         default=lambda self: self.env.company,
     )
+    ref = fields.Char(
+        string='Reference',
+        readonly=True,
+        copy=False,
+        help='Auto-generated reference number',
+    )
 
     @api.depends('date', 'worker_name')
     def _compute_display_name(self):
@@ -105,3 +111,12 @@ class FarmWorkerLog(models.Model):
                 raise UserError(f'Can only cancel confirmed worker logs. Log {record.display_name} is in state "{record.state}".')
         self.write({'state': 'canceled'})
         return True
+
+    @api.model
+    def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
+        for vals in vals_list:
+            if not vals.get('ref'):
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.worker.log') or '/'
+        return super(FarmWorkerLog, self).create(vals_list)

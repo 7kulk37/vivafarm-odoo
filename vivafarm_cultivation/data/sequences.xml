@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="seq_farm_input_log" model="ir.sequence">
+            <field name="name">Farm Input Log</field>
+            <field name="code">farm.input.log</field>
+            <field name="prefix">IL-</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_farm_worker_log" model="ir.sequence">
+            <field name="name">Farm Worker Log</field>
+            <field name="code">farm.worker.log</field>
+            <field name="prefix">WL-</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_material_transformation" model="ir.sequence">
+            <field name="name">Material Transformation</field>
+            <field name="code">material.transformation</field>
+            <field name="prefix">MT-</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

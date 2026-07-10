@@ -24,14 +24,15 @@
             <field name="model">material.transformation</field>
             <field name="arch" type="xml">
                 <list string="Material Transformations" default_order="date desc">
+                    <field name="ref"/>
                     <field name="state" widget="badge"
                            decoration-success="state == 'confirmed'"
                            decoration-danger="state == 'canceled'"/>
                     <field name="date"/>
-                    <field name="product_id"/>
                     <field name="quantity"/>
-                    <field name="intermediate_product_id"/>
+                    <field name="product_id"/>
                     <field name="intermediate_qty"/>
+                    <field name="intermediate_product_id"/>
                     <field name="picking_id"/>
                     <field name="return_picking_id"/>
                     <field name="notes"/>

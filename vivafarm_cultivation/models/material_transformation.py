@@ -91,6 +91,12 @@ class MaterialTransformation(models.Model):
         ('confirmed', 'Confirmed'),
         ('canceled', 'Canceled'),
     ], string='Status', default='draft', required=True)
+    ref = fields.Char(
+        string='Reference',
+        readonly=True,
+        copy=False,
+        help='Auto-generated reference number',
+    )
 
     @api.depends('date', 'product_id')
     def _compute_display_name(self):
@@ -182,11 +188,21 @@ class MaterialTransformation(models.Model):
         self.secondary_conversion_factor = recipe.output_qty_d / recipe.input_qty_a if recipe.input_qty_a and recipe.output_qty_d else 0.0
 
     def _get_water_qty(self):
-        """Calculate water quantity needed for this transformation based on product name."""
+        """Calculate water quantity needed for this transformation.
+        
+        Priority:
+        1. If a consumable recipe is set and has Raw Water as Input B, use that qty.
+        2. Otherwise, fall back to product name matching.
+        """
         water_product = self.env['product.product'].search([('name', '=', 'Raw Water')], limit=1)
         if not water_product:
             return 0.0
+        # Check if consumable recipe has Raw Water as Input B
+        if self.consumable_recipe_id and self.consumable_recipe_id.input_product_b_id == water_product:
+            return self.consumable_recipe_id.input_qty_b * (self.quantity / self.consumable_recipe_id.input_qty_a) if self.consumable_recipe_id.input_qty_a else 0.0
         name = self.product_id.name or ''
+        if 'Nutrient A+B Powder packed' in name:
+            return self.intermediate_qty
         if 'Nutrient A Powder' in name or 'Nutrient B Powder' in name:
             return self.intermediate_qty
         elif 'Nitric Acid 68%' in name:
@@ -418,3 +434,12 @@ class MaterialTransformation(models.Model):
 
         self.write({'state': 'canceled', 'return_picking_id': picking_reverse_inter.id})
         return True
+
+    @api.model
+    def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
+        for vals in vals_list:
+            if not vals.get('ref'):
+                vals['ref'] = self.env['ir.sequence'].next_by_code('material.transformation') or '/'
+        return super(MaterialTransformation, self).create(vals_list)

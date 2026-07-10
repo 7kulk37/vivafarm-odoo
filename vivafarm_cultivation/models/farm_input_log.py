@@ -89,6 +89,12 @@ class FarmInputLog(models.Model):
         string='Company',
         default=lambda self: self.env.company,
     )
+    ref = fields.Char(
+        string='Reference',
+        readonly=True,
+        copy=False,
+        help='Auto-generated reference number',
+    )
 
     @api.depends('date', 'bench_id')
     def _compute_display_name(self):
@@ -134,3 +140,12 @@ class FarmInputLog(models.Model):
                     f'Cannot delete input log {record.display_name} '
                     f'in state "{record.state}". Cancel it first.')
         return super(FarmInputLog, self).unlink()
+
+    @api.model
+    def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
+        for vals in vals_list:
+            if not vals.get('ref'):
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.input.log') or '/'
+        return super(FarmInputLog, self).create(vals_list)

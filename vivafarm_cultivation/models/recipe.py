@@ -47,8 +47,8 @@ class Recipe(models.Model):
 
     # Default nursery
     nursery_id = fields.Many2one(
-        'stock.location', string='Default Nursery',
-        domain="[('usage', '=', 'internal'), ('name', 'ilike', 'Nursery')]",
+        'farm.location', string='Default Nursery',
+        domain="[('location_type', '=', 'nursery')]",
         help='Default nursery location for this recipe')
 
     notes = fields.Text(string='Notes')

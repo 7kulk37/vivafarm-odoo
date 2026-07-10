@@ -8,15 +8,15 @@
             <field name="arch" type="xml">
                 <list string="Consumable Recipes" default_order="name asc">
                     <field name="name"/>
-                    <field name="input_product_a_id"/>
                     <field name="input_qty_a"/>
-                    <field name="input_product_b_id"/>
+                    <field name="input_product_a_id"/>
                     <field name="input_qty_b"/>
-                    <field name="output_product_c_id"/>
+                    <field name="input_product_b_id"/>
                     <field name="output_qty_c"/>
-                    <field name="output_product_d_id"/>
+                    <field name="output_product_c_id"/>
                     <field name="output_qty_d"/>
-                    <field name="active"/>
+                    <field name="output_product_d_id"/>
+                    <field name="active" widget="boolean_toggle"/>
                 </list>
             </field>
         </record>

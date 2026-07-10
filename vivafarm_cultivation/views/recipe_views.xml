@@ -14,7 +14,7 @@
                     <field name="grams_to_sow"/>
                     <field name="target_plant_count"/>
                     <field name="transplant_amount"/>
-                    <field name="active"/>
+                    <field name="active" widget="boolean_toggle"/>
                 </list>
             </field>
         </record>

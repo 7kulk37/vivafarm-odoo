@@ -8,6 +8,10 @@
             <field name="model">farm.input.log</field>
             <field name="arch" type="xml">
                 <list string="Farm Input Logs" editable="bottom" multi_edit="1">
+                    <field name="ref"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'confirmed'"
+                           decoration-danger="state == 'canceled'"/>
                     <field name="date"/>
                     <field name="bench_id"/>
                     <field name="crop_id"/>
@@ -18,9 +22,6 @@
                     <field name="acid_adjustment"/>
                     <field name="raw_water_liters"/>
                     <field name="mixing_liters"/>
-                    <field name="state" widget="badge"
-                           decoration-success="state == 'confirmed'"
-                           decoration-danger="state == 'canceled'"/>
                     <button name="action_confirm" type="object"
                             string="Confirm"
                             icon="fa-check"
