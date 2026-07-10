@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="consumable_recipe_list" model="ir.ui.view">
+            <field name="name">consumable.recipe.list</field>
+            <field name="model">consumable.recipe</field>
+            <field name="arch" type="xml">
+                <list string="Consumable Recipes" default_order="name asc">
+                    <field name="name"/>
+                    <field name="input_product_a_id"/>
+                    <field name="input_qty_a"/>
+                    <field name="input_product_b_id"/>
+                    <field name="input_qty_b"/>
+                    <field name="output_product_c_id"/>
+                    <field name="output_qty_c"/>
+                    <field name="output_product_d_id"/>
+                    <field name="output_qty_d"/>
+                    <field name="active"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="consumable_recipe_form" model="ir.ui.view">
+            <field name="name">consumable.recipe.form</field>
+            <field name="model">consumable.recipe</field>
+            <field name="arch" type="xml">
+                <form string="Consumable Recipe">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" placeholder="e.g. Rain Water → Raw Water"/></h1>
+                        </div>
+                        <group>
+                            <group string="Input (from WH/Stock)">
+                                <field name="input_product_a_id" options="{'no_create': True}"/>
+                                <field name="input_qty_a"/>
+                                <field name="input_product_b_id" options="{'no_create': True}"
+                                       placeholder="Optional second input"/>
+                                <field name="input_qty_b"
+                                       invisible="not input_product_b_id"/>
+                            </group>
+                            <group string="Output (to Buffer)">
+                                <field name="output_product_c_id" options="{'no_create': True}"/>
+                                <field name="output_qty_c"/>
+                                <field name="output_product_d_id" options="{'no_create': True}"
+                                       placeholder="Optional second output"/>
+                                <field name="output_qty_d"
+                                       invisible="not output_product_d_id"/>
+                            </group>
+                            <group string="Options">
+                                <field name="source_is_buffer"/>
+                                <field name="destination_is_stock"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="notes" nolabel="1" placeholder="Notes about this recipe..."/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="consumable_recipe_search" model="ir.ui.view">
+            <field name="name">consumable.recipe.search</field>
+            <field name="model">consumable.recipe</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="input_product_a_id"/>
+                    <field name="output_product_c_id"/>
+                    <field name="active"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_consumable_recipe" model="ir.actions.act_window">
+            <field name="name">Consumable Recipes</field>
+            <field name="res_model">consumable.recipe</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'active_test': False}</field>
+            <field name="search_view_id" ref="consumable_recipe_search"/>
+        </record>
+
+        <menuitem id="menu_consumable_recipe"
+                  name="Consumable Recipes"
+                  parent="menu_farm_root"
+                  action="action_consumable_recipe"
+                  sequence="35"/>
+
+    </data>
+</odoo>

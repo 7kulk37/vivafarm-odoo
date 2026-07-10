@@ -133,11 +133,6 @@ class Cultivation(models.Model):
                 if packed:
                     self.packed_product_id = packed
 
-    @api.onchange('plant_date')
-    def _onchange_plant_date(self):
-        """No-op: plant date only affects live lot name, not cultivation reference."""
-        pass
-
     @api.onchange('recipe_id')
     def _onchange_recipe(self):
         """Auto-fill all defaults from selected recipe."""
@@ -211,13 +206,12 @@ class Cultivation(models.Model):
     def _compute_consumable_totals(self):
         """Sum nutrient/acid adjustments from farm.input.log linked to this batch."""
         for record in self:
-            if not record.live_lot_id or not record.bench_id:
+            if not record.live_lot_id:
                 record.total_nutrient_consumed = 0.0
                 record.total_acid_consumed = 0.0
                 continue
             logs = self.env['farm.input.log'].search([
                 ('lot_id', '=', record.live_lot_id.id),
-                ('bench_id', '=', record.bench_id.id),
                 ('state', '=', 'confirmed'),
             ])
             record.total_nutrient_consumed = sum(
@@ -267,10 +261,11 @@ class Cultivation(models.Model):
                 raise UserError(f'Missing fields: {", ".join(missing)}')
 
         seed_lot = self.seed_lot_id
-        if seed_lot.product_qty < self.grams_to_sow:
+        # For consu products in Odoo 19, lots exist but move lines aren't created.
+        # Just verify the lot was created during receive.
+        if not seed_lot.exists():
             raise UserError(
-                f'Not enough stock. Seed lot {seed_lot.name} has '
-                f'{seed_lot.product_qty}g available, but {self.grams_to_sow}g requested.')
+                f'Seed lot {seed_lot.name} not found. Receive seeds first.')
 
         # Live lot name: YY-WW format from plant date (duplicates allowed)
         live_lot_name = fields.Date.from_string(self.plant_date).strftime('%y%W')
@@ -309,10 +304,14 @@ class Cultivation(models.Model):
             'procure_method': 'make_to_stock',
         }
 
-        picking = self.env['stock.picking'].create({
-            'picking_type_id': self.env['stock.picking.type'].search([
+        int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
+        if not int_type:
+            int_type = self.env['stock.picking.type'].search([
                 ('code', '=', 'internal')
-            ], limit=1).id,
+            ], limit=1)
+
+        picking = self.env['stock.picking'].create({
+            'picking_type_id': int_type.id,
             'location_id': self.nursery_id.id,
             'location_dest_id': self.nursery_id.id,
             'move_ids': [(0, 0, seed_move_vals), (0, 0, live_move_vals)],
@@ -368,10 +367,14 @@ class Cultivation(models.Model):
         prod_loc = self._get_production_loc()
 
         # Transfer live plants: Nursery → Bench
-        picking = self.env['stock.picking'].create({
-            'picking_type_id': self.env['stock.picking.type'].search([
+        int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
+        if not int_type:
+            int_type = self.env['stock.picking.type'].search([
                 ('code', '=', 'internal')
-            ], limit=1).id,
+            ], limit=1)
+
+        picking = self.env['stock.picking'].create({
+            'picking_type_id': int_type.id,
             'location_id': self.nursery_id.id,
             'location_dest_id': self.bench_id.id,
             'move_ids': [(0, 0, {
@@ -408,7 +411,7 @@ class Cultivation(models.Model):
         """Growing → Harvested: record harvest data (no stock moves yet)."""
         self.ensure_one()
         if self.state != 'transplanted':
-            raise UserError('Can only harvest from Growing state.')
+            raise UserError('Can only harvest from Transplanted state.')
         if not self.harvest_date:
             raise UserError('Enter a harvest date.')
         if not self.packed_product_id:
@@ -433,9 +436,10 @@ class Cultivation(models.Model):
         self._compute_consumable_totals()
 
         live_lot = self.live_lot_id
-        total_units = int(live_lot.product_qty)
+        # For consu products, product_qty is 0 — use transplant_amount instead
+        total_units = int(live_lot.product_qty) if live_lot.product_qty else int(self.transplant_amount or 0)
         if total_units <= 0:
-            raise UserError(f'Lot {live_lot.name} has no stock to harvest.')
+            raise UserError(f'No stock to harvest. Lot {live_lot.name} has no quantity and transplant_amount is not set.')
 
         prod_loc = self._get_production_loc()
         spoilage_loc = self._get_spoilage_loc()
@@ -514,7 +518,7 @@ class Cultivation(models.Model):
             moves.append(spoilage_move_vals)
 
         # 4. Consume nutrient: WH/Stock → Production
-        stock_loc = self.env.ref('stock.stock_location_stock')
+        stock_loc = self._get_stock_loc()
         if self.nutrient_product_id and self.total_nutrient_consumed > 0:
             moves.append({
                 'product_id': self.nutrient_product_id.id,
@@ -540,16 +544,45 @@ class Cultivation(models.Model):
                 'procure_method': 'make_to_stock',
             })
 
-        picking = self.env['stock.picking'].create({
-            'picking_type_id': self.env['stock.picking.type'].search([
+        int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
+        if not int_type:
+            int_type = self.env['stock.picking.type'].search([
                 ('code', '=', 'internal')
-            ], limit=1).id,
-            'location_id': source_loc.id,
-            'location_dest_id': prod_loc.id,
-            'move_ids': [(0, 0, m) for m in moves],
-        })
+            ], limit=1)
 
-        picking.button_validate()
+        # Split into two pickings to avoid destination mismatch:
+        # Picking 1: consume live + nutrient + acid (source → Production)
+        # Picking 2: create packed + spoilage (Production → destination)
+        consume_moves = [m for m in moves if m['location_dest_id'] == prod_loc.id]
+        produce_moves = [m for m in moves if m['location_id'] == prod_loc.id]
+
+        picking = False
+        if consume_moves:
+            picking = self.env['stock.picking'].create({
+                'picking_type_id': int_type.id,
+                'location_id': source_loc.id,
+                'location_dest_id': prod_loc.id,
+                'move_ids': [(0, 0, m) for m in consume_moves],
+            })
+            for move in picking.move_ids:
+                move._set_quantity_done(move.product_uom_qty)
+            picking.button_validate()
+
+        if produce_moves:
+            produce_dest = packed_loc
+            if self.spoilage_units > 0:
+                produce_dest = prod_loc
+            picking2 = self.env['stock.picking'].create({
+                'picking_type_id': int_type.id,
+                'location_id': prod_loc.id,
+                'location_dest_id': produce_dest.id,
+                'move_ids': [(0, 0, m) for m in produce_moves],
+            })
+            for move in picking2.move_ids:
+                move._set_quantity_done(move.product_uom_qty)
+            picking2.button_validate()
+            if not picking:
+                picking = picking2
 
         # Create packed lot using standard Odoo create (unique constraint already dropped)
         packed_lot = self.env['stock.lot'].create({
@@ -577,19 +610,19 @@ class Cultivation(models.Model):
         if self.state in ('germinated', 'transplanted') and self.plant_picking_id:
             prod_loc = self._get_production_loc()
 
-            # Reverse: move seeds back from Production → Nursery
+            # Reverse: move seeds back from Production → Stock
             return_picking = self.env['stock.picking'].create({
                 'picking_type_id': self.env['stock.picking.type'].search([
                     ('code', '=', 'internal')
                 ], limit=1).id,
                 'location_id': prod_loc.id,
-                'location_dest_id': self.nursery_id.id,
+                'location_dest_id': self._get_stock_loc().id,
                 'move_ids': [(0, 0, {
                     'product_id': self.seed_lot_id.product_id.id,
                     'product_uom_qty': self.grams_consumed,
                     'product_uom': self.seed_lot_id.product_id.uom_id.id,
                     'location_id': prod_loc.id,
-                    'location_dest_id': self.nursery_id.id,
+                    'location_dest_id': self._get_stock_loc().id,
                     'company_id': self.env.company.id,
                     'date': fields.Datetime.now(),
                     'procure_method': 'make_to_stock',

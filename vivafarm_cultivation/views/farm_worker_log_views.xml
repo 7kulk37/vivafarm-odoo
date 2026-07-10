@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- List View -->
+        <record id="farm_worker_log_list" model="ir.ui.view">
+            <field name="name">farm.worker.log.list</field>
+            <field name="model">farm.worker.log</field>
+            <field name="arch" type="xml">
+                <list string="Worker Logs" editable="bottom" multi_edit="1">
+                    <field name="date"/>
+                    <field name="worker_name"/>
+                    <field name="task_description"/>
+                    <field name="safety_briefing" widget="boolean_fa"/>
+                    <field name="wage_amount" sum="Total"/>
+                    <field name="working_hours" sum="Total"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'confirmed'"
+                           decoration-danger="state == 'canceled'"/>
+                    <button name="action_confirm" type="object"
+                            string="Confirm"
+                            icon="fa-check"
+                            invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object"
+                            string="Cancel"
+                            icon="fa-times"
+                            invisible="state != 'confirmed'"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Server Actions (bulk) -->
+        <record id="action_farm_worker_log_confirm" model="ir.actions.server">
+            <field name="name">Confirm</field>
+            <field name="model_id" ref="model_farm_worker_log"/>
+            <field name="binding_model_id" ref="model_farm_worker_log"/>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_confirm()
+            </field>
+        </record>
+
+        <record id="action_farm_worker_log_cancel" model="ir.actions.server">
+            <field name="name">Cancel</field>
+            <field name="model_id" ref="model_farm_worker_log"/>
+            <field name="binding_model_id" ref="model_farm_worker_log"/>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_cancel()
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="farm_worker_log_search" model="ir.ui.view">
+            <field name="name">farm.worker.log.search</field>
+            <field name="model">farm.worker.log</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="worker_name"/>
+                    <field name="date"/>
+                    <field name="state"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_farm_worker_log" model="ir.actions.act_window">
+            <field name="name">Worker Logs</field>
+            <field name="res_model">farm.worker.log</field>
+            <field name="view_mode">list</field>
+            <field name="search_view_id" ref="farm_worker_log_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Record daily worker activity for GAP compliance.
+                </p>
+                <p>
+                    For new workers, include their ID number.
+                    Safety briefing is recorded automatically.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu - top level under Hydroponic -->
+        <menuitem id="menu_farm_worker_log"
+                  name="Worker Logs"
+                  parent="menu_farm_root"
+                  action="action_farm_worker_log"
+                  sequence="30"/>
+
+    </data>
+</odoo>

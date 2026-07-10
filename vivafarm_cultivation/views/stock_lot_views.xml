@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Add Seed Lot field to existing stock.lot form view -->
+        <record id="view_stock_lot_form_inherit_farm" model="ir.ui.view">
+            <field name="name">stock.lot.form.inherit.farm</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.view_production_lot_form"/>
+            <field name="arch" type="xml">
+                <field name="ref" position="after">
+                    <field name="x_seed_lot" placeholder="Seed lot number (e.g. GO-2026-04)"/>
+                </field>
+                <!-- Remove invisible="not display_complete" from the quantity div inside inventory_group -->
+                <xpath expr="//group[@name='inventory_group']//div[@invisible='not display_complete']" position="attributes">
+                    <attribute name="invisible">0</attribute>
+                </xpath>
+                <!-- Remove invisible from the quantity label -->
+                <label for="product_qty" position="attributes">
+                    <attribute name="invisible">0</attribute>
+                </label>
+                <!-- Remove invisible + groups from location_id -->
+                <field name="location_id" position="attributes">
+                    <attribute name="groups"/>
+                    <attribute name="invisible">0</attribute>
+                </field>
+            </field>
+        </record>
+
+        <!-- Add Seed Lot to stock.lot list view -->
+        <record id="view_stock_lot_tree_inherit_farm" model="ir.ui.view">
+            <field name="name">stock.lot.tree.inherit.farm</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.view_production_lot_tree"/>
+            <field name="arch" type="xml">
+                <field name="ref" position="after">
+                    <field name="x_seed_lot" optional="show"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Add Seed Lot to stock.lot search view -->
+        <record id="view_stock_lot_search_inherit_farm" model="ir.ui.view">
+            <field name="name">stock.lot.search.inherit.farm</field>
+            <field name="model">stock.lot</field>
+            <field name="inherit_id" ref="stock.search_product_lot_filter"/>
+            <field name="arch" type="xml">
+                <field name="name" position="after">
+                    <field name="x_seed_lot"/>
+                </field>
+            </field>
+        </record>
+
+    </data>
+</odoo>

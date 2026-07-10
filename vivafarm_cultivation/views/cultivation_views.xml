@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+
+        <!-- Hydroponic root menu -->
+        <menuitem id="menu_farm_root" name="Hydroponic"
+                  sequence="90" web_icon="stock,static/description/icon.png"/>
+
         <!-- List View -->
         <record id="vivafarm_cultivation_list" model="ir.ui.view">
             <field name="name">vivafarm.cultivation.list</field>
@@ -8,17 +13,19 @@
             <field name="arch" type="xml">
                 <list string="Cultivation" default_order="id desc">
                     <field name="name"/>
-                    <field name="state" widget="badge"/>
+                    <field name="state" widget="badge"
+                           decoration-info="state in ('germinated','transplanted','harvested')"
+                           decoration-success="state == 'done'"
+                           decoration-danger="state == 'canceled'"/>
                     <field name="plant_date"/>
                     <field name="target_transplant_date"/>
                     <field name="target_harvest_date"/>
                     <field name="seed_lot_id"/>
-                    <field name="crop_id"/>
                     <field name="nursery_id"/>
                     <field name="bench_id"/>
                     <field name="live_lot_id"/>
                     <field name="harvest_date"/>
-                    <field name="packed_lot_id"/>
+                    <field name="packed_kg"/>
                 </list>
             </field>
         </record>
@@ -61,8 +68,6 @@
                                        readonly="state != 'draft'"
                                        placeholder="Select recipe to auto-fill..."/>
                                 <field name="seed_product_id"/>
-                                <field name="nutrient_product_id" readonly="1"/>
-                                <field name="acid_product_id" readonly="1"/>
                                 <field name="crop_id" readonly="1"/>
                                 <field name="packed_product_id" readonly="1"/>
                             </group>
@@ -113,7 +118,6 @@
                                 <field name="grams_consumed" invisible="state == 'draft'"/>
                                 <field name="total_nutrient_consumed" invisible="state == 'draft'"/>
                                 <field name="total_acid_consumed" invisible="state == 'draft'"/>
-                                <field name="plant_picking_id"/>
                                 <field name="harvest_picking_id" invisible="state in ('draft', 'germinated', 'transplanted')"/>
                             </group>
                         </group>
@@ -133,11 +137,12 @@
             <field name="view_mode">list,form</field>
         </record>
 
-        <!-- Menu Item - top level under Hydroponic -->
+        <!-- Menu Item -->
         <menuitem id="menu_vivafarm_cultivation"
                   name="Cultivation"
-                  parent="vivafarm_farm_logs.menu_farm_root"
+                  parent="menu_farm_root"
                   action="action_vivafarm_cultivation"
                   sequence="10"/>
+
     </data>
 </odoo>

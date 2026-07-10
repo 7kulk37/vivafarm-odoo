@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Server actions for multi-select Action menu -->
+        <record id="action_confirm_material_transformation" model="ir.actions.server">
+            <field name="name">Confirm</field>
+            <field name="model_id" ref="model_material_transformation"/>
+            <field name="binding_model_id" ref="model_material_transformation"/>
+            <field name="state">code</field>
+            <field name="code">records.action_confirm()</field>
+        </record>
+
+        <record id="action_cancel_material_transformation" model="ir.actions.server">
+            <field name="name">Cancel</field>
+            <field name="model_id" ref="model_material_transformation"/>
+            <field name="binding_model_id" ref="model_material_transformation"/>
+            <field name="state">code</field>
+            <field name="code">records.action_cancel()</field>
+        </record>
+
+        <record id="material_transformation_list" model="ir.ui.view">
+            <field name="name">material.transformation.list</field>
+            <field name="model">material.transformation</field>
+            <field name="arch" type="xml">
+                <list string="Material Transformations" default_order="date desc">
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'confirmed'"
+                           decoration-danger="state == 'canceled'"/>
+                    <field name="date"/>
+                    <field name="product_id"/>
+                    <field name="quantity"/>
+                    <field name="intermediate_product_id"/>
+                    <field name="intermediate_qty"/>
+                    <field name="picking_id"/>
+                    <field name="return_picking_id"/>
+                    <field name="notes"/>
+                    <button name="action_confirm" type="object"
+                            string="Confirm" icon="fa-check"
+                            invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object"
+                            string="Cancel" icon="fa-times"
+                            invisible="state != 'confirmed'"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="material_transformation_form" model="ir.ui.view">
+            <field name="name">material.transformation.form</field>
+            <field name="model">material.transformation</field>
+            <field name="arch" type="xml">
+                <form string="Material Transformation">
+                    <header>
+                        <button name="action_confirm" string="Confirm"
+                                type="object" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_cancel" string="Cancel"
+                                type="object" class="btn-secondary"
+                                invisible="state != 'confirmed'"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="draft,confirmed,canceled"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Material Transformation</h1>
+                            <p class="text-muted">
+                                Convert raw materials to intermediate products in Cultivation Buffer.
+                                Raw material is consumed from WH/Stock, intermediate product is created in Buffer.
+                            </p>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="product_id" options="{'no_create': True}"
+                                       readonly="state != 'draft'"/>
+                                <field name="quantity" readonly="state != 'draft'"/>
+                                <field name="intermediate_product_id" options="{'no_create': True}"
+                                       readonly="state != 'draft'"/>
+                                <field name="intermediate_qty"/>
+                                <field name="conversion_factor" readonly="state != 'draft'"/>
+                                <field name="secondary_intermediate_product_id" options="{'no_create': True}"
+                                       readonly="state != 'draft'"/>
+                                <field name="secondary_conversion_factor" readonly="state != 'draft'"/>
+                                <field name="destination_is_stock" readonly="state != 'draft'"/>
+                                <field name="source_is_buffer" readonly="state != 'draft'"/>
+                                <field name="date" readonly="state != 'draft'"/>
+                            </group>
+                            <group>
+                                <field name="picking_id" readonly="1"/>
+                                <field name="return_picking_id" readonly="1"
+                                       invisible="return_picking_id == False"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="notes" nolabel="1" placeholder="e.g. Mixed 10 kg Nutrient A + 10 L water = 10 L concentrate"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="material_transformation_search" model="ir.ui.view">
+            <field name="name">material.transformation.search</field>
+            <field name="model">material.transformation</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="date"/>
+                    <field name="product_id"/>
+                    <field name="intermediate_product_id"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_material_transformation" model="ir.actions.act_window">
+            <field name="name">Material Transformation</field>
+            <field name="res_model">material.transformation</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="material_transformation_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Record a material transformation.
+                </p>
+                <p>
+                    Convert raw materials (Nutrient A/B Powder, Nitric Acid 68%, Plastic Bags)
+                    into intermediate products (Nutrient A/B Concentrate, Diluted Acid 6.8%, Opened Bags)
+                    stored in the Cultivation Buffer.
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="menu_material_transformation"
+                  name="Material Transformation"
+                  parent="menu_farm_root"
+                  action="action_material_transformation"
+                  sequence="30"/>
+
+    </data>
+</odoo>

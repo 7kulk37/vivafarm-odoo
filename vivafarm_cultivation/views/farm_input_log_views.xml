@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- List View -->
+        <record id="farm_input_log_list" model="ir.ui.view">
+            <field name="name">farm.input.log.list</field>
+            <field name="model">farm.input.log</field>
+            <field name="arch" type="xml">
+                <list string="Farm Input Logs" editable="bottom" multi_edit="1">
+                    <field name="date"/>
+                    <field name="bench_id"/>
+                    <field name="crop_id"/>
+                    <field name="lot_id"/>
+                    <field name="ec_value"/>
+                    <field name="ph_value"/>
+                    <field name="nutrient_adjustment"/>
+                    <field name="acid_adjustment"/>
+                    <field name="raw_water_liters"/>
+                    <field name="mixing_liters"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'confirmed'"
+                           decoration-danger="state == 'canceled'"/>
+                    <button name="action_confirm" type="object"
+                            string="Confirm"
+                            icon="fa-check"
+                            invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object"
+                            string="Cancel"
+                            icon="fa-times"
+                            invisible="state != 'confirmed'"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Server Actions (bulk) -->
+        <record id="action_farm_input_log_confirm" model="ir.actions.server">
+            <field name="name">Confirm</field>
+            <field name="model_id" ref="model_farm_input_log"/>
+            <field name="binding_model_id" ref="model_farm_input_log"/>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_confirm()
+            </field>
+        </record>
+
+        <record id="action_farm_input_log_cancel" model="ir.actions.server">
+            <field name="name">Cancel</field>
+            <field name="model_id" ref="model_farm_input_log"/>
+            <field name="binding_model_id" ref="model_farm_input_log"/>
+            <field name="state">code</field>
+            <field name="code">
+                records.action_cancel()
+            </field>
+        </record>
+
+        <!-- Search View -->
+        <record id="farm_input_log_search" model="ir.ui.view">
+            <field name="name">farm.input.log.search</field>
+            <field name="model">farm.input.log</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="date"/>
+                    <field name="bench_id"/>
+                    <field name="lot_id"/>
+                    <field name="state"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_farm_input_log" model="ir.actions.act_window">
+            <field name="name">Farm Input Logs</field>
+            <field name="res_model">farm.input.log</field>
+            <field name="view_mode">list</field>
+            <field name="search_view_id" ref="farm_input_log_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Record daily EC/pH readings for each bench.
+                </p>
+                <p>
+                    Create one log entry per bench per day with EC and pH readings.
+                    Optional: log nutrient or acid adjustments.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu -->
+        <menuitem id="menu_farm_input_log"
+                  name="Input Logs (EC/pH)"
+                  parent="menu_farm_root"
+                  action="action_farm_input_log"
+                  sequence="20"/>
+
+    </data>
+</odoo>
