@@ -80,6 +80,12 @@ class MaterialTransformation(models.Model):
         'consumable.recipe', string='Consumable Recipe',
         help='Select a consumable recipe to auto-fill products and ratios.',
     )
+    recipe_multiplier = fields.Float(
+        string='Recipe Multiplier',
+        default=1.0,
+        digits=(6, 1),
+        help='Multiply the recipe quantities by this factor. E.g. 2.5 = 2.5x the recipe.',
+    )
     state = fields.Selection([
         ('draft', 'Draft'),
         ('confirmed', 'Confirmed'),
@@ -156,6 +162,7 @@ class MaterialTransformation(models.Model):
         if not self.consumable_recipe_id:
             return
         recipe = self.consumable_recipe_id
+        self.recipe_multiplier = 1.0
         self.product_id = recipe.input_product_a_id
         self.quantity = recipe.input_qty_a
         self.intermediate_product_id = recipe.output_product_c_id
@@ -164,6 +171,15 @@ class MaterialTransformation(models.Model):
         self.secondary_conversion_factor = recipe.output_qty_d / recipe.input_qty_a if recipe.input_qty_a and recipe.output_qty_d else 0.0
         self.source_is_buffer = recipe.source_is_buffer
         self.destination_is_stock = recipe.destination_is_stock
+
+    @api.onchange('recipe_multiplier')
+    def _onchange_recipe_multiplier(self):
+        if not self.consumable_recipe_id or self.recipe_multiplier <= 0:
+            return
+        recipe = self.consumable_recipe_id
+        self.quantity = recipe.input_qty_a * self.recipe_multiplier
+        self.conversion_factor = recipe.output_qty_c / recipe.input_qty_a if recipe.input_qty_a else 1.0
+        self.secondary_conversion_factor = recipe.output_qty_d / recipe.input_qty_a if recipe.input_qty_a and recipe.output_qty_d else 0.0
 
     def _get_water_qty(self):
         """Calculate water quantity needed for this transformation based on product name."""

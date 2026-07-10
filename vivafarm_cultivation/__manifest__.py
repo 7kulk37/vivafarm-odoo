@@ -20,6 +20,7 @@
         'views/cultivation_views.xml',
         'views/recipe_views.xml',
         'views/consumable_recipe_views.xml',
+        'views/material_transformation_views.xml',
         'views/farm_input_log_views.xml',
         'views/farm_worker_log_views.xml',
         'views/stock_lot_views.xml',

@@ -69,29 +69,31 @@
                             </p>
                         </div>
                         <group>
-                            <group>
-                                <field name="product_id" options="{'no_create': True}"
-                                       readonly="state != 'draft'"/>
-                                <field name="quantity" readonly="state != 'draft'"/>
-                                <field name="intermediate_product_id" options="{'no_create': True}"
-                                       readonly="state != 'draft'"/>
-                                <field name="intermediate_qty"/>
-                                <field name="conversion_factor" readonly="state != 'draft'"/>
-                                <field name="secondary_intermediate_product_id" options="{'no_create': True}"
-                                       readonly="state != 'draft'"/>
-                                <field name="secondary_conversion_factor" readonly="state != 'draft'"/>
-                                <field name="destination_is_stock" readonly="state != 'draft'"/>
-                                <field name="source_is_buffer" readonly="state != 'draft'"/>
+                            <group string="Input">
+                                <field name="consumable_recipe_id" options="{'no_create': True}"
+                                       readonly="state != 'draft'"
+                                       placeholder="Select a consumable recipe to auto-fill..."/>
+                                <field name="recipe_multiplier" readonly="state != 'draft'"/>
                                 <field name="date" readonly="state != 'draft'"/>
-                            </group>
-                            <group>
                                 <field name="picking_id" readonly="1"/>
                                 <field name="return_picking_id" readonly="1"
                                        invisible="return_picking_id == False"/>
                             </group>
-                        </group>
-                        <group>
-                            <field name="notes" nolabel="1" placeholder="e.g. Mixed 10 kg Nutrient A + 10 L water = 10 L concentrate"/>
+                            <group string="Information">
+                                <field name="product_id" options="{'no_create': True}"
+                                       readonly="1" force_save="1"/>
+                                <field name="quantity" readonly="1" force_save="1"/>
+                                <field name="intermediate_product_id" options="{'no_create': True}"
+                                       readonly="1" force_save="1"/>
+                                <field name="intermediate_qty" readonly="1" force_save="1"/>
+                                <field name="conversion_factor" readonly="1" force_save="1"/>
+                                <field name="secondary_intermediate_product_id" options="{'no_create': True}"
+                                       readonly="1" force_save="1"/>
+                                <field name="secondary_conversion_factor" readonly="1" force_save="1"/>
+                                <field name="destination_is_stock" readonly="1" force_save="1"/>
+                                <field name="source_is_buffer" readonly="1" force_save="1"/>
+                                <field name="notes" readonly="1" force_save="1"/>
+                            </group>
                         </group>
                     </sheet>
                 </form>
