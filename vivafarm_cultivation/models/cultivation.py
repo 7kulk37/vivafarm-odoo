@@ -245,13 +245,12 @@ class Cultivation(models.Model):
             ('name', '=', 'Packed Goods'),
         ], limit=1)
 
-    def _get_farm_stock_loc(self, farm_loc):
-        """Map a farm.location record to a stock.location by name."""
-        if not farm_loc:
-            return False
-        return self.env['stock.location'].search([
-            ('name', '=', farm_loc.name),
-        ], limit=1)
+    def _get_farm_stock_loc(self, farm_loc=None):
+        """All cultivation stock moves now use the main WH/Stock location.
+
+        Farm.location records are labels for input logs and cultivation forms only.
+        """
+        return self._get_stock_loc()
 
     def action_germinate(self):
         """Draft → Germinated: consume seeds, create live plants at nursery."""
@@ -302,16 +301,14 @@ class Cultivation(models.Model):
             })],
         }
 
-        # 2. Create live plants: Production → Nursery
-        nursery_stock = self._get_farm_stock_loc(self.nursery_id)
-        if not nursery_stock:
-            raise UserError(f'Stock location "{self.nursery_id.name}" not found. Create it in Location Recipes first.')
+        # 2. Create live plants: Production → WH/Stock
+        stock_loc = self._get_stock_loc()
         live_move_vals = {
             'product_id': self.crop_id.id,
             'product_uom_qty': self.target_plant_count,
             'product_uom': self.crop_id.uom_id.id,
             'location_id': prod_loc.id,
-            'location_dest_id': nursery_stock.id,
+            'location_dest_id': stock_loc.id,
             'company_id': self.env.company.id,
             'date': fields.Datetime.now(),
             'procure_method': 'make_to_stock',
@@ -325,8 +322,8 @@ class Cultivation(models.Model):
 
         picking = self.env['stock.picking'].create({
             'picking_type_id': int_type.id,
-            'location_id': nursery_stock.id,
-            'location_dest_id': nursery_stock.id,
+            'location_id': stock_loc.id,
+            'location_dest_id': stock_loc.id,
             'move_ids': [(0, 0, seed_move_vals), (0, 0, live_move_vals)],
         })
 
@@ -350,7 +347,7 @@ class Cultivation(models.Model):
                     'quantity': self.target_plant_count,
                     'product_uom_id': self.crop_id.uom_id.id,
                     'location_id': prod_loc.id,
-                    'location_dest_id': nursery_stock.id,
+                    'location_dest_id': stock_loc.id,
                 })
 
         picking.button_validate()
@@ -378,14 +375,9 @@ class Cultivation(models.Model):
             raise UserError('Transplant amount must be greater than 0.')
 
         prod_loc = self._get_production_loc()
-        nursery_stock = self._get_farm_stock_loc(self.nursery_id)
-        bench_stock = self._get_farm_stock_loc(self.bench_id)
-        if not nursery_stock:
-            raise UserError(f'Stock location "{self.nursery_id.name}" not found.')
-        if not bench_stock:
-            raise UserError(f'Stock location "{self.bench_id.name}" not found. Create it in Location Recipes first.')
+        stock_loc = self._get_stock_loc()
 
-        # Transfer live plants: Nursery → Bench
+        # Transfer live plants: WH/Stock → WH/Stock (state change only, no per-location tracking)
         int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
         if not int_type:
             int_type = self.env['stock.picking.type'].search([
@@ -394,14 +386,14 @@ class Cultivation(models.Model):
 
         picking = self.env['stock.picking'].create({
             'picking_type_id': int_type.id,
-            'location_id': nursery_stock.id,
-            'location_dest_id': bench_stock.id,
+            'location_id': stock_loc.id,
+            'location_dest_id': stock_loc.id,
             'move_ids': [(0, 0, {
                 'product_id': self.crop_id.id,
                 'product_uom_qty': self.transplant_amount,
                 'product_uom': self.crop_id.uom_id.id,
-                'location_id': nursery_stock.id,
-                'location_dest_id': bench_stock.id,
+                'location_id': stock_loc.id,
+                'location_dest_id': stock_loc.id,
                 'company_id': self.env.company.id,
                 'date': fields.Datetime.now(),
                 'procure_method': 'make_to_stock',
@@ -410,8 +402,8 @@ class Cultivation(models.Model):
                     'lot_id': self.live_lot_id.id,
                     'quantity': self.transplant_amount,
                     'product_uom_id': self.crop_id.uom_id.id,
-                    'location_id': nursery_stock.id,
-                    'location_dest_id': bench_stock.id,
+                    'location_id': stock_loc.id,
+                    'location_dest_id': stock_loc.id,
                 })],
             })],
         })
@@ -463,11 +455,7 @@ class Cultivation(models.Model):
         prod_loc = self._get_production_loc()
         spoilage_loc = self._get_spoilage_loc()
         packed_loc = self._get_packed_loc()
-
-        source_farm = self.bench_id or self.nursery_id
-        source_loc = self._get_farm_stock_loc(source_farm)
-        if not source_loc:
-            raise UserError(f'Stock location "{source_farm.name}" not found.')
+        stock_loc = self._get_stock_loc()
 
         # Build packed lot name: SeedLot-LiveLot-Location
         seed_code = self.seed_lot_id.name
@@ -476,12 +464,12 @@ class Cultivation(models.Model):
         bench_code = self.bench_id.name.split()[0] if self.bench_id else ''
         packed_lot_name = f'{seed_code}-{live_code}-{nursery_code}{bench_code}'
 
-        # 1. Consume live plants: source → Production
+        # 1. Consume live plants: WH/Stock → Production
         live_move_vals = {
             'product_id': live_lot.product_id.id,
             'product_uom_qty': total_units,
             'product_uom': live_lot.product_id.uom_id.id,
-            'location_id': source_loc.id,
+            'location_id': stock_loc.id,
             'location_dest_id': prod_loc.id,
             'company_id': self.env.company.id,
             'date': fields.Datetime.now(),
@@ -491,7 +479,7 @@ class Cultivation(models.Model):
                 'lot_id': live_lot.id,
                 'quantity': total_units,
                 'product_uom_id': live_lot.product_id.uom_id.id,
-                'location_id': source_loc.id,
+                'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
             })],
         }
@@ -517,13 +505,13 @@ class Cultivation(models.Model):
 
         moves = [live_move_vals, packed_move_vals]
 
-        # 3. If spoilage: move from source → Spoilage
+        # 3. If spoilage: move from WH/Stock → Spoilage
         if self.spoilage_units > 0:
             spoilage_move_vals = {
                 'product_id': live_lot.product_id.id,
                 'product_uom_qty': self.spoilage_units,
                 'product_uom': live_lot.product_id.uom_id.id,
-                'location_id': source_loc.id,
+                'location_id': stock_loc.id,
                 'location_dest_id': spoilage_loc.id,
                 'company_id': self.env.company.id,
                 'date': fields.Datetime.now(),
@@ -533,7 +521,7 @@ class Cultivation(models.Model):
                     'lot_id': live_lot.id,
                     'quantity': self.spoilage_units,
                     'product_uom_id': live_lot.product_id.uom_id.id,
-                    'location_id': source_loc.id,
+                    'location_id': stock_loc.id,
                     'location_dest_id': spoilage_loc.id,
                 })],
             }
@@ -573,7 +561,7 @@ class Cultivation(models.Model):
             ], limit=1)
 
         # Split into two pickings to avoid destination mismatch:
-        # Picking 1: consume live + nutrient + acid (source → Production)
+        # Picking 1: consume live + nutrient + acid (WH/Stock → Production)
         # Picking 2: create packed + spoilage (Production → destination)
         consume_moves = [m for m in moves if m['location_dest_id'] == prod_loc.id]
         produce_moves = [m for m in moves if m['location_id'] == prod_loc.id]
@@ -582,7 +570,7 @@ class Cultivation(models.Model):
         if consume_moves:
             picking = self.env['stock.picking'].create({
                 'picking_type_id': int_type.id,
-                'location_id': source_loc.id,
+                'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'move_ids': [(0, 0, m) for m in consume_moves],
             })
@@ -631,21 +619,21 @@ class Cultivation(models.Model):
         # If seeds were consumed, return them
         if self.state in ('germinated', 'transplanted') and self.plant_picking_id:
             prod_loc = self._get_production_loc()
-            nursery_stock = self._get_farm_stock_loc(self.nursery_id)
+            stock_loc = self._get_stock_loc()
 
-            # Reverse: move seeds back from Production → Stock
+            # Reverse: move seeds back from Production → WH/Stock
             return_picking = self.env['stock.picking'].create({
                 'picking_type_id': self.env['stock.picking.type'].search([
                     ('code', '=', 'internal')
                 ], limit=1).id,
                 'location_id': prod_loc.id,
-                'location_dest_id': self._get_stock_loc().id,
+                'location_dest_id': stock_loc.id,
                 'move_ids': [(0, 0, {
                     'product_id': self.seed_lot_id.product_id.id,
                     'product_uom_qty': self.grams_consumed,
                     'product_uom': self.seed_lot_id.product_id.uom_id.id,
                     'location_id': prod_loc.id,
-                    'location_dest_id': self._get_stock_loc().id,
+                    'location_dest_id': stock_loc.id,
                     'company_id': self.env.company.id,
                     'date': fields.Datetime.now(),
                     'procure_method': 'make_to_stock',
@@ -655,7 +643,7 @@ class Cultivation(models.Model):
                         'quantity': self.grams_consumed,
                         'product_uom_id': self.seed_lot_id.product_id.uom_id.id,
                         'location_id': prod_loc.id,
-                        'location_dest_id': nursery_stock.id if nursery_stock else self._get_stock_loc().id,
+                        'location_dest_id': stock_loc.id,
                     })],
                 })],
             })
