@@ -352,6 +352,15 @@ class Cultivation(models.Model):
 
         picking.button_validate()
 
+        # Assign seed cost to the live plant product so it carries cost through cultivation.
+        # Cost per live plant unit = total seed value / number of live plants produced.
+        seed_move = next((m for m in picking.move_ids if m.product_id == seed_lot.product_id), None)
+        live_move = next((m for m in picking.move_ids if m.product_id == self.crop_id), None)
+        if seed_move and live_move and live_move.product_uom_qty:
+            unit_cost = (seed_move.value or 0.0) / live_move.product_uom_qty
+            if unit_cost:
+                self.crop_id.product_tmpl_id.standard_price = unit_cost
+
         self.write({
             'state': 'germinated',
             'name': self._next_reference(),
@@ -527,12 +536,12 @@ class Cultivation(models.Model):
             }
             moves.append(spoilage_move_vals)
 
-        # 4. Consume nutrient: WH/Stock → Production
+        # 4. Consume nutrient: WH/Stock → Production (input logs are in ml, product UoM is L)
         stock_loc = self._get_stock_loc()
         if self.nutrient_product_id and self.total_nutrient_consumed > 0:
             moves.append({
                 'product_id': self.nutrient_product_id.id,
-                'product_uom_qty': self.total_nutrient_consumed,
+                'product_uom_qty': self.total_nutrient_consumed / 1000.0,
                 'product_uom': self.nutrient_product_id.uom_id.id,
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
@@ -541,11 +550,11 @@ class Cultivation(models.Model):
                 'procure_method': 'make_to_stock',
             })
 
-        # 5. Consume acid: WH/Stock → Production
+        # 5. Consume acid: WH/Stock → Production (input logs are in ml, product UoM is L)
         if self.acid_product_id and self.total_acid_consumed > 0:
             moves.append({
                 'product_id': self.acid_product_id.id,
-                'product_uom_qty': self.total_acid_consumed,
+                'product_uom_qty': self.total_acid_consumed / 1000.0,
                 'product_uom': self.acid_product_id.uom_id.id,
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
@@ -553,6 +562,27 @@ class Cultivation(models.Model):
                 'date': fields.Datetime.now(),
                 'procure_method': 'make_to_stock',
             })
+
+        # 6. Consume direct labor allocation based on grow days
+        labor_product = self.env['product.product'].search([
+            ('product_tmpl_id.name', '=', 'Direct Labor Allocation')
+        ], limit=1)
+        if labor_product and labor_product.standard_price:
+            start_date = self.plant_date or (self.germinated_date.date() if self.germinated_date else None)
+            end_date = self.harvest_date or (self.harvested_date.date() if self.harvested_date else None)
+            if start_date and end_date:
+                labor_days = (end_date - start_date).days + 1
+                if labor_days > 0:
+                    moves.append({
+                        'product_id': labor_product.id,
+                        'product_uom_qty': labor_days,
+                        'product_uom': labor_product.uom_id.id,
+                        'location_id': stock_loc.id,
+                        'location_dest_id': prod_loc.id,
+                        'company_id': self.env.company.id,
+                        'date': fields.Datetime.now(),
+                        'procure_method': 'make_to_stock',
+                    })
 
         int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
         if not int_type:
@@ -567,6 +597,7 @@ class Cultivation(models.Model):
         produce_moves = [m for m in moves if m['location_id'] == prod_loc.id]
 
         picking = False
+        total_input_cost = 0.0
         if consume_moves:
             picking = self.env['stock.picking'].create({
                 'picking_type_id': int_type.id,
@@ -577,6 +608,8 @@ class Cultivation(models.Model):
             for move in picking.move_ids:
                 move._set_quantity_done(move.product_uom_qty)
             picking.button_validate()
+            # Capture actual input cost from consumed move values
+            total_input_cost = sum(move.value for move in picking.move_ids)
 
         if produce_moves:
             produce_dest = packed_loc
@@ -590,6 +623,17 @@ class Cultivation(models.Model):
             })
             for move in picking2.move_ids:
                 move._set_quantity_done(move.product_uom_qty)
+
+            # Assign total input cost to packed product output move(s).
+            # Spoilage is costed at the same unit cost as packed goods.
+            output_moves = picking2.move_ids
+            total_output_qty = sum(m.product_uom_qty for m in output_moves) or 1.0
+            for move in output_moves:
+                if total_input_cost and move.product_uom_qty:
+                    unit_cost = total_input_cost * (move.product_uom_qty / total_output_qty) / move.product_uom_qty
+                    move.product_id.product_tmpl_id.standard_price = unit_cost
+                    move.price_unit = unit_cost
+
             picking2.button_validate()
             if not picking:
                 picking = picking2

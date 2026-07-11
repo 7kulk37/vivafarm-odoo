@@ -121,8 +121,8 @@ class MaterialTransformation(models.Model):
             return
         name = self.product_id.name
         if 'Nutrient A+B Powder packed' in name:
-            inter_a = self.env['product.product'].search([('name', '=', 'Nutrient A Powder')], limit=1)
-            inter_b = self.env['product.product'].search([('name', '=', 'Nutrient B Powder')], limit=1)
+            inter_a = self.env['product.product'].search([('name', '=', 'Nutrient A Concentrate')], limit=1)
+            inter_b = self.env['product.product'].search([('name', '=', 'Nutrient B Concentrate')], limit=1)
             if inter_a:
                 self.intermediate_product_id = inter_a
                 self.conversion_factor = 1.0
@@ -161,7 +161,7 @@ class MaterialTransformation(models.Model):
             inter = self.env['product.product'].search([('name', '=', 'Raw Water')], limit=1)
             if inter:
                 self.intermediate_product_id = inter
-                self.conversion_factor = 1.0
+                self.conversion_factor = 1000.0
 
     @api.onchange('consumable_recipe_id')
     def _onchange_consumable_recipe_id(self):
@@ -202,7 +202,8 @@ class MaterialTransformation(models.Model):
             return self.consumable_recipe_id.input_qty_b * (self.quantity / self.consumable_recipe_id.input_qty_a) if self.consumable_recipe_id.input_qty_a else 0.0
         name = self.product_id.name or ''
         if 'Nutrient A+B Powder packed' in name:
-            return self.intermediate_qty
+            # 1 pack -> 1 L A Concentrate + 1 L B Concentrate, so water = 2 * quantity
+            return self.quantity * 2.0
         if 'Nutrient A Powder' in name or 'Nutrient B Powder' in name:
             return self.intermediate_qty
         elif 'Nitric Acid 68%' in name:
@@ -309,6 +310,10 @@ class MaterialTransformation(models.Model):
             move._set_quantity_done(move.product_uom_qty)
         picking_raw.button_validate()
 
+        # Calculate total input cost from consumed raw material move values.
+        # In Odoo 19, stock.move.value holds the actual valuation of the move.
+        total_input_cost = sum(move.value for move in picking_raw.move_ids)
+
         # Move intermediate(s) from Production -> destination SECOND
         dest_loc = stock_loc if self.destination_is_stock else buffer_loc
         picking = self.env['stock.picking'].create({
@@ -319,6 +324,19 @@ class MaterialTransformation(models.Model):
         })
         for move in picking.move_ids:
             move._set_quantity_done(move.product_uom_qty)
+
+        # Assign total input cost to output products.
+        # We set both the product template standard_price and move.price_unit.
+        # Odoo 19 values the output move from standard_price at validation time;
+        # the move.value is then frozen even if standard_price later recomputes.
+        output_moves = picking.move_ids
+        total_output_qty = sum(m.product_uom_qty for m in output_moves) or 1.0
+        for move in output_moves:
+            if total_input_cost:
+                unit_cost = total_input_cost * (move.product_uom_qty / total_output_qty) / move.product_uom_qty
+                move.product_id.product_tmpl_id.standard_price = unit_cost
+                move.price_unit = unit_cost
+
         picking.button_validate()
 
         self.write({'picking_id': picking.id, 'state': 'confirmed'})
