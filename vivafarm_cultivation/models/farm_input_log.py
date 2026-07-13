@@ -20,11 +20,11 @@ class FarmInputLog(models.Model):
         index=True,
     )
     bench_id = fields.Many2one(
-        'stock.location',
-        string='Bench',
+        'farm.location',
+        string='Location',
         required=True,
-        domain="[('usage', '=', 'internal')]",
-        help='NFT bench location (C1-F6)',
+        domain="[('location_type', 'in', ('nursery', 'bench'))]",
+        help='Nursery or NFT bench location',
     )
     lot_id = fields.Many2one(
         'stock.lot',

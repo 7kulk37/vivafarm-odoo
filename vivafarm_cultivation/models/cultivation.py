@@ -446,6 +446,37 @@ class Cultivation(models.Model):
 
         return self._reopen()
 
+    def _compute_labor_share(self):
+        """Compute this cultivation's share of the daily labor rate.
+
+        For each day between plant_date and harvest_date, find how many
+        cultivations are active (not draft/canceled), and split the daily
+        rate equally among them.
+        """
+        self.ensure_one()
+        labor_product = self.env['product.product'].search([
+            ('product_tmpl_id.name', '=', 'Direct Labor Allocation')
+        ], limit=1)
+        if not labor_product:
+            return 0.0
+        daily_rate = labor_product.standard_price or 0.0
+        if not daily_rate:
+            return 0.0
+        start = self.plant_date
+        end = self.harvest_date
+        if not start or not end:
+            return 0.0
+        total = 0.0
+        for offset in range((end - start).days + 1):
+            day = start + timedelta(days=offset)
+            active = self.env['vivafarm.cultivation'].search_count([
+                ('state', 'not in', ['draft', 'canceled']),
+                ('plant_date', '<=', day),
+                ('harvest_date', '>=', day),
+            ])
+            total += daily_rate / max(active, 1)
+        return total
+
     def action_done(self):
         """Harvested → Done: execute stock moves (packed → WH/Stock, spoilage → Spoilage)."""
         self.ensure_one()
@@ -563,16 +594,23 @@ class Cultivation(models.Model):
                 'procure_method': 'make_to_stock',
             })
 
-        # 6. Consume direct labor allocation based on grow days
+        # 6. Consume direct labor allocation split by active cultivations per day
         labor_product = self.env['product.product'].search([
             ('product_tmpl_id.name', '=', 'Direct Labor Allocation')
         ], limit=1)
-        if labor_product and labor_product.standard_price:
+        labor_share = self._compute_labor_share()
+        original_labor_price = 0.0
+        if labor_product and labor_share > 0:
             start_date = self.plant_date or (self.germinated_date.date() if self.germinated_date else None)
             end_date = self.harvest_date or (self.harvested_date.date() if self.harvested_date else None)
             if start_date and end_date:
                 labor_days = (end_date - start_date).days + 1
                 if labor_days > 0:
+                    unit_labor_price = labor_share / labor_days
+                    # Odoo 19 stock move value uses product.standard_price at validation time,
+                    # so temporarily set it to the per-day share for this batch.
+                    original_labor_price = labor_product.product_tmpl_id.standard_price
+                    labor_product.product_tmpl_id.standard_price = unit_labor_price
                     moves.append({
                         'product_id': labor_product.id,
                         'product_uom_qty': labor_days,
@@ -637,6 +675,10 @@ class Cultivation(models.Model):
             picking2.button_validate()
             if not picking:
                 picking = picking2
+
+        # Restore Direct Labor Allocation standard_price if we changed it
+        if original_labor_price:
+            labor_product.product_tmpl_id.standard_price = original_labor_price
 
         # Create packed lot using standard Odoo create (unique constraint already dropped)
         packed_lot = self.env['stock.lot'].create({
