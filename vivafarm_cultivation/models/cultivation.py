@@ -98,6 +98,7 @@ class Cultivation(models.Model):
     # Stock moves
     plant_picking_id = fields.Many2one('stock.picking', string='Plant Picking', readonly=True)
     harvest_picking_id = fields.Many2one('stock.picking', string='Harvest Picking', readonly=True)
+    packed_picking_id = fields.Many2one('stock.picking', string='Packed Picking', readonly=True)
 
     # Observations log
     notes = fields.Text(string='Notes / Observations')
@@ -692,6 +693,7 @@ class Cultivation(models.Model):
             'done_date': fields.Datetime.now(),
             'packed_lot_id': packed_lot.id,
             'harvest_picking_id': picking.id,
+            'packed_picking_id': picking2.id if produce_moves else False,
         })
 
         # Thai accounting: transfer the NET WIP delta for this batch to FG.
@@ -713,7 +715,7 @@ class Cultivation(models.Model):
         """
         self.ensure_one()
         delta = 0.0
-        for pick in (self.plant_picking_id, self.harvest_picking_id):
+        for pick in (self.plant_picking_id, self.harvest_picking_id, self.packed_picking_id):
             if not pick:
                 continue
             for move in pick.move_ids:
