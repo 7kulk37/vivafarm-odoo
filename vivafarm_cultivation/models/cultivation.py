@@ -694,10 +694,35 @@ class Cultivation(models.Model):
             'harvest_picking_id': picking.id,
         })
 
-        # Thai accounting: transfer accumulated WIP cost to FG at harvest time.
-        self._create_wip_to_fg_entry(total_input_cost)
+        # Thai accounting: transfer the NET WIP delta for this batch to FG.
+        # Using net WIP account change (plant + harvest pickings) avoids
+        # over-transferring value that was already cleared from WIP.
+        wip_delta = self._get_batch_wip_delta()
+        self._create_wip_to_fg_entry(wip_delta)
 
         return self._reopen()
+
+    def _get_batch_wip_delta(self):
+        """Net change to WIP account caused by this cultivation batch.
+
+        Sums all account move lines on 113400 from plant_picking_id and
+        harvest_picking_id. Positive = WIP increased; negative = WIP decreased.
+        """
+        self.ensure_one()
+        wip_cat = self.env['product.category'].search([('name', '=', 'WIP')], limit=1)
+        wip_acc = wip_cat.property_stock_valuation_account_id if wip_cat else False
+        if not wip_acc:
+            return 0.0
+        delta = 0.0
+        for pick in (self.plant_picking_id, self.harvest_picking_id):
+            if not pick:
+                continue
+            for move in pick.move_ids:
+                if move.account_move_id:
+                    for line in move.account_move_id.line_ids:
+                        if line.account_id == wip_acc:
+                            delta += line.debit - line.credit
+        return delta
 
     def _create_wip_to_fg_entry(self, cost):
         """Create a posted JE: Dr FG stock_valuation / Cr WIP stock_valuation.
