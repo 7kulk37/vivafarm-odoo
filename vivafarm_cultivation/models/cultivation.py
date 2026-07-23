@@ -705,23 +705,26 @@ class Cultivation(models.Model):
     def _get_batch_wip_delta(self):
         """Net change to WIP account caused by this cultivation batch.
 
-        Sums all account move lines on 113400 from plant_picking_id and
-        harvest_picking_id. Positive = WIP increased; negative = WIP decreased.
+        We sum the stock move values by direction:
+        - Moves INTO Production from an internal location increase WIP (+)
+        - Moves OUT OF Production to an internal/packed location decrease WIP (-)
+        This avoids double-counting when Odoo groups multiple moves into one
+        account move per picking.
         """
         self.ensure_one()
-        wip_cat = self.env['product.category'].search([('name', '=', 'WIP')], limit=1)
-        wip_acc = wip_cat.property_stock_valuation_account_id if wip_cat else False
-        if not wip_acc:
-            return 0.0
         delta = 0.0
         for pick in (self.plant_picking_id, self.harvest_picking_id):
             if not pick:
                 continue
             for move in pick.move_ids:
-                if move.account_move_id:
-                    for line in move.account_move_id.line_ids:
-                        if line.account_id == wip_acc:
-                            delta += line.debit - line.credit
+                if move.state != 'done':
+                    continue
+                if move.location_id.usage == 'internal' and move.location_dest_id.usage == 'production':
+                    delta += move.value
+                elif move.location_id.usage == 'production' and move.location_dest_id.usage in ('internal', 'internal'):
+                    # Packed goods location has usage='internal' as well; treat any
+                    # production -> internal as WIP decrease.
+                    delta -= move.value
         return delta
 
     def _create_wip_to_fg_entry(self, cost):
