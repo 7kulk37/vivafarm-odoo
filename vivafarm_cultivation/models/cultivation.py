@@ -694,7 +694,55 @@ class Cultivation(models.Model):
             'harvest_picking_id': picking.id,
         })
 
+        # Thai accounting: transfer accumulated WIP cost to FG at harvest time.
+        self._create_wip_to_fg_entry(total_input_cost)
+
         return self._reopen()
+
+    def _create_wip_to_fg_entry(self, cost):
+        """Create a posted JE: Dr FG stock_valuation / Cr WIP stock_valuation.
+
+        Transfers the actual accumulated WIP cost into FG at harvest time.
+        Idempotent — skips if entry already exists for this cultivation.
+        """
+        self.ensure_one()
+        if not cost:
+            return self.env['account.move']
+        ref = f'WIP-FG-{self.id}'
+        existing = self.env['account.move'].search([
+            ('ref', '=', ref),
+        ], limit=1)
+        if existing:
+            return existing
+
+        fg_acc = self.packed_product_id._get_product_accounts()['stock_valuation']
+        wip_cat = self.env['product.category'].search([('name', '=', 'WIP')], limit=1)
+        wip_acc = wip_cat.property_stock_valuation_account_id if wip_cat else False
+        if not fg_acc or not wip_acc:
+            return self.env['account.move']
+
+        stock_journal = self.env.company.account_stock_journal_id
+        if not stock_journal:
+            return self.env['account.move']
+
+        move = self.env['account.move'].create({
+            'ref': ref,
+            'journal_id': stock_journal.id,
+            'date': fields.Date.today(),
+            'line_ids': [(0, 0, {
+                'account_id': fg_acc.id,
+                'name': f'WIP→FG transfer: {self.name}',
+                'debit': cost,
+                'credit': 0,
+            }), (0, 0, {
+                'account_id': wip_acc.id,
+                'name': f'WIP→FG transfer: {self.name}',
+                'debit': 0,
+                'credit': cost,
+            })],
+        })
+        move.action_post()
+        return move
 
     def action_cancel(self):
         """Cancel from any state. Returns seeds if germinated/growing."""
