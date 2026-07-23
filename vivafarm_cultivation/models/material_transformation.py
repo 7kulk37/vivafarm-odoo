@@ -312,9 +312,7 @@ class MaterialTransformation(models.Model):
 
         # Calculate total input cost from consumed raw material move values.
         # In Odoo 19, stock.move.value holds the actual valuation of the move.
-        # Force immediate recomputation so that the standard_price just set is
-        # visible to the output move valuation.
-        picking_raw.move_ids._compute_value()
+        # We read value directly after validate; it is already computed.
         total_input_cost = sum(move.value for move in picking_raw.move_ids)
 
         # Move intermediate(s) from Production -> destination SECOND
@@ -339,9 +337,6 @@ class MaterialTransformation(models.Model):
                 unit_cost = total_input_cost * (move.product_uom_qty / total_output_qty) / move.product_uom_qty
                 move.product_id.product_tmpl_id.standard_price = unit_cost
                 move.price_unit = unit_cost
-                # Force the output move value to equal the input cost share
-                # so WIP is cleared exactly, not at some stale standard_price.
-                move.value = unit_cost * move.product_uom_qty
 
         picking.button_validate()
 
