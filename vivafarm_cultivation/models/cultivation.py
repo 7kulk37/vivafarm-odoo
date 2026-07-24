@@ -719,6 +719,21 @@ class Cultivation(models.Model):
                     for ml in move.move_line_ids:
                         ml.lot_id = packed_lot.id
 
+            # Force exact batch cost into the production output move BEFORE validation.
+            # We create a product.value record; on creation it calls _set_value() for
+            # the move and forces move.value = total_input_cost. That becomes the FIFO
+            # layer cost and the production AM value.
+            output_move = picking2.move_ids.filtered(
+                lambda m: m.product_id == self.packed_product_id
+            )[:1]
+            if output_move and total_input_cost:
+                self.env['product.value'].create({
+                    'move_id': output_move.id,
+                    'product_id': self.packed_product_id.id,
+                    'value': total_input_cost,
+                    'description': f'Exact batch WIP cost for {packed_lot_name}',
+                })
+
             picking2.button_validate()
             if not picking:
                 picking = picking2
