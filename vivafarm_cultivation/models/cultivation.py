@@ -398,12 +398,21 @@ class Cultivation(models.Model):
 
         picking.button_validate()
 
-        # Assign seed cost to the live plant product so it carries cost through cultivation.
-        # Cost per live plant unit = total seed value / number of live plants produced.
+        # Compute the exact seed cost transferred to the live lot and force it
+        # into the live move value. Without this, Odoo values the incoming live
+        # move at product.standard_price (which is zero before first production),
+        # leaving WIP under-credited and 113400 with a residual.
         seed_move = next((m for m in picking.move_ids if m.product_id == seed_lot.product_id), None)
         live_move = next((m for m in picking.move_ids if m.product_id == self.crop_id), None)
-        if seed_move and live_move and live_move.product_uom_qty:
-            unit_cost = (seed_move.value or 0.0) / live_move.product_uom_qty
+        if seed_move and live_move and seed_move.value:
+            self.env['product.value'].create({
+                'move_id': live_move.id,
+                'product_id': self.crop_id.id,
+                'value': seed_move.value,
+                'description': f'Seed cost transfer for live lot {live_lot.name}',
+            })
+            # Recompute standard_price so subsequent live moves can use it
+            unit_cost = seed_move.value / live_move.product_uom_qty if live_move.product_uom_qty else 0.0
             if unit_cost:
                 self.crop_id.product_tmpl_id.standard_price = unit_cost
 
