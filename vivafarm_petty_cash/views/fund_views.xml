@@ -40,9 +40,7 @@
                     <group name="balance" string="Float Balance">
                         <group>
                             <field name="disbursed_total" widget="monetary"/>
-                            <field name="current_balance" widget="monetary"
-                                   decoration-danger="current_balance &lt; 0"
-                                   decoration-warning="current_balance &lt; (float_ceiling * 0.2)"/>
+                            <field name="current_balance" widget="monetary"/>
                         </group>
                         <group>
                             <field name="voucher_count"/>
