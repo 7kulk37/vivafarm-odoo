@@ -5,7 +5,7 @@
     "description": "Custodian-based petty cash float with voucher tracking, top-up wizard, and monthly replenishment wizard. Posts sub-ledger to dedicated Petty Cash account (111102) with variance account (639900).",
     "author": "VivaFarm",
     "category": "Accounting",
-    "depends": ["account", "mail"],
+    "depends": ["account", "hr_expense", "mail"],
     "data": [
         "security/ir.model.access.csv",
         "data/sequence.xml",

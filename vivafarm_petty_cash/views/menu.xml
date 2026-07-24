@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <data>
+
     <menuitem id="menu_vivafarm_petty_cash_root"
               name="Petty Cash"
-              parent="account.menu_finance"
-              sequence="50"
+              parent="hr_expense.menu_hr_expense_root"
+              sequence="2"
               groups="account.group_account_user"/>
 
     <menuitem id="menu_vivafarm_petty_cash_fund"
@@ -17,4 +19,6 @@
               parent="menu_vivafarm_petty_cash_root"
               action="action_vivafarm_petty_cash_voucher"
               sequence="20"/>
+
+    </data>
 </odoo>
