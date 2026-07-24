@@ -1,3 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_vivafarm_petty_cash_fund,vivafarm.petty.cash.fund,model_vivafarm_petty_cash_fund,account.group_account_user,1,1,1,1
 access_vivafarm_petty_cash_voucher,vivafarm.petty.cash.voucher,model_vivafarm_petty_cash_voucher,account.group_account_user,1,1,1,1
+access_vivafarm_petty_cash_topup,vivafarm.petty.cash.topup,model_vivafarm_petty_cash_topup,account.group_account_user,1,1,1,1
+access_vivafarm_petty_cash_replenish,vivafarm.petty.cash.replenish,model_vivafarm_petty_cash_replenish,account.group_account_user,1,1,1,1
