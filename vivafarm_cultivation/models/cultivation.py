@@ -377,7 +377,7 @@ class Cultivation(models.Model):
         # Set x_seed_lot after creation
         live_lot.write({'x_seed_lot': seed_lot.name})
 
-        # Add lot to live move line
+        # Add lot to live move line BEFORE validation so the move is valued correctly.
         for move in picking.move_ids:
             if move.product_id == self.crop_id:
                 self.env['stock.move.line'].create({
@@ -390,6 +390,11 @@ class Cultivation(models.Model):
                     'location_id': prod_loc.id,
                     'location_dest_id': stock_loc.id,
                 })
+        # Also assign the seed lot to the seed move line before validation.
+        seed_move = next((m for m in picking.move_ids if m.product_id == seed_lot.product_id), None)
+        if seed_move:
+            for ml in seed_move.move_line_ids:
+                ml.lot_id = seed_lot.id
 
         picking.button_validate()
 
