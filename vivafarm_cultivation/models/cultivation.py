@@ -757,9 +757,6 @@ class Cultivation(models.Model):
         for pick in (self.plant_picking_id, self.harvest_picking_id, self.packed_picking_id):
             if pick:
                 refs.append(pick.name)
-        # Include MT-WIP-ADJ entries linked to this batch's material transformations
-        mt_refs = [f'MT-WIP-ADJ-{mt.id}' for mt in self.material_transformation_ids if mt.id]
-        refs += mt_refs
         amls = self.env['account.move.line'].search([
             ('account_id', '=', wip_acc.id),
             ('parent_state', '=', 'posted'),
