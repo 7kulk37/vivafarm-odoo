@@ -663,16 +663,10 @@ class Cultivation(models.Model):
             for move in picking2.move_ids:
                 move._set_quantity_done(move.product_uom_qty)
 
-            # Assign total input cost to packed product output move(s).
-            # Spoilage is costed at the same unit cost as packed goods.
-            output_moves = picking2.move_ids
-            total_output_qty = sum(m.product_uom_qty for m in output_moves) or 1.0
-            for move in output_moves:
-                if total_input_cost and move.product_uom_qty:
-                    unit_cost = total_input_cost * (move.product_uom_qty / total_output_qty) / move.product_uom_qty
-                    move.product_id.product_tmpl_id.standard_price = unit_cost
-                    move.price_unit = unit_cost
-
+            # Do NOT assign unit cost or create stock valuation AM here.
+            # FG uses standard cost; the exact batch cost is set below after
+            # the WIP-FG journal entry is created, ensuring deliveries use that
+            # exact cost and 113100 has no rounding mismatch.
             picking2.button_validate()
             if not picking:
                 picking = picking2
@@ -699,22 +693,15 @@ class Cultivation(models.Model):
         # Thai accounting: transfer the EXACT WIP balance for this batch to FG.
         # _create_wip_to_fg_entry reads the actual 113400 lines caused by this
         # batch's pickings and posts the opposite amount, so 113400 ends at zero.
-        # We also set the packed product's standard_price and the validated quant
-        # cost to this exact amount so future deliveries match.
+        # We set the packed product's standard_price to the exact WIP-FG per-kg
+        # so that standard-cost deliveries and COGS match the batch cost exactly.
         wip_fg_move = self._create_wip_to_fg_entry(None)
         if wip_fg_move:
             wip_fg_value = sum(l.debit for l in wip_fg_move.line_ids if l.account_id.code == '113100')
             unit_cost = wip_fg_value / self.packed_kg if self.packed_kg else 0.0
+            # Set standard price on the product template (Odoo 19 standard cost).
+            # This ensures future outgoing moves use this exact unit cost.
             self.packed_product_id.product_tmpl_id.standard_price = unit_cost
-            # Update the quant cost for the just-created packed lot so AVCO/FIFO
-            # deliveries use the exact WIP-FG value.
-            quants = self.env['stock.quant'].search([
-                ('product_id', '=', self.packed_product_id.id),
-                ('lot_id', '=', packed_lot.id),
-                ('quantity', '>', 0),
-            ])
-            for q in quants:
-                q.write({'cost': unit_cost})
 
         return self._reopen()
 
