@@ -680,8 +680,16 @@ class Cultivation(models.Model):
             for move in picking.move_ids:
                 move._set_quantity_done(move.product_uom_qty)
             picking.button_validate()
-            # Capture actual input cost from consumed move values
+            # Capture actual input cost from consumed move values AFTER validation
             total_input_cost = sum(move.value for move in picking.move_ids)
+            # Include material transformation balancing JEs linked to this batch
+            mt_wip_adj = self.env['account.move'].search([
+                ('ref', '=', f'MT-WIP-ADJ-{self.id}'),
+                ('state', '=', 'posted'),
+            ])
+            for m in mt_wip_adj:
+                for l in m.line_ids.filtered(lambda x: x.account_id.code == '113400'):
+                    total_input_cost += l.debit - l.credit
 
         if produce_moves:
             produce_dest = packed_loc
