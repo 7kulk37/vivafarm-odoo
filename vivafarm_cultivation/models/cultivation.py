@@ -699,7 +699,22 @@ class Cultivation(models.Model):
         # Thai accounting: transfer the EXACT WIP balance for this batch to FG.
         # _create_wip_to_fg_entry reads the actual 113400 lines caused by this
         # batch's pickings and posts the opposite amount, so 113400 ends at zero.
-        self._create_wip_to_fg_entry(None)
+        # We also set the packed product's standard_price and the validated quant
+        # cost to this exact amount so future deliveries match.
+        wip_fg_move = self._create_wip_to_fg_entry(None)
+        if wip_fg_move:
+            wip_fg_value = sum(l.debit for l in wip_fg_move.line_ids if l.account_id.code == '113100')
+            unit_cost = wip_fg_value / self.packed_kg if self.packed_kg else 0.0
+            self.packed_product_id.product_tmpl_id.standard_price = unit_cost
+            # Update the quant cost for the just-created packed lot so AVCO/FIFO
+            # deliveries use the exact WIP-FG value.
+            quants = self.env['stock.quant'].search([
+                ('product_id', '=', self.packed_product_id.id),
+                ('lot_id', '=', packed_lot.id),
+                ('quantity', '>', 0),
+            ])
+            for q in quants:
+                q.write({'cost': unit_cost})
 
         return self._reopen()
 
