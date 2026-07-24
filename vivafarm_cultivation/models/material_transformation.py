@@ -464,7 +464,7 @@ class MaterialTransformation(models.Model):
         return True
 
     def _balance_wip_for_transformation(self, picking_raw, picking_out):
-        """Post a balancing JE so that net 113400 impact of this transformation is zero.
+        """Post a balancing journal entry so net 113400 impact of this transformation is zero.
 
         Input picking (raw -> production) posts Dr 113400 / Cr source account.
         Output picking (production -> destination) posts Dr destination account / Cr 113400.
@@ -475,6 +475,15 @@ class MaterialTransformation(models.Model):
         wip_acc = self.env['account.account'].search([('code', '=', '113400')], limit=1)
         fg_acc = self.env['account.account'].search([('code', '=', '113100')], limit=1)
         if not wip_acc or not fg_acc:
+            return
+
+        stock_journal = self.env.company.account_stock_journal_id
+        if not stock_journal:
+            return
+
+        ref = f'MT-WIP-ADJ-{self.id}'
+        existing = self.env['account.move'].search([('ref', '=', ref)], limit=1)
+        if existing:
             return
 
         refs = [picking_raw.name, picking_out.name]
@@ -489,27 +498,21 @@ class MaterialTransformation(models.Model):
 
         # If wip_net > 0, we have too much Dr 113400; credit 113400, debit 113100.
         # If wip_net < 0, we have too much Cr 113400; debit 113400, credit 113100.
-        stock_journal = self.env.company.account_stock_journal_id
-        if not stock_journal:
-            return
+        if wip_net > 0:
+            line_ids = [
+                (0, 0, {'account_id': fg_acc.id, 'name': f'Material transformation WIP balance: {self.display_name}', 'debit': wip_net, 'credit': 0}),
+                (0, 0, {'account_id': wip_acc.id, 'name': f'Material transformation WIP balance: {self.display_name}', 'debit': 0, 'credit': wip_net}),
+            ]
+        else:
+            line_ids = [
+                (0, 0, {'account_id': wip_acc.id, 'name': f'Material transformation WIP balance: {self.display_name}', 'debit': -wip_net, 'credit': 0}),
+                (0, 0, {'account_id': fg_acc.id, 'name': f'Material transformation WIP balance: {self.display_name}', 'debit': 0, 'credit': -wip_net}),
+            ]
         move = self.env['account.move'].create({
-            'ref': f'MT-WIP-ADJ-{self.id}',
+            'ref': ref,
             'journal_id': stock_journal.id,
             'date': fields.Date.today(),
-            'line_ids': [
-                (0, 0, {
-                    'account_id': fg_acc.id if wip_net > 0 else wip_acc.id,
-                    'name': f'Material transformation WIP balance: {self.display_name}',
-                    'debit': abs(wip_net) if wip_net > 0 else 0,
-                    'credit': 0 if wip_net > 0 else abs(wip_net),
-                }),
-                (0, 0, {
-                    'account_id': wip_acc.id if wip_net > 0 else fg_acc.id,
-                    'name': f'Material transformation WIP balance: {self.display_name}',
-                    'debit': 0 if wip_net > 0 else abs(wip_net),
-                    'credit': abs(wip_net) if wip_net > 0 else 0,
-                }),
-            ],
+            'line_ids': line_ids,
         })
         move.action_post()
 
