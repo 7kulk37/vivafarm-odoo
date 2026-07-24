@@ -701,10 +701,17 @@ class Cultivation(models.Model):
             for move in picking2.move_ids:
                 move._set_quantity_done(move.product_uom_qty)
 
-            # Do NOT assign unit cost here. With FIFO + lot reservation, Odoo
-            # computes the packed move value from the product's cost history
-            # (which is empty before first batch). We set the exact batch cost
-            # below by forcing move.value and price_unit before validation.
+            # With FIFO + lot reservation, set the exact batch cost on the
+            # production output move BEFORE validation. Odoo FIFO uses this
+            # price_unit as the incoming layer cost for future deliveries.
+            if total_input_cost and picking2.move_ids:
+                output_move = picking2.move_ids.filtered(
+                    lambda m: m.product_id == self.packed_product_id
+                )[:1]
+                if output_move:
+                    unit_cost = total_input_cost / self.packed_kg if self.packed_kg else 0.0
+                    output_move.price_unit = unit_cost
+
             picking2.button_validate()
             if not picking:
                 picking = picking2
@@ -730,58 +737,8 @@ class Cultivation(models.Model):
 
         # Thai accounting: with FIFO + lot reservation, the production output
         # move itself transfers WIP value to FG (Dr 113100 / Cr 113400) at the
-        # exact batch cost. We force that move.value below. The WIP-FG manual JE
-        # is no longer needed because the stock move already clears 113400 for
-        # the packed output. MT-WIP-ADJ JEs continue to handle rounding from
-        # material transformations.
-        self._force_packed_move_value()
-
+        # exact batch cost. The exact price_unit is set before validation.
         return self._reopen()
-
-    def _force_packed_move_value(self):
-        """Set the production output move value to the exact batch WIP cost.
-
-        For FIFO + lot reservation, the packed move value becomes the FIFO layer
-        cost. We compute the total WIP input cost for this batch (debits to 113400
-        from plant/harvest/packed pickings and MT-WIP-ADJ entries) and write it
-        onto the production output move before its account move is created.
-        """
-        self.ensure_one()
-        if not self.packed_picking_id:
-            return
-        wip_cat = self.env['product.category'].search([('name', '=', 'WIP')], limit=1)
-        wip_acc = wip_cat.property_stock_valuation_account_id if wip_cat else False
-        if not wip_acc:
-            return
-        refs = []
-        for pick in (self.plant_picking_id, self.harvest_picking_id, self.packed_picking_id):
-            if pick:
-                refs.append(pick.name)
-        amls = self.env['account.move.line'].search([
-            ('account_id', '=', wip_acc.id),
-            ('parent_state', '=', 'posted'),
-            ('move_id.ref', 'in', refs),
-        ])
-        wip_net = sum(amls.mapped('debit')) - sum(amls.mapped('credit'))
-        if abs(wip_net) < 0.005:
-            return
-        move = self.packed_picking_id.move_ids.filtered(
-            lambda m: m.product_id == self.packed_product_id and m.state == 'done'
-        )[:1]
-        if not move:
-            return
-        unit_cost = wip_net / self.packed_kg if self.packed_kg else 0.0
-        move.write({
-            'value': wip_net,
-            'price_unit': unit_cost,
-        })
-        # Force the account move lines to use this exact value
-        if move.account_move_id:
-            for line in move.account_move_id.line_ids:
-                if line.account_id == wip_acc:
-                    line.write({'credit': wip_net, 'debit': 0})
-                elif line.account_id.code == '113100':
-                    line.write({'debit': wip_net, 'credit': 0})
 
     def _get_batch_wip_delta(self):
         """Net change to WIP account caused by this cultivation batch.
