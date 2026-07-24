@@ -713,6 +713,11 @@ class Cultivation(models.Model):
                 'product_id': self.packed_product_id.id,
                 'company_id': self.env.company.id,
             })
+            # Assign lot to the output move line(s)
+            for move in picking2.move_ids:
+                if move.product_id == self.packed_product_id:
+                    for ml in move.move_line_ids:
+                        ml.lot_id = packed_lot.id
 
             picking2.button_validate()
             if not picking:
