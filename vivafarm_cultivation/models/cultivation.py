@@ -664,9 +664,10 @@ class Cultivation(models.Model):
                 move._set_quantity_done(move.product_uom_qty)
 
             # Do NOT assign unit cost or create stock valuation AM here.
-            # FG uses standard cost; the exact batch cost is set below after
-            # the WIP-FG journal entry is created, ensuring deliveries use that
-            # exact cost and 113100 has no rounding mismatch.
+            # FG uses standard cost; the exact batch cost is transferred via WIP-FG JE.
+            # Odoo's standard cost uses a single product.standard_price, so deliveries
+            # from different lots may vary slightly; setup_demo.py posts a final
+            # COGS/FG balancing entry for the net 113100 residual.
             picking2.button_validate()
             if not picking:
                 picking = picking2
@@ -694,97 +695,16 @@ class Cultivation(models.Model):
         # _create_wip_to_fg_entry reads the actual 113400 lines caused by this
         # batch's pickings and posts the opposite amount, so 113400 ends at zero.
         # We set the packed product's standard_price to the exact WIP-FG per-kg
-        # so that standard-cost deliveries and COGS match the batch cost exactly.
+        # to guide standard-cost deliveries. Because standard_price is global,
+        # later harvests may overwrite it; setup_demo.py posts a final COGS/FG
+        # balancing entry for any net 113100 residual.
         wip_fg_move = self._create_wip_to_fg_entry(None)
         if wip_fg_move:
             wip_fg_value = sum(l.debit for l in wip_fg_move.line_ids if l.account_id.code == '113100')
             unit_cost = wip_fg_value / self.packed_kg if self.packed_kg else 0.0
-            # Set standard price on the product template (Odoo 19 standard cost).
-            # This ensures outgoing moves created right after this harvest use
-            # this exact unit cost. Because standard_price is global, deliveries
-            # from older lots may use a later harvest's price; _balance_fg_for_batch
-            # corrects any resulting 113100 residual per batch.
             self.packed_product_id.product_tmpl_id.standard_price = unit_cost
 
         return self._reopen()
-
-    def action_balance_fg(self):
-        """Post a balancing JE so that net 113100 impact of this batch is zero.
-
-        When FG uses standard cost, Odoo's single standard_price per product
-        template can cause deliveries of this batch's lot to be costed at a
-        different batch's price. After all deliveries/spoilage for this batch
-        are done, read the actual 113100 lines caused by this batch's WIP-FG
-        entry and its packed lot's outgoing moves, then post the difference
-        to a COGS/FG adjustment account. This is only used by demo scripts for
-        exact-zero 113100.
-        """
-        self.ensure_one()
-        if not self.packed_lot_id:
-            return self.env['account.move']
-
-        fg_acc = self.env['account.account'].search([('code', '=', '113100')], limit=1)
-        cogs_acc = self.env['account.account'].search([('code', '=', '511100')], limit=1)
-        if not fg_acc or not cogs_acc:
-            return self.env['account.move']
-
-        ref = f'FG-BAL-{self.id}'
-        existing = self.env['account.move'].search([('ref', '=', ref)], limit=1)
-        if existing:
-            return existing
-
-        # 113100 debit from WIP-FG entry
-        wipfg = sum((l.debit - l.credit) for l in self.env['account.move.line'].search([
-            ('move_id.ref', '=', f'WIP-FG-{self.id}'),
-            ('account_id.code', '=', '113100'),
-            ('parent_state', '=', 'posted'),
-        ]))
-
-        # 113100 credit from outgoing moves of this lot
-        out_moves = self.env['stock.move'].search([
-            ('product_id', '=', self.packed_product_id.id),
-            ('state', '=', 'done'),
-            ('move_line_ids.lot_id', '=', self.packed_lot_id.id),
-            ('location_dest_id.usage', '=', 'customer'),
-        ])
-        out_value = sum(m.value for m in out_moves)
-        scrap_moves = self.env['stock.move'].search([
-            ('product_id', '=', self.packed_product_id.id),
-            ('state', '=', 'done'),
-            ('move_line_ids.lot_id', '=', self.packed_lot_id.id),
-            ('location_dest_id.name', '=', 'Scrap'),
-        ])
-        scrap_value = sum(m.value for m in scrap_moves)
-
-        # Net 113100 impact for this batch
-        fg_net = wipfg - out_value - scrap_value
-        if abs(fg_net) < 0.005:
-            return self.env['account.move']
-
-        stock_journal = self.env.company.account_stock_journal_id
-        if not stock_journal:
-            return self.env['account.move']
-
-        # If fg_net > 0, too much Dr 113100; credit 113100, debit COGS (we over-costed).
-        # If fg_net < 0, too much Cr 113100; debit 113100, credit COGS (we under-costed).
-        if fg_net > 0:
-            line_ids = [
-                (0, 0, {'account_id': cogs_acc.id, 'name': f'FG balance: {self.name}', 'debit': fg_net, 'credit': 0}),
-                (0, 0, {'account_id': fg_acc.id, 'name': f'FG balance: {self.name}', 'debit': 0, 'credit': fg_net}),
-            ]
-        else:
-            line_ids = [
-                (0, 0, {'account_id': fg_acc.id, 'name': f'FG balance: {self.name}', 'debit': -fg_net, 'credit': 0}),
-                (0, 0, {'account_id': cogs_acc.id, 'name': f'FG balance: {self.name}', 'debit': 0, 'credit': -fg_net}),
-            ]
-        move = self.env['account.move'].create({
-            'ref': ref,
-            'journal_id': stock_journal.id,
-            'date': fields.Date.today(),
-            'line_ids': line_ids,
-        })
-        move.action_post()
-        return move
 
     def _get_batch_wip_delta(self):
         """Net change to WIP account caused by this cultivation batch.
