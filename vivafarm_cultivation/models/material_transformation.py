@@ -341,15 +341,13 @@ class MaterialTransformation(models.Model):
                 move.product_id.product_tmpl_id.standard_price = unit_cost
                 move.price_unit = unit_cost
 
-        # Exact-zero fix: ensure output move.value equals allocated input cost.
-        # Odoo may round standard_price differently, leaving WIP with a cent residual.
-        # We force the output move value to the exact allocated cost before validation.
-        for move in output_moves:
-            if total_input_cost:
-                allocated_cost = total_input_cost * (move.product_uom_qty / total_output_qty)
-                move.value = allocated_cost
-
         picking.button_validate()
+
+        # Exact-zero Option B: post a balancing journal entry so that the net
+        # effect on 113400 (WIP) for this transformation is exactly zero.
+        # Stock moves already moved quantities and posted rounded valuations;
+        # this JE corrects the rounding difference.
+        self._balance_wip_for_transformation(picking_raw, picking)
 
         self.write({'picking_id': picking.id, 'raw_picking_id': picking_raw.id, 'state': 'confirmed'})
 
@@ -464,6 +462,56 @@ class MaterialTransformation(models.Model):
 
         self.write({'state': 'canceled', 'return_picking_id': picking_reverse_inter.id})
         return True
+
+    def _balance_wip_for_transformation(self, picking_raw, picking_out):
+        """Post a balancing JE so that net 113400 impact of this transformation is zero.
+
+        Input picking (raw -> production) posts Dr 113400 / Cr source account.
+        Output picking (production -> destination) posts Dr destination account / Cr 113400.
+        Due to Odoo currency rounding the two may not match. We compute the actual
+        113400 net and post the difference to 113100 (FG/inventory reconciliation).
+        """
+        self.ensure_one()
+        wip_acc = self.env['account.account'].search([('code', '=', '113400')], limit=1)
+        fg_acc = self.env['account.account'].search([('code', '=', '113100')], limit=1)
+        if not wip_acc or not fg_acc:
+            return
+
+        refs = [picking_raw.name, picking_out.name]
+        amls = self.env['account.move.line'].search([
+            ('account_id', '=', wip_acc.id),
+            ('parent_state', '=', 'posted'),
+            ('move_id.ref', 'in', refs),
+        ])
+        wip_net = sum(amls.mapped('debit')) - sum(amls.mapped('credit'))
+        if abs(wip_net) < 0.005:
+            return
+
+        # If wip_net > 0, we have too much Dr 113400; credit 113400, debit 113100.
+        # If wip_net < 0, we have too much Cr 113400; debit 113400, credit 113100.
+        stock_journal = self.env.company.account_stock_journal_id
+        if not stock_journal:
+            return
+        move = self.env['account.move'].create({
+            'ref': f'MT-WIP-ADJ-{self.id}',
+            'journal_id': stock_journal.id,
+            'date': fields.Date.today(),
+            'line_ids': [
+                (0, 0, {
+                    'account_id': fg_acc.id if wip_net > 0 else wip_acc.id,
+                    'name': f'Material transformation WIP balance: {self.display_name}',
+                    'debit': abs(wip_net) if wip_net > 0 else 0,
+                    'credit': 0 if wip_net > 0 else abs(wip_net),
+                }),
+                (0, 0, {
+                    'account_id': wip_acc.id if wip_net > 0 else fg_acc.id,
+                    'name': f'Material transformation WIP balance: {self.display_name}',
+                    'debit': 0 if wip_net > 0 else abs(wip_net),
+                    'credit': abs(wip_net) if wip_net > 0 else 0,
+                }),
+            ],
+        })
+        move.action_post()
 
     @api.model
     def create(self, vals_list):

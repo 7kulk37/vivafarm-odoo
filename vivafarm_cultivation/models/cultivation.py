@@ -696,11 +696,10 @@ class Cultivation(models.Model):
             'packed_picking_id': picking2.id if produce_moves else False,
         })
 
-        # Thai accounting: transfer the NET WIP delta for this batch to FG.
-        # Using net WIP account change (plant + harvest pickings) avoids
-        # over-transferring value that was already cleared from WIP.
-        wip_delta = self._get_batch_wip_delta()
-        self._create_wip_to_fg_entry(wip_delta)
+        # Thai accounting: transfer the EXACT WIP balance for this batch to FG.
+        # _create_wip_to_fg_entry reads the actual 113400 lines caused by this
+        # batch's pickings and posts the opposite amount, so 113400 ends at zero.
+        self._create_wip_to_fg_entry(None)
 
         return self._reopen()
 
@@ -730,14 +729,14 @@ class Cultivation(models.Model):
         return delta
 
     def _create_wip_to_fg_entry(self, cost):
-        """Create a posted JE: Dr FG stock_valuation / Cr WIP stock_valuation.
+        """Create a posted JE that brings the batch's net WIP balance to zero.
 
-        Transfers the actual accumulated WIP cost into FG at harvest time.
+        Option B: instead of trusting move.value rounding, we read the actual
+        113400 balance caused by this batch's pickings and post the exact
+        opposite amount to FG. This guarantees 113400 is zero for the batch.
         Idempotent — skips if entry already exists for this cultivation.
         """
         self.ensure_one()
-        if not cost:
-            return self.env['account.move']
         ref = f'WIP-FG-{self.id}'
         existing = self.env['account.move'].search([
             ('ref', '=', ref),
@@ -751,6 +750,21 @@ class Cultivation(models.Model):
         if not fg_acc or not wip_acc:
             return self.env['account.move']
 
+        # Compute actual 113400 balance from this batch's pickings.
+        refs = []
+        for pick in (self.plant_picking_id, self.harvest_picking_id, self.packed_picking_id):
+            if pick:
+                refs.append(pick.name)
+        amls = self.env['account.move.line'].search([
+            ('account_id', '=', wip_acc.id),
+            ('parent_state', '=', 'posted'),
+            ('move_id.ref', 'in', refs),
+        ])
+        wip_net = sum(amls.mapped('debit')) - sum(amls.mapped('credit'))
+        if abs(wip_net) < 0.005:
+            return self.env['account.move']
+
+        # Post Dr FG / Cr WIP for the exact net amount.
         stock_journal = self.env.company.account_stock_journal_id
         if not stock_journal:
             return self.env['account.move']
@@ -762,13 +776,13 @@ class Cultivation(models.Model):
             'line_ids': [(0, 0, {
                 'account_id': fg_acc.id,
                 'name': f'WIP→FG transfer: {self.name}',
-                'debit': cost,
+                'debit': wip_net,
                 'credit': 0,
             }), (0, 0, {
                 'account_id': wip_acc.id,
                 'name': f'WIP→FG transfer: {self.name}',
                 'debit': 0,
-                'credit': cost,
+                'credit': wip_net,
             })],
         })
         move.action_post()
