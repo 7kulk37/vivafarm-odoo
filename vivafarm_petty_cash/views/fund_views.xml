@@ -76,6 +76,6 @@
     <record id="action_vivafarm_petty_cash_fund" model="ir.actions.act_window">
         <field name="name">Petty Cash Funds</field>
         <field name="res_model">vivafarm.petty.cash.fund</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 </odoo>
