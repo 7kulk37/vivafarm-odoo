@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <data>
+
     <record id="view_vivafarm_petty_cash_fund_form" model="ir.ui.view">
         <field name="name">vivafarm.petty.cash.fund.form</field>
         <field name="model">vivafarm.petty.cash.fund</field>
@@ -25,10 +27,10 @@
                     </div>
                     <group>
                         <group name="custody" string="Custody">
-                            <field name="custodian_id"/>
-                            <field name="journal_id"/>
-                            <field name="account_id"/>
-                            <field name="variance_account_id"/>
+                            <field name="custodian_id" options="{'no_create': True}"/>
+                            <field name="journal_id" options="{'no_create': True}"/>
+                            <field name="account_id" options="{'no_create': True}"/>
+                            <field name="variance_account_id" options="{'no_create': True}"/>
                         </group>
                         <group name="controls" string="Controls">
                             <field name="float_ceiling"/>
@@ -47,11 +49,6 @@
                         </group>
                     </group>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
             </form>
         </field>
     </record>
@@ -76,4 +73,6 @@
         <field name="res_model">vivafarm.petty.cash.fund</field>
         <field name="view_mode">list,form</field>
     </record>
+
+    </data>
 </odoo>
