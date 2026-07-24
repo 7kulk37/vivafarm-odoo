@@ -66,7 +66,10 @@ class MaterialTransformation(models.Model):
         default=fields.Date.context_today)
     picking_id = fields.Many2one(
         'stock.picking', string='Stock Move', readonly=True,
-        help='The stock transfer created by this transformation')
+        help='The output stock transfer created by this transformation')
+    raw_picking_id = fields.Many2one(
+        'stock.picking', string='Raw Input Move', readonly=True,
+        help='The raw material consumption stock transfer created by this transformation')
     return_picking_id = fields.Many2one(
         'stock.picking', string='Stock Return', readonly=True,
         help='The stock transfer created when canceling this transformation')
@@ -338,9 +341,17 @@ class MaterialTransformation(models.Model):
                 move.product_id.product_tmpl_id.standard_price = unit_cost
                 move.price_unit = unit_cost
 
+        # Exact-zero fix: ensure output move.value equals allocated input cost.
+        # Odoo may round standard_price differently, leaving WIP with a cent residual.
+        # We force the output move value to the exact allocated cost before validation.
+        for move in output_moves:
+            if total_input_cost:
+                allocated_cost = total_input_cost * (move.product_uom_qty / total_output_qty)
+                move.value = allocated_cost
+
         picking.button_validate()
 
-        self.write({'picking_id': picking.id, 'state': 'confirmed'})
+        self.write({'picking_id': picking.id, 'raw_picking_id': picking_raw.id, 'state': 'confirmed'})
 
         return {
             'type': 'ir.actions.act_window',
