@@ -564,6 +564,8 @@ class Cultivation(models.Model):
         }
 
         # 2. Create packed goods: Production → Packed Goods
+        # Create the packed lot BEFORE validating the picking so the move line
+        # can reference it (required for storable products with lot tracking).
         packed_move_vals = {
             'product_id': self.packed_product_id.id,
             'product_uom_qty': self.packed_kg,
@@ -573,13 +575,6 @@ class Cultivation(models.Model):
             'company_id': self.env.company.id,
             'date': fields.Datetime.now(),
             'procure_method': 'make_to_stock',
-            'move_line_ids': [(0, 0, {
-                'product_id': self.packed_product_id.id,
-                'quantity': self.packed_kg,
-                'product_uom_id': self.packed_product_id.uom_id.id,
-                'location_id': prod_loc.id,
-                'location_dest_id': packed_loc.id,
-            })],
         }
 
         moves = [live_move_vals, packed_move_vals]
@@ -712,6 +707,13 @@ class Cultivation(models.Model):
                     unit_cost = total_input_cost / self.packed_kg if self.packed_kg else 0.0
                     output_move.price_unit = unit_cost
 
+            # Create packed lot BEFORE validating so move lines can reference it.
+            packed_lot = self.env['stock.lot'].create({
+                'name': packed_lot_name,
+                'product_id': self.packed_product_id.id,
+                'company_id': self.env.company.id,
+            })
+
             picking2.button_validate()
             if not picking:
                 picking = picking2
@@ -720,12 +722,13 @@ class Cultivation(models.Model):
         if original_labor_price:
             labor_product.product_tmpl_id.standard_price = original_labor_price
 
-        # Create packed lot using standard Odoo create (unique constraint already dropped)
-        packed_lot = self.env['stock.lot'].create({
-            'name': packed_lot_name,
-            'product_id': self.packed_product_id.id,
-            'company_id': self.env.company.id,
-        })
+        # If no produce_moves, create lot anyway (should not happen for done state)
+        if not produce_moves:
+            packed_lot = self.env['stock.lot'].create({
+                'name': packed_lot_name,
+                'product_id': self.packed_product_id.id,
+                'company_id': self.env.company.id,
+            })
 
         self.write({
             'state': 'done',
