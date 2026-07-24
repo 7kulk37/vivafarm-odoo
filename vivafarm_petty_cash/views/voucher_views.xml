@@ -40,12 +40,10 @@
                     </group>
                     <group>
                         <field name="description" placeholder="What was this cash for?"/>
-                        <field name="receipt_attached"
-                               decoration-warning="amount &gt; 1000 and not receipt_attached"
-                               decoration-danger="amount &gt; 1000 and not receipt_attached"/>
+                        <field name="receipt_attached" decoration-danger="amount &gt; 1000 and not receipt_attached"/>
                     </group>
-                    <group invisible="not journal_entry_id">
-                        <field name="journal_entry_id" readonly="1"/>
+                    <group>
+                        <field name="journal_entry_id" readonly="1" invisible="not journal_entry_id"/>
                     </group>
                 </sheet>
                 <div class="oe_chatter">
@@ -74,11 +72,7 @@
                 <field name="amount" widget="monetary"/>
                 <field name="expense_account_id"/>
                 <field name="receipt_attached" widget="boolean_toggle"/>
-                <field name="state" widget="badge"
-                       decoration-info="state=='draft'"
-                       decoration-warning="state=='submitted'"
-                       decoration-success="state=='reconciled'"
-                       decoration-muted="state=='cancelled'"/>
+                <field name="state" widget="badge" decoration-bf="state=='reconciled'"/>
             </list>
         </field>
     </record>

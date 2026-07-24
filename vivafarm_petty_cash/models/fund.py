@@ -101,10 +101,12 @@ class VivafarmPettyCashFund(models.Model):
         help='Sum of draft + submitted vouchers not yet replenished.',
     )
 
-    _sql_constraints = [
-        ('name_unique', 'UNIQUE(name)',
-         'Fund name must be unique.'),
-    ]
+    # Modern Odoo 19 way to declare SQL constraints.
+    # The old `_sql_constraints = [...]` is deprecated and emits a warning.
+    _name_unique = models.Constraint(
+        'UNIQUE(name)',
+        'Fund name must be unique.',
+    )
 
     @api.depends('voucher_ids', 'voucher_ids.state', 'voucher_ids.amount')
     def _compute_voucher_count(self):
@@ -136,7 +138,7 @@ class VivafarmPettyCashFund(models.Model):
             'name': _('Vouchers'),
             'type': 'ir.actions.act_window',
             'res_model': 'vivafarm.petty.cash.voucher',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('fund_id', '=', self.id)],
             'context': {'default_fund_id': self.id},
         }
@@ -217,10 +219,10 @@ class VivafarmPettyCashVoucher(models.Model):
         help='The replenishment journal entry that consumed this voucher',
     )
 
-    _sql_constraints = [
-        ('name_unique', 'UNIQUE(name)',
-         'Voucher number must be unique.'),
-    ]
+    _voucher_name_unique = models.Constraint(
+        'UNIQUE(name)',
+        'Voucher number must be unique.',
+    )
 
     @api.model_create_multi
     def create(self, vals_list):
