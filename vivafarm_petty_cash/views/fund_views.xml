@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_vivafarm_petty_cash_fund_form" model="ir.ui.view">
+        <field name="name">vivafarm.petty.cash.fund.form</field>
+        <field name="model">vivafarm.petty.cash.fund</field>
+        <field name="arch" type="xml">
+            <form string="Petty Cash Fund">
+                <header>
+                    <button name="action_view_vouchers" type="object"
+                            string="View Vouchers" class="btn-primary"
+                            icon="fa-list"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Manager Float"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="custody" string="Custody">
+                            <field name="custodian_id"/>
+                            <field name="journal_id"/>
+                            <field name="account_id"/>
+                            <field name="variance_account_id"/>
+                        </group>
+                        <group name="controls" string="Controls">
+                            <field name="float_ceiling"/>
+                            <field name="max_voucher_amount"/>
+                            <field name="receipt_required_above"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group name="balance" string="Float Balance">
+                        <group>
+                            <field name="disbursed_total" widget="monetary"/>
+                            <field name="current_balance" widget="monetary"
+                                   decoration-danger="current_balance &lt; 0"
+                                   decoration-warning="current_balance &lt; (float_ceiling * 0.2)"/>
+                        </group>
+                        <group>
+                            <field name="voucher_count"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vivafarm_petty_cash_fund_tree" model="ir.ui.view">
+        <field name="name">vivafarm.petty.cash.fund.tree</field>
+        <field name="model">vivafarm.petty.cash.fund</field>
+        <field name="arch" type="xml">
+            <list string="Petty Cash Funds">
+                <field name="name"/>
+                <field name="custodian_id"/>
+                <field name="float_ceiling" widget="monetary"/>
+                <field name="disbursed_total" widget="monetary"/>
+                <field name="current_balance" widget="monetary"/>
+                <field name="voucher_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_vivafarm_petty_cash_fund" model="ir.actions.act_window">
+        <field name="name">Petty Cash Funds</field>
+        <field name="res_model">vivafarm.petty.cash.fund</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

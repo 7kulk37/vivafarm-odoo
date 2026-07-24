@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_vivafarm_petty_cash_root"
+              name="Petty Cash"
+              parent="account.menu_finance"
+              sequence="50"
+              groups="account.group_account_user"/>
+
+    <menuitem id="menu_vivafarm_petty_cash_fund"
+              name="Funds"
+              parent="menu_vivafarm_petty_cash_root"
+              action="action_vivafarm_petty_cash_fund"
+              sequence="10"/>
+
+    <menuitem id="menu_vivafarm_petty_cash_voucher"
+              name="Vouchers"
+              parent="menu_vivafarm_petty_cash_root"
+              action="action_vivafarm_petty_cash_voucher"
+              sequence="20"/>
+</odoo>
