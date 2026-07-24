@@ -745,13 +745,14 @@ class Cultivation(models.Model):
             ('product_id', '=', self.packed_product_id.id),
             ('state', '=', 'done'),
             ('move_line_ids.lot_id', '=', self.packed_lot_id.id),
+            ('location_dest_id.usage', '=', 'customer'),
         ])
         out_value = sum(m.value for m in out_moves)
         scrap_moves = self.env['stock.move'].search([
             ('product_id', '=', self.packed_product_id.id),
             ('state', '=', 'done'),
-            ('location_dest_id.scrap_location', '=', True),
             ('move_line_ids.lot_id', '=', self.packed_lot_id.id),
+            ('location_dest_id.name', '=', 'Scrap'),
         ])
         scrap_value = sum(m.value for m in scrap_moves)
 
