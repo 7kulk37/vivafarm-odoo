@@ -642,33 +642,26 @@ class Cultivation(models.Model):
                 'procure_method': 'make_to_stock',
             })
 
-        # 6. Consume direct labor allocation split by active cultivations per day
-        labor_product = self.env['product.product'].search([
-            ('product_tmpl_id.name', '=', 'Direct Labor Allocation')
-        ], limit=1)
+        # 6. Allocate direct labor cost via journal entry (exact amount, no standard_price gymnastics)
         labor_share = self._compute_labor_share()
-        original_labor_price = 0.0
-        if labor_product and labor_share > 0:
-            start_date = self.plant_date or (self.germinated_date.date() if self.germinated_date else None)
-            end_date = self.harvest_date or (self.harvested_date.date() if self.harvested_date else None)
-            if start_date and end_date:
-                labor_days = (end_date - start_date).days + 1
-                if labor_days > 0:
-                    unit_labor_price = labor_share / labor_days
-                    # Odoo 19 stock move value uses product.standard_price at validation time,
-                    # so temporarily set it to the per-day share for this batch.
-                    original_labor_price = labor_product.product_tmpl_id.standard_price
-                    labor_product.product_tmpl_id.standard_price = unit_labor_price
-                    moves.append({
-                        'product_id': labor_product.id,
-                        'product_uom_qty': labor_days,
-                        'product_uom': labor_product.uom_id.id,
-                        'location_id': stock_loc.id,
-                        'location_dest_id': prod_loc.id,
-                        'company_id': self.env.company.id,
-                        'date': fields.Datetime.now(),
-                        'procure_method': 'make_to_stock',
-                    })
+        if labor_share > 0:
+            wip_cat = self.env['product.category'].search([('name', '=', 'WIP')], limit=1)
+            wip_acc = wip_cat.property_stock_valuation_account_id if wip_cat else False
+            labor_liab_acc = self.env['account.account'].search([('code', '=', '222100')], limit=1)
+            stock_journal = self.env.company.account_stock_journal_id
+            if wip_acc and labor_liab_acc and stock_journal:
+                labor_je = self.env['account.move'].create({
+                    'journal_id': stock_journal.id,
+                    'date': fields.Date.today(),
+                    'ref': f'LABOR-ALLOC-{self.id}',
+                    'line_ids': [
+                        (0, 0, {'account_id': wip_acc.id, 'debit': labor_share, 'credit': 0.0,
+                                'name': f'Direct labor allocation - {self.name}'}),
+                        (0, 0, {'account_id': labor_liab_acc.id, 'debit': 0.0, 'credit': labor_share,
+                                'name': f'Direct labor allocation - {self.name}'}),
+                    ],
+                })
+                labor_je.action_post()
 
         int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
         if not int_type:
@@ -759,10 +752,6 @@ class Cultivation(models.Model):
             picking2.button_validate()
             if not picking:
                 picking = picking2
-
-        # Restore Direct Labor Allocation standard_price if we changed it
-        if original_labor_price:
-            labor_product.product_tmpl_id.standard_price = original_labor_price
 
         # If no produce_moves, create lot anyway (should not happen for done state)
         if not produce_moves:
