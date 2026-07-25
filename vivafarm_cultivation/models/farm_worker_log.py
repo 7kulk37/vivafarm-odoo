@@ -132,7 +132,11 @@ class FarmWorkerLog(models.Model):
         ], limit=1)
 
     def _recalculate_direct_labor_rate(self):
-        """Set Direct Labor Allocation standard_price to average wage per distinct confirmed day."""
+        """Set Direct Labor Allocation standard_price to wage per cultivation-day.
+
+        Computes the rate as total_wage / total_cultivation_days so that
+        _compute_labor_share() across all cultivations sums to exactly total_wage.
+        """
         product = self._get_direct_labor_product()
         if not product:
             raise UserError('Direct Labor Allocation product not found. Run setup to create it.')
@@ -141,11 +145,23 @@ class FarmWorkerLog(models.Model):
             product.product_tmpl_id.standard_price = 0.0
             return 0.0
         total_wage = sum(log.wage_amount for log in logs)
-        distinct_days = len(set(log.date for log in logs))
-        if distinct_days <= 0:
+
+        # Count total cultivation-days across all active (non-draft, non-canceled) cultivations
+        cultivations = self.env['vivafarm.cultivation'].search([
+            ('state', 'not in', ['draft', 'canceled']),
+        ])
+        total_cultivation_days = 0
+        for cul in cultivations:
+            start = cul.plant_date
+            end = cul.harvest_date
+            if start and end:
+                total_cultivation_days += (end - start).days + 1
+
+        if total_cultivation_days <= 0:
             product.product_tmpl_id.standard_price = 0.0
             return 0.0
-        rate = total_wage / distinct_days
+
+        rate = total_wage / total_cultivation_days
         product.product_tmpl_id.standard_price = rate
         return rate
 
