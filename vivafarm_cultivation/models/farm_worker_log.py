@@ -1,5 +1,6 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError
+from datetime import timedelta
 
 
 class FarmWorkerLog(models.Model):
@@ -132,10 +133,12 @@ class FarmWorkerLog(models.Model):
         ], limit=1)
 
     def _recalculate_direct_labor_rate(self):
-        """Set Direct Labor Allocation standard_price to wage per cultivation-day.
+        """Set Direct Labor Allocation standard_price to wage per calendar day.
 
-        Computes the rate as total_wage / total_cultivation_days so that
-        _compute_labor_share() across all cultivations sums to exactly total_wage.
+        _compute_labor_share() divides the rate by the number of active
+        cultivations on each day. So the rate must be per calendar day
+        (unique day with at least one active cultivation), not per
+        cultivation-day. This ensures sum over all cultivations = total_wage.
         """
         product = self._get_direct_labor_product()
         if not product:
@@ -146,22 +149,26 @@ class FarmWorkerLog(models.Model):
             return 0.0
         total_wage = sum(log.wage_amount for log in logs)
 
-        # Count total cultivation-days across all active (non-draft, non-canceled) cultivations
+        # Count distinct calendar days where at least one cultivation is active
         cultivations = self.env['vivafarm.cultivation'].search([
             ('state', 'not in', ['draft', 'canceled']),
         ])
-        total_cultivation_days = 0
+        all_dates = set()
         for cul in cultivations:
             start = cul.plant_date
             end = cul.harvest_date
             if start and end:
-                total_cultivation_days += (end - start).days + 1
+                d = start
+                while d <= end:
+                    all_dates.add(d)
+                    d += timedelta(days=1)
 
-        if total_cultivation_days <= 0:
+        distinct_days = len(all_dates)
+        if distinct_days <= 0:
             product.product_tmpl_id.standard_price = 0.0
             return 0.0
 
-        rate = total_wage / total_cultivation_days
+        rate = total_wage / distinct_days
         product.product_tmpl_id.standard_price = rate
         return rate
 
