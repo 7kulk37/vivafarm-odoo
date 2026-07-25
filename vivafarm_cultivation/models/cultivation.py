@@ -46,6 +46,10 @@ class Cultivation(models.Model):
         'product.product', string='Nutrient Product',
         domain="[('type', '=', 'consu')]",
         help='Nutrient product consumed during this cultivation cycle')
+    nutrient_b_product_id = fields.Many2one(
+        'product.product', string='Nutrient B Product',
+        domain="[('type', '=', 'consu')]",
+        help='Second nutrient concentrate consumed in equal quantity')
     acid_product_id = fields.Many2one(
         'product.product', string='Acid Product',
         domain="[('type', '=', 'consu')]",
@@ -147,6 +151,7 @@ class Cultivation(models.Model):
         self.crop_id = recipe.crop_id
         self.packed_product_id = recipe.packed_product_id
         self.nutrient_product_id = recipe.nutrient_product_id
+        self.nutrient_b_product_id = recipe.nutrient_b_product_id
         self.acid_product_id = recipe.acid_product_id
         self.grams_to_sow = recipe.grams_to_sow
         self.target_plant_count = recipe.target_plant_count
@@ -188,6 +193,8 @@ class Cultivation(models.Model):
                         vals['packed_product_id'] = recipe.packed_product_id.id
                     if not vals.get('nutrient_product_id'):
                         vals['nutrient_product_id'] = recipe.nutrient_product_id.id
+                    if not vals.get('nutrient_b_product_id'):
+                        vals['nutrient_b_product_id'] = recipe.nutrient_b_product_id.id if recipe.nutrient_b_product_id else False
                     if not vals.get('acid_product_id'):
                         vals['acid_product_id'] = recipe.acid_product_id.id
                     if not vals.get('grams_to_sow'):
@@ -607,13 +614,26 @@ class Cultivation(models.Model):
             }
             moves.append(spoilage_move_vals)
 
-        # 4. Consume nutrient: WH/Stock → Production (input logs are in ml, product UoM is L)
+        # 4. Consume nutrient A: WH/Stock → Production (input logs are in ml, product UoM is L)
         stock_loc = self._get_stock_loc()
         if self.nutrient_product_id and self.total_nutrient_consumed > 0:
             moves.append({
                 'product_id': self.nutrient_product_id.id,
                 'product_uom_qty': self.total_nutrient_consumed / 1000.0,
                 'product_uom': self.nutrient_product_id.uom_id.id,
+                'location_id': stock_loc.id,
+                'location_dest_id': prod_loc.id,
+                'company_id': self.env.company.id,
+                'date': fields.Datetime.now(),
+                'procure_method': 'make_to_stock',
+            })
+
+        # 4b. Consume nutrient B: same quantity as A (both concentrates used equally)
+        if self.nutrient_b_product_id and self.total_nutrient_consumed > 0:
+            moves.append({
+                'product_id': self.nutrient_b_product_id.id,
+                'product_uom_qty': self.total_nutrient_consumed / 1000.0,
+                'product_uom': self.nutrient_b_product_id.uom_id.id,
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
@@ -637,17 +657,16 @@ class Cultivation(models.Model):
         # 6. Allocate direct labor cost via journal entry (exact amount, no standard_price gymnastics)
         labor_share = self._compute_labor_share()
         if labor_share > 0:
-            wip_cat = self.env['product.category'].search([('name', '=', 'WIP')], limit=1)
-            wip_acc = wip_cat.property_stock_valuation_account_id if wip_cat else False
+            labor_cogs_acc = self.env['account.account'].search([('code', '=', '511200')], limit=1)
             labor_liab_acc = self.env['account.account'].search([('code', '=', '222100')], limit=1)
             stock_journal = self.env.company.account_stock_journal_id
-            if wip_acc and labor_liab_acc and stock_journal:
+            if labor_cogs_acc and labor_liab_acc and stock_journal:
                 labor_je = self.env['account.move'].create({
                     'journal_id': stock_journal.id,
                     'date': fields.Date.today(),
                     'ref': f'LABOR-ALLOC-{self.id}',
                     'line_ids': [
-                        (0, 0, {'account_id': wip_acc.id, 'debit': labor_share, 'credit': 0.0,
+                        (0, 0, {'account_id': labor_cogs_acc.id, 'debit': labor_share, 'credit': 0.0,
                                 'name': f'Direct labor allocation - {self.name}'}),
                         (0, 0, {'account_id': labor_liab_acc.id, 'debit': 0.0, 'credit': labor_share,
                                 'name': f'Direct labor allocation - {self.name}'}),
@@ -689,6 +708,10 @@ class Cultivation(models.Model):
             for m in mt_wip_adj:
                 for l in m.line_ids.filtered(lambda x: x.account_id.code == '113400'):
                     total_input_cost += l.debit - l.credit
+
+        # Include direct labor in product cost (labor_share computed above)
+        if labor_share > 0:
+            total_input_cost += labor_share
 
         if produce_moves:
             produce_dest = packed_loc

@@ -27,6 +27,10 @@ class Recipe(models.Model):
         'product.product', string='Nutrient Product',
         domain="[('type', '=', 'consu')]",
         help='Nutrient product consumed during this cycle')
+    nutrient_b_product_id = fields.Many2one(
+        'product.product', string='Nutrient B Product',
+        domain="[('type', '=', 'consu')]",
+        help='Second nutrient concentrate consumed in equal quantity')
     acid_product_id = fields.Many2one(
         'product.product', string='Acid Product',
         domain="[('type', '=', 'consu')]",
