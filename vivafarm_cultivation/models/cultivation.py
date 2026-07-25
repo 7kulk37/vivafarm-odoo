@@ -502,11 +502,11 @@ class Cultivation(models.Model):
         return self._reopen()
 
     def _compute_labor_share(self):
-        """Compute this cultivation's share of the daily labor rate.
+        """Compute this cultivation's share of total labor cost.
 
-        For each day between plant_date and harvest_date, find how many
-        cultivations are active (not draft/canceled), and split the daily
-        rate equally among them.
+        Deterministic: share = (this cultivation's duration / total
+        cultivation-days across all cultivations) × total_wage.
+        This ensures sum over all cultivations = total_wage exactly.
         """
         self.ensure_one()
         labor_product = self.env['product.product'].search([
@@ -521,16 +521,8 @@ class Cultivation(models.Model):
         end = self.harvest_date
         if not start or not end:
             return 0.0
-        total = 0.0
-        for offset in range((end - start).days + 1):
-            day = start + timedelta(days=offset)
-            active = self.env['vivafarm.cultivation'].search_count([
-                ('state', 'not in', ['draft', 'canceled']),
-                ('plant_date', '<=', day),
-                ('harvest_date', '>=', day),
-            ])
-            total += daily_rate / max(active, 1)
-        return total
+        duration = (end - start).days + 1
+        return daily_rate * duration
 
     def action_done(self):
         """Harvested → Done: execute stock moves (packed → WH/Stock, spoilage → Spoilage)."""

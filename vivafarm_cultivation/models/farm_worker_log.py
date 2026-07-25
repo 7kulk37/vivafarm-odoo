@@ -133,12 +133,11 @@ class FarmWorkerLog(models.Model):
         ], limit=1)
 
     def _recalculate_direct_labor_rate(self):
-        """Set Direct Labor Allocation standard_price to wage per calendar day.
+        """Set Direct Labor Allocation standard_price to wage per cultivation-day.
 
-        _compute_labor_share() divides the rate by the number of active
-        cultivations on each day. So the rate must be per calendar day
-        (unique day with at least one active cultivation), not per
-        cultivation-day. This ensures sum over all cultivations = total_wage.
+        _compute_labor_share() now returns daily_rate * duration. So the rate
+        must be total_wage / total_cultivation_days (sum of all cultivation
+        durations). This ensures sum over all cultivations = total_wage.
         """
         product = self._get_direct_labor_product()
         if not product:
@@ -149,26 +148,22 @@ class FarmWorkerLog(models.Model):
             return 0.0
         total_wage = sum(log.wage_amount for log in logs)
 
-        # Count distinct calendar days where at least one cultivation is active
+        # Sum total cultivation-days across all cultivations
         cultivations = self.env['vivafarm.cultivation'].search([
             ('state', 'not in', ['draft', 'canceled']),
         ])
-        all_dates = set()
+        total_days = 0
         for cul in cultivations:
             start = cul.plant_date
             end = cul.harvest_date
             if start and end:
-                d = start
-                while d <= end:
-                    all_dates.add(d)
-                    d += timedelta(days=1)
+                total_days += (end - start).days + 1
 
-        distinct_days = len(all_dates)
-        if distinct_days <= 0:
+        if total_days <= 0:
             product.product_tmpl_id.standard_price = 0.0
             return 0.0
 
-        rate = total_wage / distinct_days
+        rate = total_wage / total_days
         product.product_tmpl_id.standard_price = rate
         return rate
 
