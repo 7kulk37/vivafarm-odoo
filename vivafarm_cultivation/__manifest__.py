@@ -1,6 +1,6 @@
 {
     'name': 'Hydroponic',
-    'version': '1.9.1',
+    'version': '1.10.0',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Hydroponic farm management - cultivation, recipes, logs, and material transformation',
     'description': """\
