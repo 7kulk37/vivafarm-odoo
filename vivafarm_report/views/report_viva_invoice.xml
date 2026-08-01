@@ -29,10 +29,10 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div t-if="o.company_id.l10n_th_branch_name or o.company_id.l10n_th_branch_number" class="mt-1">
+                            <div t-if="o.company_id.l10n_th_branch_name or (o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000')" class="mt-1">
                                 <span>สาขา: </span>
                                 <span t-field="o.company_id.l10n_th_branch_name"/>
-                                <span t-if="o.company_id.l10n_th_branch_number" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
+                                <span t-if="o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000'" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
                             </div>
                         </t>
                     </div>
@@ -45,10 +45,10 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div t-if="o.company_id.l10n_th_branch_name or o.company_id.l10n_th_branch_number" class="mt-1">
+                            <div t-if="o.company_id.l10n_th_branch_name or (o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000')" class="mt-1">
                                 <span>สาขา: </span>
                                 <span t-field="o.company_id.l10n_th_branch_name"/>
-                                <span t-if="o.company_id.l10n_th_branch_number" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
+                                <span t-if="o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000'" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
                             </div>
                         </t>
                     </div>
@@ -61,10 +61,10 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div t-if="o.company_id.l10n_th_branch_name or o.company_id.l10n_th_branch_number" class="mt-1">
+                            <div t-if="o.company_id.l10n_th_branch_name or (o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000')" class="mt-1">
                                 <span>สาขา: </span>
                                 <span t-field="o.company_id.l10n_th_branch_name"/>
-                                <span t-if="o.company_id.l10n_th_branch_number" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
+                                <span t-if="o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000'" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
                             </div>
                         </t>
                     </div>
@@ -434,8 +434,7 @@
                     </div>
 
                     <!-- ── Signature blocks (VivaFarm specific) ── -->
-                    <div t-if="o.company_id.l10n_th_signature_image"
-                         style="width: 100%; margin-top: 30px; clear: both;">
+                    <div style="width: 100%; margin-top: 30px; clear: both;">
                         <table style="width: 100%; border-collapse: separate; border-spacing: 10px 0;">
                             <tr>
                                 <td style="width: 50%; text-align: center; vertical-align: top; padding: 5px;">
@@ -451,7 +450,8 @@
                                     <div style="border: 1px solid #ccc; border-radius: 8px; padding: 8px;">
                                     <span style="font-size: 12px;">ในนามของบริษัท</span><br/>
                                     <div style="min-height: 50px;">
-                                        <img t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
+                                        <img t-if="o.company_id.l10n_th_signature_image"
+                                             t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
                                              style="max-height: 50px;"
                                              alt="Authorized Signature"/>
                                     </div>

@@ -24,40 +24,23 @@
             </svg>
 
             <div class="d-flex justify-content-between">
-                <div class="w-50">
-                    <img t-if="company.logo" class="o_company_logo mb-2" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
-                    <div t-if="company.report_header" t-field="company.report_header" class="o_company_tagline fw-bold">Company tagline</div>
+                <div style="width: 160px; flex-shrink: 0; text-align: center;">
+                    <img t-if="company.logo" class="o_company_logo mb-2" t-att-src="image_data_uri(company.logo)" alt="Logo" style="height: 130px; width: auto;"/>
                 </div>
-                <div name="company_address" class="w-50 text-end">
-                    <ul class="list-unstyled" name="company_address_list">
-                        <li t-if="company.is_company_details_empty"><span t-field="company.partner_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: true}">
-                            <div class="d-flex flex-column align-items-center justify-content-center border-1 rounded p-4 h-100 w-100 bg-light opacity-75 text-muted text-center">
-                                <strong>Company address block</strong>
-                                <div>Contains the company address.</div>
-                            </div>
-                        </span></li>
-                        <li t-else="">
-                            <span t-field="company.company_details">
-                                <div class="d-flex flex-column align-items-center justify-content-center border-1 rounded p-4 h-100 w-100 bg-light opacity-75 text-muted text-center">
-                                    <strong>Company details block</strong>
-                                    <div>Contains the company details.</div>
-                                </div>
-                            </span>
-                        </li>
-                        <li t-if="not forced_vat">
-                            <t t-if="company.vat">
-                                <t t-esc="company.country_id.vat_label or 'Tax ID'">Tax ID</t>:
-                                <span t-esc="company.vat">US12345671</span>
-                            </t>
-                        </li>
-                        <li t-else="">
-                            <t t-esc="company.country_id.vat_label or 'Tax ID'">Tax ID</t>:
-                            <span t-esc="forced_vat">US12345671</span>
-                        </li>
-                        <li t-if="company.l10n_th_branch_name or company.l10n_th_branch_number">
-                            <span>สาขา: <t t-esc="company.l10n_th_branch_name"/><t t-if="company.l10n_th_branch_number"> (<t t-esc="company.l10n_th_branch_number"/>)</t></span>
-                        </li>
-                    </ul>
+                <div class="flex-grow-1 text-start">
+                    <div style="font-size: 14px; line-height: 1.0;">
+                        <div style="font-weight: bold; font-size: 20px; margin-bottom: 8px;">Viva la Finca CO.,LTD.</div>
+                        <div style="font-weight: bold; font-size: 19px;">บริษัท วิว่า ลา ฟินก้า จำกัด</div>
+                        <div style="margin-top: 8px;">
+                            สำนักงานใหญ่ : 200 ซอยมัสยิด หมู่ 1 ตำบลคลองเขม้า อำเภอเหนือคลอง จังหวัดกระบี่ 81130
+                        </div>
+                        <div style="margin-top: 4px;">
+                            Head office : 200 Soi Masjid, Moo 1, Khlong Khamot, Nuea Khlong District, Krabi 81130, Thailand
+                        </div>
+                        <div style="margin-top: 6px;">
+                            tel: 088-448-4846 &#160; TAX ID: 1819900144296
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
