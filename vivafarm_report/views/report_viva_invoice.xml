@@ -511,7 +511,10 @@
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-set="lang" t-value="o.partner_id.lang"/>
-                <t t-call="vivafarm_report.viva_invoice_document" t-lang="lang"/>
+                <t t-foreach="o._get_tax_invoice_copies()" t-as="copy">
+                    <t t-set="copy_kind" t-value="copy['key']"/>
+                    <t t-call="vivafarm_report.viva_invoice_document" t-lang="lang"/>
+                </t>
             </t>
         </t>
     </template>
