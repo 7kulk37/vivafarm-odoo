@@ -17,8 +17,12 @@
                     <div class="col-6">
                         <t t-set="information_block" groups="account.group_delivery_invoice_address">
                             <div name="shipping_address_block">
-                                <strong class="d-block mt-3">Shipping Address</strong>
-                                <div t-field="o.partner_shipping_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                                <strong class="d-block mt-3">
+                                <t t-if="lang == 'th_TH'">ที่อยู่จัดส่ง</t>
+                                <t t-else="">Shipping Address</t>
+                            </strong>
+                                <div t-field="o.partner_shipping_id.name">Branch name</div>
+                                <div t-field="o.partner_shipping_id" t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/>
                             </div>
                         </t>
                     </div>
@@ -29,10 +33,9 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div t-if="o.company_id.l10n_th_branch_name or (o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000')" class="mt-1">
-                                <span>สาขา: </span>
-                                <span t-field="o.company_id.l10n_th_branch_name"/>
-                                <span t-if="o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000'" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
+                            <div class="mt-1">
+                                <t t-if="lang == 'th_TH'">สาขา: สำนักงานใหญ่ (00000)</t>
+                                <t t-else="">branch: Headquarter (00000)</t>
                             </div>
                         </t>
                     </div>
@@ -45,10 +48,9 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div t-if="o.company_id.l10n_th_branch_name or (o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000')" class="mt-1">
-                                <span>สาขา: </span>
-                                <span t-field="o.company_id.l10n_th_branch_name"/>
-                                <span t-if="o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000'" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
+                            <div class="mt-1">
+                                <t t-if="lang == 'th_TH'">สาขา: สำนักงานใหญ่ (00000)</t>
+                                <t t-else="">branch: Headquarter (00000)</t>
                             </div>
                         </t>
                     </div>
@@ -61,10 +63,9 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div t-if="o.company_id.l10n_th_branch_name or (o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000')" class="mt-1">
-                                <span>สาขา: </span>
-                                <span t-field="o.company_id.l10n_th_branch_name"/>
-                                <span t-if="o.company_id.l10n_th_branch_number and o.company_id.l10n_th_branch_number != '00000'" t-esc="' (' + o.company_id.l10n_th_branch_number + ')'"/>
+                            <div class="mt-1">
+                                <t t-if="lang == 'th_TH'">สาขา: สำนักงานใหญ่ (00000)</t>
+                                <t t-else="">branch: Headquarter (00000)</t>
                             </div>
                         </t>
                     </div>

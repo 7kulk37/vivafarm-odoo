@@ -1,0 +1,173 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following module:
+# 	* vivafarm_report
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-02 00:00+0000\n"
+"PO-Revision-Date: 2026-08-02 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: th\n"
+
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<span>Description</span>"
+msgstr "<span>คำอธิบาย</span>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<span>Quantity</span>"
+msgstr "<span>จำนวน</span>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<span>Unit Price</span>"
+msgstr "<span>ราคาต่อหน่วย</span>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<span>Disc.%</span>"
+msgstr "<span>ส่วนลด%</span>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<span>Taxes</span>"
+msgstr "<span>ภาษี</span>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<span>Amount</span>"
+msgstr "<span>จำนวน</span>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Invoice Date</strong>"
+msgstr "<strong>วันที่ออกใบแจ้งหนี้</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Credit Note Date</strong>"
+msgstr "<strong>วันที่บันทึกเครดิต</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Receipt Date</strong>"
+msgstr "<strong>วันที่รับสินค้า</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Date</strong>"
+msgstr "<strong>วันที่</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Due Date</strong>"
+msgstr "<strong>กำหนดส่ง</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Taxable Supply</strong>"
+msgstr ""
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Delivery Date</strong>"
+msgstr "<strong>วันที่จัดส่งสินค้า</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Source</strong>"
+msgstr "<strong>แหล่งที่มา</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Customer Code</strong>"
+msgstr "<strong>รหัสลูกค้า</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Reference</strong>"
+msgstr "<strong>ข้อมูลอ้างอิง</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<strong>Incoterm</strong>"
+msgstr "<strong>Incoterm</strong>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Amount Due"
+msgstr "จำนวนที่ค้างชําระ"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Reversed on"
+msgstr ""
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Paid on"
+msgstr "จ่ายเมื่อ"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Total amount in words: <br/>"
+msgstr "จำนวนเงินทั้งหมดเป็นตัวอักษร: <br/>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Payment Communication:"
+msgstr "การสื่อสารการชำระเงิน:"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<br/> on this account:"
+msgstr "<br/> ในบัญชีนี้:"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Scan this QR Code with<br/>your banking application"
+msgstr "สแกนรหัส QR โค้ดนี้ด้วย<br/>แอปพลิเคชันธนาคารของคุณ"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "PAY IN A FLASH!"
+msgstr ""
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Scan the QR code<br/>or click to pay online"
+msgstr ""
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "- Installment of"
+msgstr "- การผ่อนชำระของ"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "<span> due on </span>"
+msgstr "<span> ครบกำหนดใน </span>"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "due if paid before"
+msgstr "ครบกำหนดหากชำระเงินก่อน"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Tax ID"
+msgstr "เลขประจำตัวผู้เสียภาษี"
+
+#. module: vivafarm_report
+#: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
+msgid "Payment within 30 calendar day"
+msgstr "ชำระเงินภายใน 30 วันตามปฏิทิน"
