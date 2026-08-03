@@ -16,4 +16,22 @@
             </button>
         </field>
     </record>
+
+    <!-- Policy: all price/discount controlled on pricelist — no per-line
+         discounts on invoices. Hide the Disc.% column in the invoice line
+         list and the mobile line form. Two xpaths because Odoo's
+         inheritance applies attributes to the first xpath match only. -->
+    <record id="view_move_form_vivafarm_hide_discount" model="ir.ui.view">
+        <field name="name">account.move.form.vivafarm.hide.discount</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list[@name='journal_items']/field[@name='discount']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='invoice_line_ids']/form//field[@name='discount']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
 </odoo>
