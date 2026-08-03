@@ -444,7 +444,15 @@
                                 <p name="payment_communication">
                                     Payment Communication: <span class="fw-bold" t-field="o.payment_reference">INV/2026/0001</span>
                                     <t t-if="o.partner_bank_id">
-                                        <br/> on this account: <span t-field="o.partner_bank_id" class="fw-bold"/>
+                                        <br/> Wire transfer on this:
+                                        <span class="fw-bold">
+                                            <t t-if="o.partner_bank_id.bank_id">
+                                                <t t-out="o.partner_bank_id.acc_number">204-3-30805-2</t> (<t t-out="o.partner_bank_id.bank_id.name">Kasikorn Bank</t>)
+                                            </t>
+                                            <t t-else="">
+                                                <t t-out="o.partner_bank_id.acc_number">204-3-30805-2</t>
+                                            </t>
+                                        </span>
                                     </t>
                                 </p>
                             </div>
@@ -462,7 +470,7 @@
                                     </p>
                                 </div>
                                 <div class="d-inline text-muted lh-sm fst-italic" id="qrcode_info" t-if="qr_code_url">
-                                    <p>Scan this QR Code with<br/>your banking application</p>
+                                    <p style="font-size: 0.875em;">Scan this PromptPay QR Code<br/>with your banking application</p>
                                 </div>
                             </div>
                             <t t-set="show_link_qr" t-value="o.display_link_qr_code and o.amount_residual"/>

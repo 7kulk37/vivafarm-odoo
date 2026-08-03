@@ -129,13 +129,13 @@ msgstr "การสื่อสารการชำระเงิน:"
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
-msgid "<br/> on this account:"
-msgstr "<br/> ในบัญชีนี้:"
+msgid "<br/> Wire transfer on this:"
+msgstr "<br/> โอนเงินเข้าบัญชีนี้:"
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
-msgid "Scan this QR Code with<br/>your banking application"
-msgstr "สแกนรหัส QR โค้ดนี้ด้วย<br/>แอปพลิเคชันธนาคารของคุณ"
+msgid "Scan this PromptPay QR Code<br/>with your banking application"
+msgstr "สแกนรหัส PromptPay QR Code<br/>นี้ด้วยแอปพลิเคชันธนาคารของคุณ"
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
