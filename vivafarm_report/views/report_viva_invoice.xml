@@ -296,10 +296,66 @@
                             <div id="total" class="clearfix row">
                                 <div class="ms-auto">
                                     <table class="o_total_table table table-borderless avoid-page-break-inside">
-                                        <t t-if="o.tax_totals" t-call="account.document_tax_totals">
-                                            <t t-set="tax_totals" t-value="o.tax_totals"/>
-                                            <t t-set="currency" t-value="o.currency_id"/>
+                                        <t t-set="tt_rows" t-value="o._get_tax_invoice_totals()"/>
+                                        <t t-set="currency" t-value="o.currency_id"/>
+                                        <tr>
+                                            <td>
+                                                <t t-if="lang == 'th_TH'">รวมเงิน</t>
+                                                <t t-else="">Total Amount</t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="tt_rows['gross_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="tt_rows['discount']">
+                                            <td>
+                                                <t t-if="lang == 'th_TH'">ส่วนลด</t>
+                                                <t t-else="">Discount</t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="tt_rows['discount']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="tt_rows['discount']">
+                                            <td>
+                                                <t t-if="lang == 'th_TH'">มูลค่าสินค้าหลังหักส่วนลด</t>
+                                                <t t-else="">Total After Discount</t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="tt_rows['net_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                            </td>
+                                        </tr>
+                                        <t t-foreach="tt_rows['vat_rows']" t-as="vrow">
+                                            <tr>
+                                                <td>
+                                                    <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม <t t-out="vrow['rate_label']"/></t>
+                                                    <t t-else="">VAT <t t-out="vrow['rate_label']"/></t>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-out="vrow['amount']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                                </td>
+                                            </tr>
                                         </t>
+                                        <t t-foreach="tt_rows['exempt_rows']" t-as="erow">
+                                            <tr style="white-space: nowrap;">
+                                                <td>
+                                                    <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม: ( <t t-out="erow['label']"/> )</t>
+                                                    <t t-else="">VAT: ( <t t-out="erow['label']"/> )</t>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-options='{"widget": "monetary", "display_currency": currency}' t-out="0.0"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <tr class="o_total">
+                                            <td><strong>
+                                                <t t-if="lang == 'th_TH'">จำนวนรวมทั้งสิ้น</t>
+                                                <t t-else="">Grand Total</t>
+                                            </strong></td>
+                                            <td class="text-end">
+                                                <strong t-out="tt_rows['grand_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                            </td>
+                                        </tr>
                                         <t t-if="print_with_payments">
                                             <t t-if="o.payment_state != 'invoicing_legacy'">
                                                 <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
@@ -333,7 +389,7 @@
                             <div class="mb-2">
                                 <p class="text-end lh-sm" t-if="o.company_id.display_invoice_amount_total_words">
                                     Total amount in words: <br/>
-                                    <small class="text-muted lh-sm"><span t-field="o.amount_total_words">One hundred Baht</span></small>
+                                    <span class="text-muted lh-sm" style="font-size: 0.875em;">(<span t-field="o.amount_total_words">One hundred Baht</span>)</span>
                                 </p>
                             </div>
                             <t t-if="o.tax_totals and o.tax_totals.get('display_in_company_currency')">
