@@ -161,19 +161,23 @@
                             <t t-elif="o.move_type == 'out_refund'"><strong>Credit Note Date</strong></t>
                             <t t-elif="o.move_type == 'out_receipt'"><strong>Receipt Date</strong></t>
                             <t t-else=""><strong>Date</strong></t>
-                            <div t-field="o.invoice_date">2026-09-12</div>
+                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('invoice_date')">03/ส.ค./2569</div></t>
+                            <t t-else=""><div t-field="o.invoice_date">2026-09-12</div></t>
                         </div>
                         <div class="col" t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'" name="due_date">
                             <strong>Due Date</strong>
-                            <div t-field="o.invoice_date_due">2026-10-31</div>
+                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('invoice_date_due')">02/ก.ย./2569</div></t>
+                            <t t-else=""><div t-field="o.invoice_date_due">2026-10-31</div></t>
                         </div>
                         <div class="col" t-if="o.taxable_supply_date and o.show_taxable_supply_date" name="taxable_supply_date">
                             <strong>Taxable Supply</strong>
-                            <div t-field="o.taxable_supply_date">2026-10-31</div>
+                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('taxable_supply_date')">03/ส.ค./2569</div></t>
+                            <t t-else=""><div t-field="o.taxable_supply_date">2026-10-31</div></t>
                         </div>
                         <div class="col" t-if="o.delivery_date" name="delivery_date">
                             <strong>Delivery Date</strong>
-                            <div t-field="o.delivery_date">2026-09-25</div>
+                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('delivery_date')">03/ส.ค./2569</div></t>
+                            <t t-else=""><div t-field="o.delivery_date">2026-09-25</div></t>
                         </div>
                         <div class="col" t-if="o.invoice_origin" name="origin">
                             <strong>Source</strong>

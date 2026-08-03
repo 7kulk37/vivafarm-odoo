@@ -4,6 +4,21 @@ from odoo import models
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    def _get_thai_date_display(self, field_name):
+        """Date in Thai tax-invoice style: '03/ส.ค./2569' (Buddhist Era year = CE + 543).
+
+        Babel has no Buddhist calendar engine, so the TH report computes the
+        day/month via the Thai locale (dd/MMM -> '03/ส.ค.') and appends the
+        Buddhist Era year (Gregorian year + 543).
+        """
+        self.ensure_one()
+        value = self[field_name]
+        if not value:
+            return ''
+        from odoo.tools.misc import format_date
+        day_month = format_date(self.env, value, lang_code='th_TH', date_format='dd/MMM')
+        return '%s/%s' % (day_month, value.year + 543)
+
     def _get_tax_invoice_copies(self):
         """Copies to print for a tax invoice (Thai practice: 3 copies).
 
