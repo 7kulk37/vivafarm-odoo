@@ -17,7 +17,7 @@
         </t>
 
         <!-- HEADER -->
-        <t t-set="header_shape_height" t-value="'230'"/>
+        <t t-set="header_shape_height" t-value="'200'"/>
         <div t-attf-class="header o_company_#{company.id}_layout {{report_type != 'pdf' and 'h-0'}}" style="position: relative;">
             <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 w-100 z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
                 <path d="M1000 230.734C937.384 240.621 803.83 250.266 562.185 220.602C311.343 189.809 104.626 201.375 0 211.598V0.5H1000V230.734Z" t-att-fill="company.primary_color" fill-opacity=".1"/>
@@ -62,26 +62,32 @@
             <t t-set="custom_layout_address" t-value="true"/>
             <h2 t-out="layout_document_title" t-att-style="('font-size: 28px; line-height: 1.5; margin-top: 28px; margin-bottom: 12px;' if lang != 'th_TH' else 'line-height: 1.5; margin-top: 28px; margin-bottom: 12px;')"/>
             <!-- Address row: billing (address) LEFT, shipping (information_block) RIGHT -->
-            <div t-if="address" class="address row mb-4" title="This block is not always present depending on the printed document.">
+            <div t-if="address" class="address row mb-2" title="This block is not always present depending on the printed document.">
                 <t t-if="information_block">
                     <div name="address" class="col-6">
-                        <strong class="d-block mt-3">
+                        <strong class="d-block mt-1" style="font-size: 16px; font-weight: bold;">
                             <t t-if="lang == 'th_TH'">ผู้ซื้อ</t>
                             <t t-else="">Customer</t>
                         </strong>
-                        <t t-esc="address or None"/>
+                        <div style="font-size: 14px; line-height: 1.25;">
+                            <t t-esc="address or None"/>
+                        </div>
                     </div>
                     <div name="information_block" class="col-6">
-                        <t t-out="information_block or None"/>
+                        <div style="font-size: 14px; line-height: 1.25;">
+                            <t t-out="information_block or None"/>
+                        </div>
                     </div>
                 </t>
                 <t t-else="">
                     <div name="address">
-                        <strong class="d-block mt-3">
+                        <strong class="d-block mt-1" style="font-size: 16px; font-weight: bold;">
                             <t t-if="lang == 'th_TH'">ผู้ซื้อ</t>
                             <t t-else="">Customer</t>
                         </strong>
-                        <t t-esc="address or None"/>
+                        <div style="font-size: 14px; line-height: 1.25;">
+                            <t t-esc="address or None"/>
+                        </div>
                     </div>
                 </t>
             </div>
