@@ -506,7 +506,7 @@
                                     <p class="text-muted fst-italic">Scan the QR code<br/>or click to pay online</p>
                                 </div>
                             </div>
-                            <div class="text-muted mb-2" t-attf-style="#{'text-align:justify;text-justify:inter-word;' if o.company_id.terms_type != 'html' else ''}" t-if="not is_html_empty(o.narration)" name="comment">
+                            <div class="text-muted mb-2" t-attf-style="width: #{'317pt' if report_type == 'pdf' else '100%'}; #{'text-align:justify;text-justify:inter-word;' if o.company_id.terms_type != 'html' else ''}" t-if="not is_html_empty(o.narration)" name="comment">
                                 <span t-field="o.narration"/>
                             </div>
                             <div class="oe_structure"></div>
