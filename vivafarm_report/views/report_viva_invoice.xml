@@ -512,12 +512,12 @@
                                 </div>
                             </div>
                             <div class="row" style="margin-top: 2px; clear: both;">
-                                <div class="col-6" style="padding-right: 6px;">
+                                <div class="col-6" style="width: 70%; padding-right: 6px;">
                                     <div class="text-muted" id="terms_note" t-attf-style="width: 100%; text-align:justify;text-justify:inter-word;" t-if="not is_html_empty(o.narration)" name="comment">
                                         <span t-field="o.narration"/>
                                     </div>
                                 </div>
-                                <div class="col-6" style="padding-left: 6px;">
+                                <div class="col-6" style="width: 30%; padding-left: 6px;">
                                     <!-- ── Signature blocks (VivaFarm specific) ── -->
                                     <div style="page-break-inside: avoid;">
                                         <div class="text-muted" style="font-size: 7.5px; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
