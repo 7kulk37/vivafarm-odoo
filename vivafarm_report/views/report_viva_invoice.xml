@@ -512,12 +512,12 @@
                                 </div>
                             </div>
                             <div class="row" style="margin-top: 2px; clear: both;">
-                                <div class="col-6" style="width: 70%; padding-right: 6px;">
+                                <div class="col-6" style="width: 60%; padding-right: 6px;">
                                     <div class="text-muted" id="terms_note" t-attf-style="width: 100%; text-align:justify;text-justify:inter-word;" t-if="not is_html_empty(o.narration)" name="comment">
                                         <span t-field="o.narration"/>
                                     </div>
                                 </div>
-                                <div class="col-6" style="width: 30%; padding-left: 6px;">
+                                <div class="col-6" style="width: 40%; padding-left: 6px;">
                                     <!-- ── Signature blocks (VivaFarm specific) ── -->
                                     <div style="page-break-inside: avoid;">
                                         <div class="text-muted" style="font-size: 12px; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
@@ -527,7 +527,7 @@
                                         <div style="width: 100%; margin-top: 1px;">
                                         <div style="page-break-inside: avoid;">
                                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; margin-bottom: 2px; text-align: center;">
-                                            <strong style="font-size: 7px;">
+                                            <strong>
                                                 <t t-if="lang == 'th_TH'">ลูกค้า/ผู้รับสินค้า</t>
                                                 <t t-else="">Received by Customer</t>
                                             </strong><br/>
@@ -541,7 +541,7 @@
                                         </div>
                                         <div style="page-break-inside: avoid;">
                                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
-                                            <strong style="font-size: 7px;">
+                                            <strong>
                                                 <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
                                                 <t t-else="">Authorized Signatory</t>
                                             </strong><br/>
