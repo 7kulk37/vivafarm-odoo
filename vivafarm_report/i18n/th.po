@@ -124,18 +124,18 @@ msgstr "จำนวนเงินทั้งหมดเป็นตัวอ
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
-msgid "Payment Communication:"
-msgstr "การสื่อสารการชำระเงิน:"
+msgid "Payment Communication:<br/>"
+msgstr "การสื่อสารการชำระเงิน:<br/>"
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
-msgid "<br/> Wire transfer on this:"
-msgstr "<br/> โอนเงินเข้าบัญชีนี้:"
+msgid "<br/>Wire transfer on this:<br/>"
+msgstr "<br/>โอนเงินเข้าบัญชีนี้:<br/>"
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
-msgid "Scan this PromptPay QR Code<br/>with your banking application"
-msgstr "สแกนรหัส PromptPay QR Code<br/>นี้ด้วยแอปพลิเคชันธนาคารของคุณ"
+msgid "Promptpay QR Code"
+msgstr "พร้อมเพย์ QR Code"
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document

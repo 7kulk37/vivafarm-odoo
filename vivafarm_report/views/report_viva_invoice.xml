@@ -411,16 +411,37 @@
                                 <div class="oe_structure"/>
                             </t>
                         </div>
-                        <div class="mb-3 mt-3">
+                        <div class="mb-3 row" style="margin-top: 32pt; margin-left: 20pt;">
+                            <div class="col-4">
+                                <t t-set="show_qr" t-value="o.display_qr_code and o.amount_residual"/>
+                                <div t-if="not show_qr" name="qr_code_placeholder" class="oe_structure"></div>
+                                <div id="qrcode" class="mb-2 avoid-page-break-inside" t-else="">
+                                    <div class="qrcode" id="qrcode_image">
+                                        <t t-set="qr_code_url" t-value="o._generate_qr_code(silent_errors=True)"/>
+                                        <p t-if="qr_code_url" class="position-relative mb-0">
+                                            <img t-att-src="qr_code_url"/>
+                                            <img src="/account/static/src/img/Odoo_logo_O.svg"
+                                                 id="qrcode_odoo_logo"
+                                                 class="top-50 start-50 position-absolute bg-white border border-3 rounded-circle"
+                                            />
+                                        </p>
+                                    </div>
+                                    <div class="text-muted lh-sm fst-italic" id="qrcode_info" t-if="qr_code_url" t-att-style="'width: %s;' % ('82pt' if report_type == 'pdf' else '100%')">
+                                        <p class="mb-0" style="font-size: 0.65em; text-align: center;">Promptpay QR Code</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-8" style="padding-left: 15pt;">
                             <span id="payment_terms_note_id"
                                   t-if="o.invoice_payment_term_id.note"
                                   t-field="o.invoice_payment_term_id.note"
                                   name="payment_term">Payment within 30 calendar day</span>
                             <t t-if="o.move_type in ('out_invoice', 'in_refund') and o.payment_reference">
                                 <p name="payment_communication" class="mb-0">
-                                    Payment Communication:&#160;<span class="fw-bold" t-field="o.payment_reference">INV/2026/0001</span>
+                                    Payment Communication:<br/>
+                                    <span class="fw-bold" t-field="o.payment_reference">INV/2026/0001</span>
                                     <t t-if="o.partner_bank_id">
-                                        <br/> Wire transfer on this:
+                                        <br/>Wire transfer on this:<br/>
                                         <span class="fw-bold">
                                             <t t-if="o.partner_bank_id.bank_id">
                                                 <t t-out="o.partner_bank_id.acc_number">204-3-30805-2</t> (<t t-out="o.partner_bank_id.bank_id.name">Kasikorn Bank</t>)
@@ -454,6 +475,7 @@
                                     </div>
                                 </div>
                             </t>
+                            </div>
                         </div>
                         <div id="payment_term" class="clearfix mt-3">
                             <div class="justify-text">
@@ -465,23 +487,6 @@
                                 <p t-if="not is_html_empty(o.taxes_legal_notes)" name="taxes_legal_notes" class="mb-2">
                                     <span t-field="o.taxes_legal_notes"/>
                                 </p>
-                            </div>
-                            <t t-set="show_qr" t-value="o.display_qr_code and o.amount_residual"/>
-                            <div t-if="not show_qr" name="qr_code_placeholder" class="oe_structure"></div>
-                            <div id="qrcode" class="d-flex mb-2 avoid-page-break-inside" t-else="">
-                                <div class="qrcode me-3" id="qrcode_image">
-                                    <t t-set="qr_code_url" t-value="o._generate_qr_code(silent_errors=True)"/>
-                                    <p t-if="qr_code_url" class="position-relative mb-0">
-                                        <img t-att-src="qr_code_url"/>
-                                        <img src="/account/static/src/img/Odoo_logo_O.svg"
-                                             id="qrcode_odoo_logo"
-                                             class="top-50 start-50 position-absolute bg-white border border-3 rounded-circle"
-                                        />
-                                    </p>
-                                </div>
-                                <div class="d-inline text-muted lh-sm fst-italic" id="qrcode_info" t-if="qr_code_url">
-                                    <p style="font-size: 0.875em;">Scan this PromptPay QR Code<br/>with your banking application</p>
-                                </div>
                             </div>
                             <t t-set="show_link_qr" t-value="o.display_link_qr_code and o.amount_residual"/>
                             <div t-if="show_link_qr" id="payment_link_qrcode" class="d-flex mb-3 avoid-page-break-inside">
