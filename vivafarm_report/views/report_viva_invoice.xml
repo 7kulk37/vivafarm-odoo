@@ -415,7 +415,7 @@
                             <div class="col-4">
                                 <t t-set="show_qr" t-value="o.display_qr_code and o.amount_residual"/>
                                 <div t-if="not show_qr" name="qr_code_placeholder" class="oe_structure"></div>
-                                <div id="qrcode" class="mb-2 avoid-page-break-inside" t-else="">
+                                <div id="qrcode" class="d-flex flex-column align-items-center mb-2 avoid-page-break-inside" t-else="">
                                     <div class="qrcode" id="qrcode_image">
                                         <t t-set="qr_code_url" t-value="o._generate_qr_code(silent_errors=True)"/>
                                         <p t-if="qr_code_url" class="position-relative mb-0">
@@ -426,8 +426,8 @@
                                             />
                                         </p>
                                     </div>
-                                    <div class="text-muted lh-sm fst-italic" id="qrcode_info" t-if="qr_code_url" t-att-style="'width: %s;' % ('82pt' if report_type == 'pdf' else '100%')">
-                                        <p class="mb-0" style="font-size: 0.65em; text-align: center;">Promptpay QR Code</p>
+                                    <div class="text-muted lh-sm fst-italic" id="qrcode_info" t-if="qr_code_url" style="margin-top: 8pt;">
+                                        <p class="mb-0" style="font-size: 0.65em;">Promptpay QR Code</p>
                                     </div>
                                 </div>
                             </div>
