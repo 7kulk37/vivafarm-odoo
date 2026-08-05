@@ -16,6 +16,11 @@
                 /* Payment terms note is stored as HTML paragraph — keep the inner paragraph
                    inline so the "Payment terms: 30 Days" line stays a single line. */
                 #payment_terms_note_id > p { display: inline; margin-bottom: 0 !important; }
+                /* Compact T&amp;C so the signature section fits on one page (TH + EN).
+                   Stored narration uses inline font-size:10px — override with !important. */
+                #terms_note h4 { margin-top: 4px !important; margin-bottom: 2px !important; font-size: 10.5px !important; }
+                #terms_note ol { font-size: 8px !important; line-height: 1.2 !important; margin-bottom: 1px !important; padding-left: 13px !important; }
+                #terms_note li { font-size: 8px !important; line-height: 1.2 !important; margin-bottom: 0 !important; }
             </style>
             <div class="row">
                 <t t-if="o.partner_shipping_id and (o.partner_shipping_id != o.partner_id)">
@@ -506,7 +511,7 @@
                                     <p class="text-muted fst-italic">Scan the QR code<br/>or click to pay online</p>
                                 </div>
                             </div>
-                            <div class="text-muted mb-2" t-attf-style="width: #{'317pt' if report_type == 'pdf' else '100%'}; #{'text-align:justify;text-justify:inter-word;' if o.company_id.terms_type != 'html' else ''}" t-if="not is_html_empty(o.narration)" name="comment">
+                            <div class="text-muted mb-2" id="terms_note" t-attf-style="width: #{'317pt' if report_type == 'pdf' else '100%'}; #{'text-align:justify;text-justify:inter-word;' if o.company_id.terms_type != 'html' else ''}" t-if="not is_html_empty(o.narration)" name="comment">
                                 <span t-field="o.narration"/>
                             </div>
                             <div class="oe_structure"></div>
@@ -515,7 +520,7 @@
 
                     <!-- ── Signature blocks (VivaFarm specific) ── -->
                     <div style="page-break-inside: avoid;">
-                        <div class="text-muted" style="font-size: 7.5px; margin-top: 0; margin-bottom: 1px; text-align: center;">
+                        <div class="text-muted" style="font-size: 7.5px; margin-top: 0; margin-bottom: 1px; text-align: center; width: 372pt; margin-left: 0;">
                             <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
                             <t t-else="">Signatures below constitute acknowledgment and acceptance in accordance with the Terms &amp; Conditions of this document.</t>
                         </div>
