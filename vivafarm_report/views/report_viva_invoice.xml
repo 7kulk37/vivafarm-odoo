@@ -514,12 +514,12 @@
                     </div>
 
                     <!-- ── Signature blocks (VivaFarm specific) ── -->
-                    <div style="page-break-inside: avoid;">
+                    <div style="page-break-inside: avoid; padding-top: 323pt;">
                         <div class="text-muted mb-1" style="font-size: 9px; margin-top: 4px; text-align: center;">
                             <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
                             <t t-else="">Signatures below constitute acknowledgment and acceptance in accordance with the Terms &amp; Conditions of this document.</t>
                         </div>
-                        <div style="width: 265pt; margin-left: 29pt; margin-top: 4px; clear: both;">
+                        <div style="width: 372pt; margin-left: 0; margin-top: 4px; clear: both;">
                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 6px; margin-bottom: 8px; text-align: center;">
                             <strong>
                                 <t t-if="lang == 'th_TH'">ลูกค้า/ผู้รับสินค้า</t>
@@ -527,9 +527,9 @@
                             </strong><br/>
                             <div style="min-height: 30px;"></div>
                             <div style="font-size: 10px; margin-top: 3px;">
-                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
-                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
-                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
                             </div>
                         </div>
                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 6px; text-align: center;">
@@ -544,9 +544,9 @@
                                      alt="Authorized Signature"/>
                             </div>
                             <div style="font-size: 10px; margin-top: 3px;">
-                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
-                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
-                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                <div style="border-bottom: 2px solid #ccc; margin: 0 6px; padding: 1px 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
                             </div>
                         </div>
                         </div>
