@@ -511,53 +511,57 @@
                                     <p class="text-muted fst-italic">Scan the QR code<br/>or click to pay online</p>
                                 </div>
                             </div>
-                            <div class="text-muted mb-2" id="terms_note" t-attf-style="width: #{'317pt' if report_type == 'pdf' else '100%'}; #{'text-align:justify;text-justify:inter-word;' if o.company_id.terms_type != 'html' else ''}" t-if="not is_html_empty(o.narration)" name="comment">
-                                <span t-field="o.narration"/>
+                            <div class="row" style="margin-top: 2px; clear: both;">
+                                <div class="col-6" style="padding-right: 6px;">
+                                    <div class="text-muted" id="terms_note" t-attf-style="width: 100%; text-align:justify;text-justify:inter-word;" t-if="not is_html_empty(o.narration)" name="comment">
+                                        <span t-field="o.narration"/>
+                                    </div>
+                                </div>
+                                <div class="col-6" style="padding-left: 6px;">
+                                    <!-- ── Signature blocks (VivaFarm specific) ── -->
+                                    <div style="page-break-inside: avoid;">
+                                        <div class="text-muted" style="font-size: 7.5px; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
+                                            <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
+                                            <t t-else="">Signatures below constitute acknowledgment and acceptance in accordance with the Terms &amp; Conditions of this document.</t>
+                                        </div>
+                                        <div style="width: 100%; margin-top: 1px;">
+                                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; margin-bottom: 2px; text-align: center;">
+                                            <strong>
+                                                <t t-if="lang == 'th_TH'">ลูกค้า/ผู้รับสินค้า</t>
+                                                <t t-else="">Received by Customer</t>
+                                            </strong><br/>
+                                            <div style="min-height: 6px;"></div>
+                                            <div style="font-size: 7.5px; margin-top: 0;">
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                                            </div>
+                                        </div>
+                                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
+                                            <strong>
+                                                <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
+                                                <t t-else="">Authorized Signatory</t>
+                                            </strong><br/>
+                                            <div style="min-height: 6px;">
+                                                <img t-if="o.company_id.l10n_th_signature_image"
+                                                     t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
+                                                     style="max-height: 15px;"
+                                                     alt="Authorized Signature"/>
+                                            </div>
+                                            <div style="font-size: 7.5px; margin-top: 0;">
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                                            </div>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="oe_structure"></div>
                         </div>
-                    </div>
-
-                    <!-- ── Signature blocks (VivaFarm specific) ── -->
-                    <div style="page-break-inside: avoid;">
-                        <div class="text-muted" style="font-size: 7.5px; margin-top: 0; margin-bottom: 1px; text-align: center; width: 372pt; margin-left: 0;">
-                            <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
-                            <t t-else="">Signatures below constitute acknowledgment and acceptance in accordance with the Terms &amp; Conditions of this document.</t>
-                        </div>
-                        <div style="width: 372pt; margin-left: 0; margin-top: 1px; clear: both;">
-                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; margin-bottom: 2px; text-align: center;">
-                            <strong>
-                                <t t-if="lang == 'th_TH'">ลูกค้า/ผู้รับสินค้า</t>
-                                <t t-else="">Received by Customer</t>
-                            </strong><br/>
-                            <div style="min-height: 6px;"></div>
-                            <div style="font-size: 7.5px; margin-top: 0;">
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
-                            </div>
-                        </div>
-                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
-                            <strong>
-                                <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
-                                <t t-else="">Authorized Signatory</t>
-                            </strong><br/>
-                            <div style="min-height: 6px;">
-                                <img t-if="o.company_id.l10n_th_signature_image"
-                                     t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
-                                     style="max-height: 15px;"
-                                     alt="Authorized Signature"/>
-                            </div>
-                            <div style="font-size: 7.5px; margin-top: 0;">
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: center;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
-                            </div>
-                        </div>
-                        </div>
-                    </div>
                 </div>
             </div>
+        </div>
         </t>
     </template>
 
