@@ -522,7 +522,7 @@
                                     <div style="page-break-inside: avoid;">
                                         <div class="text-muted" style="font-size: 12px; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
                                             <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
-                                            <t t-else="">Signatures below constitute acknowledgment and acceptance in accordance with the Terms &amp; Conditions of this document.</t>
+                                            <t t-else="">Signatures below constitute acceptance in accordance with the Terms &amp; Conditions of this document.</t>
                                         </div>
                                         <div style="width: 100%; margin-top: 1px;">
                                         <div style="page-break-inside: avoid;">
