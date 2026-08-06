@@ -5,4 +5,20 @@
         <field name="view_id" ref="vivafarm_report.external_layout_viva"/>
         <field name="image">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYPgPAAEDAQAIicLsAAAAASUVORK5CYII=</field>
     </record>
+
+    <!-- A4 paperformat for the VivaFarm tax invoice.
+         margin_top is large enough to hold the repeating header block
+         (logo + company + badge + title + address + info section), which
+         wkhtmltopdf renders inside the top margin area via header-html. -->
+    <record id="paperformat_viva_invoice" model="report.paperformat">
+        <field name="name">VivaFarm Tax Invoice A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">95</field>
+        <field name="margin_bottom">32</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_spacing">5</field>
+        <field name="dpi">90</field>
+    </record>
 </odoo>

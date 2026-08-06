@@ -16,7 +16,10 @@
             </t>
         </t>
 
-        <!-- HEADER -->
+        <!-- HEADER (repeated on every page via wkhtmltopdf header-html).
+             Contains logo + company + copy badge + document title +
+             customer/shipping addresses + info section, so every sheet of a
+             multi-page tax invoice carries elements (1)-(5) per ป.86/2542 ข้อ 9(2). -->
         <t t-set="header_shape_height" t-value="'200'"/>
         <div t-attf-class="header o_company_#{company.id}_layout {{report_type != 'pdf' and 'h-0'}}" style="position: relative;">
             <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 w-100 z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
@@ -54,13 +57,10 @@
                     </t>
                 </div>
             </t>
-        </div>
 
-        <!-- BODY -->
-        <t t-set="layout_background_url" t-value="'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else                 '/base/static/img/demo_logo_report.png' if company.layout_background == 'Demo logo' else ''"/>
-        <div t-attf-class="article o_report_layout_wave o_table_striped o_company_#{company.id}_layout {{'o_report_layout_background' if company.layout_background != 'Blank' else ''}}" t-attf-style="{{report_type != 'pdf' and 'margin-top:' + header_shape_height + 'px;'}}                 {{ 'background-image: url(%s);' % layout_background_url if layout_background_url else ''}}" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
-            <t t-set="custom_layout_address" t-value="true"/>
+            <!-- Document title -->
             <h2 t-out="layout_document_title" t-att-style="('font-size: 28px; line-height: 1.5; margin-top: 28px; margin-bottom: 12px;' if lang != 'th_TH' else 'font-size: 28px; line-height: 1.5; margin-top: 28px; margin-bottom: 12px;')"/>
+
             <!-- Address row: billing (address) LEFT, shipping (information_block) RIGHT -->
             <div t-if="address" class="address row mb-2" title="This block is not always present depending on the printed document.">
                 <t t-if="information_block">
@@ -91,7 +91,63 @@
                     </div>
                 </t>
             </div>
-            <div class="oe_structure" t-else=""/>
+
+            <!-- Info section (dates / references): repeated on every page -->
+            <div
+                id="informations" class="row mb-2 mx-0"
+                t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.secondary_color))"
+                t-if="o.invoice_date or (o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted') or o.delivery_date or o.invoice_origin or o.partner_id.ref or o.ref or o.invoice_incoterm_id">
+                <div class="col" t-if="o.invoice_date" name="invoice_date">
+                    <t t-if="o.move_type == 'out_invoice'"><strong>Invoice Date</strong></t>
+                    <t t-elif="o.move_type == 'out_refund'"><strong>Credit Note Date</strong></t>
+                    <t t-elif="o.move_type == 'out_receipt'"><strong>Receipt Date</strong></t>
+                    <t t-else=""><strong>Date</strong></t>
+                    <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('invoice_date')">03/ส.ค./2569</div></t>
+                    <t t-else=""><div t-field="o.invoice_date">2026-09-12</div></t>
+                </div>
+                <div class="col" t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'" name="due_date">
+                    <strong>Due Date</strong>
+                    <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('invoice_date_due')">02/ก.ย./2569</div></t>
+                    <t t-else=""><div t-field="o.invoice_date_due">2026-10-31</div></t>
+                </div>
+                <div class="col" t-if="o.taxable_supply_date and o.show_taxable_supply_date" name="taxable_supply_date">
+                    <strong>Taxable Supply</strong>
+                    <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('taxable_supply_date')">03/ส.ค./2569</div></t>
+                    <t t-else=""><div t-field="o.taxable_supply_date">2026-10-31</div></t>
+                </div>
+                <div class="col" t-if="o.delivery_date" name="delivery_date">
+                    <strong>Delivery Date</strong>
+                    <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('delivery_date')">03/ส.ค./2569</div></t>
+                    <t t-else=""><div t-field="o.delivery_date">2026-09-25</div></t>
+                </div>
+                <div class="col" t-if="o.invoice_origin" name="origin">
+                    <strong>Source</strong>
+                    <div t-field="o.invoice_origin">SO123</div>
+                </div>
+                <div class="col" t-if="o.partner_id.ref" name="customer_code">
+                    <strong>Customer Code</strong>
+                    <div t-field="o.partner_id.ref"/>
+                </div>
+                <div class="col" t-if="o.ref" name="reference">
+                    <strong>Reference</strong>
+                    <div t-field="o.ref">INV/2026/0001</div>
+                </div>
+                <div class="col" t-if="o.invoice_incoterm_id" name="incoterm_id">
+                    <strong>Incoterm</strong>
+                    <div t-if="o.incoterm_location">
+                        <span t-field="o.invoice_incoterm_id.code"/> <br/>
+                        <span t-field="o.incoterm_location"/>
+                    </div>
+                    <div t-else="" t-field="o.invoice_incoterm_id.code" class="m-0"/>
+                </div>
+            </div>
+        </div>
+
+        <!-- BODY -->
+        <t t-set="layout_background_url" t-value="'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else                 '/base/static/img/demo_logo_report.png' if company.layout_background == 'Demo logo' else ''"/>
+        <div t-attf-class="article o_report_layout_wave o_table_striped o_company_#{company.id}_layout {{'o_report_layout_background' if company.layout_background != 'Blank' else ''}}" t-attf-style="{{report_type != 'pdf' and 'margin-top:' + header_shape_height + 'px;'}}                 {{ 'background-image: url(%s);' % layout_background_url if layout_background_url else ''}}" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-set="custom_layout_address" t-value="true"/>
+            <div class="oe_structure"/>
             <t t-out="0"/>
         </div>
 
@@ -103,7 +159,14 @@
             <div t-attf-class="o_footer_content {{report_type != 'pdf' and 'position-absolute end-0 start-0 bottom-0 mx-5'}} pt-5 text-center">
                 <div t-field="company.report_footer"/>
                 <span t-if="report_type == 'pdf' and display_name_in_footer" class="text-muted" t-out="str(o.name) + ', '">(document name)</span>
-                <span t-if="report_type == 'pdf'" class="text-muted">Page <span class="page"/> / <span class="topage"/></span>
+                <t t-if="report_type == 'pdf'">
+                    <t t-if="lang == 'th_TH'">
+                        <span class="text-muted">หน้าที่ <span class="page"/> / <span class="topage"/></span>
+                    </t>
+                    <t t-else="">
+                        <span class="text-muted">Page <span class="page"/> / <span class="topage"/></span>
+                    </t>
+                </t>
             </div>
         </div>
     </template>
