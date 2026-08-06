@@ -592,6 +592,6 @@
         <field name="binding_model_id" ref="account.model_account_move"/>
         <field name="binding_type">report</field>
         <field name="is_invoice_report" eval="True"/>
-        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
     </record>
 </odoo>
