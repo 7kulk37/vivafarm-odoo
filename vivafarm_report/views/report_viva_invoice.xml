@@ -10,6 +10,7 @@
     <template id="viva_invoice_document"
               name="VivaFarm Invoice Document">
         <t t-call="vivafarm_report.external_layout_viva">
+            <t t-set="is_tax_invoice" t-value="True"/>
             <t t-set="o" t-value="o.with_context(lang=lang)" />
             <t t-set="forced_vat" t-value="o.fiscal_position_id.foreign_vat"/>
             <style>

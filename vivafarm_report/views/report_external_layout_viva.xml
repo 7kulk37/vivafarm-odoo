@@ -25,7 +25,7 @@
              (Commercial Invoice, Invoice PDF, ...) get the Viva branding
              (logo + wave + company) and render their own title/address/info
              in the body. -->
-        <t t-set="is_tax_invoice" t-value="report_xml_id == 'vivafarm_report.report_viva_invoice'"/>
+        <t t-set="is_tax_invoice" t-value="is_tax_invoice or report_xml_id == 'vivafarm_report.report_viva_invoice'"/>
         <t t-set="header_shape_height" t-value="'200'"/>
         <div t-attf-class="header o_company_#{company.id}_layout {{report_type != 'pdf' and 'h-0'}}" style="position: relative; padding: 41px 19pt 0;">
             <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 {{report_type == 'pdf' and 'vw-100' or 'w-100'}} z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
