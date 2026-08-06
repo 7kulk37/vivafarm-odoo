@@ -13,11 +13,11 @@
     """,
     'depends': ['l10n_th', 'account'],
     'data': [
-        'data/report_layout_data.xml',
         'views/res_company_views.xml',
         'views/report_external_layout_viva.xml',
         'views/report_viva_invoice.xml',
         'views/account_move_views.xml',
+        'data/report_layout_data.xml',
     ],
     'installable': True,
     'application': False,
