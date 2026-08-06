@@ -21,7 +21,7 @@
              customer/shipping addresses + info section, so every sheet of a
              multi-page tax invoice carries elements (1)-(5) per ป.86/2542 ข้อ 9(2). -->
         <t t-set="header_shape_height" t-value="'200'"/>
-        <div t-attf-class="header o_company_#{company.id}_layout {{report_type != 'pdf' and 'h-0'}}" style="position: relative; padding-top: 36px;">
+        <div t-attf-class="header o_company_#{company.id}_layout {{report_type != 'pdf' and 'h-0'}}" style="position: relative; padding-top: 41px;">
             <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 w-100 z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
                 <path d="M1000 230.734C937.384 240.621 803.83 250.266 562.185 220.602C311.343 189.809 104.626 201.375 0 211.598V0.5H1000V230.734Z" t-att-fill="company.primary_color" fill-opacity=".1"/>
             </svg>
