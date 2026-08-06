@@ -277,7 +277,7 @@
                             </tr>
                         </tfoot>
                     </table>
-                    <div class="overflow-hidden">
+                    <div class="overflow-hidden" t-att-style="'page-break-before: always; page-break-inside: avoid;' if o._is_multipage() else ''">
                         <t t-set="payment_term_details" t-value="o.payment_term_details"/>
                         <div id="right-elements" t-attf-class="#{'col-5' if report_type == 'pdf' else 'col-12 col-md-5'} ms-5 d-inline-block float-end" t-att-style="'border-top: 2px solid %s; margin-top: 12pt;' % (o.company_id.primary_color or '#000000')">
                             <div id="total" class="clearfix row">
