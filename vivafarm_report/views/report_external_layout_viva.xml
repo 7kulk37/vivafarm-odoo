@@ -61,7 +61,7 @@
             <!-- Document title (nowrap: must stay one line at side margins).
                  margin-top calibrated so title lands at y=147.4 like the
                  reference perfect-1-page fit (INV/2026/00058) -->
-            <h2 t-out="layout_document_title" t-att-style="'font-size: 28px; line-height: 1.5; margin-top: 61px; margin-bottom: 12px; white-space: nowrap;'"/>
+            <h2 t-out="layout_document_title" t-att-style="'font-size: 28px; line-height: 1.5; margin-top: 83px; margin-bottom: 12px; white-space: nowrap;'"/>
 
             <!-- Address row: billing (address) LEFT, shipping (information_block) RIGHT -->
             <div t-if="address" class="address row mb-2" title="This block is not always present depending on the printed document.">

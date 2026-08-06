@@ -15,17 +15,19 @@
          anchored at the frame's bottom edge. If header_spacing < margin_top the
          tall header rides down and overlaps the body table; with equal values the
          frame is zero-height and content anchors at the top of the page.
-         margin_left/right (5.6mm) match the reference perfect-1-page fit
-         (Tax Invoice-72_perfect_onepage_fit.pdf: content inset ~26.2pt =
-         5.6mm + the template's ~10pt baseline padding). -->
+         margin_left/right (0) restore the reference perfect-1-page fit: the
+         reference (INV/2026/00058) used the default A4 paperformat
+         (margin_left/right=0) — the ~26.2pt side inset and full-bleed wave
+         (x=[0,595]) come from the template's own padding, not paperformat.
+         Any positive margin insets the header wave (measured 16pt each side). -->
     <record id="paperformat_viva_invoice" model="report.paperformat">
         <field name="name">VivaFarm Tax Invoice A4</field>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
         <field name="margin_top">90</field>
         <field name="margin_bottom">32</field>
-        <field name="margin_left">5.6</field>
-        <field name="margin_right">5.6</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
         <field name="header_spacing">90</field>
         <field name="dpi">90</field>
     </record>
