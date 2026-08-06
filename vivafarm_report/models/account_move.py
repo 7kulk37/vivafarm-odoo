@@ -30,6 +30,11 @@ class AccountMove(models.Model):
         beyond the baseline tax row adds height. Every extra row consumes
         ~1 product-line equivalent (~26pt), so they count toward the
         single-sheet capacity.
+
+        Product rows are also taller when the line name wraps: each embedded
+        newline adds a text line (~26pt), e.g. names built from product
+        internal reference + name ('[TRIM-001] Gasoline Grass Trimmer\n...')
+        render two lines per row.
         """
         self.ensure_one()
         if self.move_type != 'out_invoice':
@@ -42,7 +47,10 @@ class AccountMove(models.Model):
         # Baseline totals table always has exactly one tax row (VAT or
         # VAT-exempt); only rows beyond that add height.
         extra_rows += max(0, len(tt['vat_rows']) + len(tt['exempt_rows']) - 1)
-        effective_lines = len(product_lines) + extra_rows
+        # Multi-line product names: each embedded newline adds a text line.
+        wrapped_lines = sum(max(0, (l.name or '').count('\n'))
+                            for l in product_lines)
+        effective_lines = len(product_lines) + extra_rows + wrapped_lines
         if effective_lines >= MULTIPAGE_PRODUCT_LINES:
             return True
         # A long description (>30 newlines) can make the line-item table span
