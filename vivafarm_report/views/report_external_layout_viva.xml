@@ -101,42 +101,61 @@
                 t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px; margin-top: 18px; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.secondary_color))"
                 t-if="o.invoice_date or (o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted') or o.delivery_date or o.invoice_origin or o.partner_id.ref or o.ref or o.invoice_incoterm_id">
                 <div class="col" t-if="o.invoice_date" name="invoice_date">
-                    <t t-if="o.move_type == 'out_invoice'"><strong>Invoice Date</strong></t>
-                    <t t-elif="o.move_type == 'out_refund'"><strong>Credit Note Date</strong></t>
-                    <t t-elif="o.move_type == 'out_receipt'"><strong>Receipt Date</strong></t>
-                    <t t-else=""><strong>Date</strong></t>
+                    <t t-if="o.move_type == 'out_invoice'">
+                        <t t-if="lang == 'th_TH'"><strong>วันที่ออกใบแจ้งหนี้</strong></t>
+                        <t t-else=""><strong>Invoice Date</strong></t>
+                    </t>
+                    <t t-elif="o.move_type == 'out_refund'">
+                        <t t-if="lang == 'th_TH'"><strong>วันที่บันทึกเครดิต</strong></t>
+                        <t t-else=""><strong>Credit Note Date</strong></t>
+                    </t>
+                    <t t-elif="o.move_type == 'out_receipt'">
+                        <t t-if="lang == 'th_TH'"><strong>วันที่รับสินค้า</strong></t>
+                        <t t-else=""><strong>Receipt Date</strong></t>
+                    </t>
+                    <t t-else="">
+                        <t t-if="lang == 'th_TH'"><strong>วันที่</strong></t>
+                        <t t-else=""><strong>Date</strong></t>
+                    </t>
                     <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('invoice_date')">03/ส.ค./2569</div></t>
                     <t t-else=""><div t-field="o.invoice_date">2026-09-12</div></t>
                 </div>
                 <div class="col" t-if="o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted'" name="due_date">
-                    <strong>Due Date</strong>
+                    <t t-if="lang == 'th_TH'"><strong>กำหนดส่ง</strong></t>
+                    <t t-else=""><strong>Due Date</strong></t>
                     <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('invoice_date_due')">02/ก.ย./2569</div></t>
                     <t t-else=""><div t-field="o.invoice_date_due">2026-10-31</div></t>
                 </div>
                 <div class="col" t-if="o.taxable_supply_date and o.show_taxable_supply_date" name="taxable_supply_date">
-                    <strong>Taxable Supply</strong>
+                    <t t-if="lang == 'th_TH'"><strong>วันที่ขายสินค้า</strong></t>
+                    <t t-else=""><strong>Taxable Supply</strong></t>
                     <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('taxable_supply_date')">03/ส.ค./2569</div></t>
                     <t t-else=""><div t-field="o.taxable_supply_date">2026-10-31</div></t>
                 </div>
                 <div class="col" t-if="o.delivery_date" name="delivery_date">
-                    <strong>Delivery Date</strong>
+                    <t t-if="lang == 'th_TH'"><strong>วันที่จัดส่งสินค้า</strong></t>
+                    <t t-else=""><strong>Delivery Date</strong></t>
                     <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('delivery_date')">03/ส.ค./2569</div></t>
                     <t t-else=""><div t-field="o.delivery_date">2026-09-25</div></t>
                 </div>
                 <div class="col" t-if="o.invoice_origin" name="origin">
-                    <strong>Source</strong>
+                    <t t-if="lang == 'th_TH'"><strong>แหล่งที่มา</strong></t>
+                    <t t-else=""><strong>Source</strong></t>
                     <div t-field="o.invoice_origin">SO123</div>
                 </div>
                 <div class="col" t-if="o.partner_id.ref" name="customer_code">
-                    <strong>Customer Code</strong>
+                    <t t-if="lang == 'th_TH'"><strong>รหัสลูกค้า</strong></t>
+                    <t t-else=""><strong>Customer Code</strong></t>
                     <div t-field="o.partner_id.ref"/>
                 </div>
                 <div class="col" t-if="o.ref" name="reference">
-                    <strong>Reference</strong>
+                    <t t-if="lang == 'th_TH'"><strong>ข้อมูลอ้างอิง</strong></t>
+                    <t t-else=""><strong>Reference</strong></t>
                     <div t-field="o.ref">INV/2026/0001</div>
                 </div>
                 <div class="col" t-if="o.invoice_incoterm_id" name="incoterm_id">
-                    <strong>Incoterm</strong>
+                    <t t-if="lang == 'th_TH'"><strong>เงื่อนไขการส่งมอบ</strong></t>
+                    <t t-else=""><strong>Incoterm</strong></t>
                     <div t-if="o.incoterm_location">
                         <span t-field="o.invoice_incoterm_id.code"/> <br/>
                         <span t-field="o.incoterm_location"/>
