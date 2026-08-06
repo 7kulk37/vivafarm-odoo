@@ -25,11 +25,11 @@ class AccountMove(models.Model):
         to keep the ending block on the last sheet.
 
         The ending block (totals + payment + T&C + signatures) is taller when
-        the totals table carries extra rows: a discount adds 2 rows
-        (Discount + Total After Discount) and each additional VAT/exempt row
-        beyond the baseline tax row adds height. Every extra row consumes
-        ~1 product-line equivalent (~26pt), so they count toward the
-        single-sheet capacity.
+        the totals table carries extra rows: each VAT/exempt row beyond the
+        baseline tax row adds height. Every extra row consumes ~1 product-line
+        equivalent (~26pt), so they count toward the single-sheet capacity.
+        (Discounts are never shown on the invoice — pricelist-only pricing —
+        so they add no rows.)
 
         Product rows are also taller when the line name wraps: each embedded
         newline adds a text line (~26pt), e.g. names built from product
@@ -42,8 +42,6 @@ class AccountMove(models.Model):
         product_lines = self.invoice_line_ids.filtered(lambda l: l.display_type == 'product')
         tt = self._get_tax_invoice_totals()
         extra_rows = 0
-        if tt['discount']:
-            extra_rows += 2  # Discount + Total After Discount rows
         # Baseline totals table always has exactly one tax row (VAT or
         # VAT-exempt); only rows beyond that add height.
         extra_rows += max(0, len(tt['vat_rows']) + len(tt['exempt_rows']) - 1)
@@ -99,13 +97,26 @@ class AccountMove(models.Model):
         Withholding-tax groups are excluded: WHT is an income-tax matter
         handled by the buyer with a separate certificate, never shown on a
         seller's VAT tax invoice.
+
+        Discounts are never shown on the invoice: VivaFarm pricing is
+        pricelist-only (no manual per-line discounts), and a pricelist
+        discount is already reflected in the lower selling price. The line
+        table shows the effective (discounted) unit price and the totals
+        table has no Discount / Total After Discount rows.
+
+        price_subtotal is the pre-tax, post-discount line amount (VAT is
+        already extracted for price-included taxes), so it is the gross
+        shown as Total Amount. This keeps the rows reconciling:
+        Total Amount + VAT = Grand Total. (Previously gross_total used
+        price_unit * qty, which for price-included VAT included the tax and
+        made Total Amount equal Grand Total.)
         """
         self.ensure_one()
         tt = self.tax_totals or {}
         lines = self.invoice_line_ids.filtered(lambda l: l.display_type == 'product')
-        gross_total = sum(l.price_unit * l.quantity for l in lines)
-        discount = sum(l.price_unit * l.quantity * (l.discount or 0.0) / 100.0 for l in lines)
-        net_total = tt.get('base_amount_currency', gross_total - discount)
+        gross_total = sum(l.price_subtotal for l in lines)
+        discount = 0.0
+        net_total = tt.get('base_amount_currency', gross_total)
         vat_rows = []
         exempt_rows = []
         for subtotal in tt.get('subtotals') or []:

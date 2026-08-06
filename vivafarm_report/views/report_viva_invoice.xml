@@ -167,20 +167,16 @@
                     <div class="oe_structure"></div>
 
                     <t t-set="lines_to_report" t-value="o._get_move_lines_to_report()"/>
-                    <t t-set="display_discount" t-value="any(l.discount for l in lines_to_report)"/>
                     <t t-set="display_taxes" t-value="any(l.tax_ids for l in o.invoice_line_ids)"/>
                     <div class="oe_structure"></div>
                     <t t-set="has_long_desc" t-value="any(line.name and line.name.count('\n') > 30 for line in o.invoice_line_ids if line.name)"/>
                     <table class="o_has_total_table table o_main_table table-borderless mb-0" name="invoice_line_table">
-                        <thead t-attf-style="#{has_long_desc and 'display: table-row-group;' or ''}">
+                        <thead>
                             <tr>
                                 <th name="th_no" class="fw-bold text-center" style="width: 5%;"><span><t t-if="lang == 'th_TH'">ลำดับ</t><t t-else="">NO.</t></span></th>
                                 <th name="th_description" class="fw-bold text-start"><span>Description</span></th>
                                 <th name="th_quantity" class="fw-bold text-end"><span>Quantity</span></th>
                                 <th name="th_priceunit" t-attf-class="fw-bold text-end text-nowrap {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Unit Price</span></th>
-                                <th name="th_discount" t-if="display_discount" t-attf-class="fw-bold text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
-                                    <span>Disc.%</span>
-                                </th>
                                 <th name="th_taxes" t-if="display_taxes" t-attf-class="fw-bold text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Taxes</span></th>
                                 <th name="th_subtotal" class="fw-bold text-end">
                                     <span>Amount</span>
@@ -226,7 +222,7 @@
                                         'fw-bold o_line_subsection' if is_subsection else
                                         'fst-italic o_line_note' if is_note
                                         else ''">
-                                        <t t-set="line_colspan" t-value="4 + (1 if display_discount else 0) + (1 if display_taxes and not line.tax_ids else 0)"/>
+                                        <t t-set="line_colspan" t-value="4 + (1 if display_taxes and not line.tax_ids else 0)"/>
                                         <t t-if="is_product" name="account_invoice_line_accountable">
                                             <td name="td_no" class="text-center">
                                                 <span t-out="line_no">1</span>
@@ -245,9 +241,6 @@
                                             </td>
                                             <td name="td_price_unit" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
                                                 <span t-if="not hide_prices" class="text-nowrap" t-field="line.price_unit">100.00</span>
-                                            </td>
-                                            <td name="td_discount" t-if="display_discount" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
-                                                <span class="text-nowrap" t-field="line.discount">0</span>
                                             </td>
                                             <t t-set="taxes" t-value="', '.join(tax.tax_label for tax in line.tax_ids if tax.tax_label)"/>
                                             <td name="td_taxes" t-if="display_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }} {{ 'text-nowrap' if len(taxes) &lt; 10 else '' }}">
@@ -292,24 +285,6 @@
                                             </td>
                                             <td class="text-end">
                                                 <span t-out="tt_rows['gross_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
-                                            </td>
-                                        </tr>
-                                        <tr t-if="tt_rows['discount']">
-                                            <td>
-                                                <t t-if="lang == 'th_TH'">ส่วนลด</t>
-                                                <t t-else="">Discount</t>
-                                            </td>
-                                            <td class="text-end">
-                                                <span t-out="tt_rows['discount']" t-options='{"widget": "monetary", "display_currency": currency}'/>
-                                            </td>
-                                        </tr>
-                                        <tr t-if="tt_rows['discount']">
-                                            <td>
-                                                <t t-if="lang == 'th_TH'">มูลค่าสินค้าหลังหักส่วนลด</t>
-                                                <t t-else="">Total After Discount</t>
-                                            </td>
-                                            <td class="text-end">
-                                                <span t-out="tt_rows['net_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
                                             </td>
                                         </tr>
                                         <t t-foreach="tt_rows['vat_rows']" t-as="vrow">
