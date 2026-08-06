@@ -267,6 +267,15 @@
                                 </t>
                             </t>
                         </tbody>
+                        <tfoot t-if="o._is_multipage()">
+                            <tr>
+                                <td colspan="6" class="text-center fst-italic"
+                                    style="padding-top: 6pt; padding-bottom: 2pt; border-top: 1px solid #ccc;">
+                                    <t t-if="lang == 'th_TH'">โปรดดูหน้าถัดไป (มีใบกำกับภาษีแผ่นต่อไป)</t>
+                                    <t t-else="">Continued on next page...</t>
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                     <div class="overflow-hidden">
                         <t t-set="payment_term_details" t-value="o.payment_term_details"/>
