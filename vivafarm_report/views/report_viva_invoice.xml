@@ -219,16 +219,17 @@
                                 <t t-if="not hide_details and not hide_prices">
                                     <t t-set="line_colspan" t-value="4 + (1 if display_taxes and not line.tax_ids else 0)"/>
                                     <t t-if="is_product" name="account_invoice_line_accountable">
-                                        <!-- Split long product names into chunks of <=16 lines so no single
+                                        <!-- Split long product names into chunks of <=15 lines so no single
                                              table row spans a page boundary. wkhtmltopdf 0.12.6.1 renders
                                              tfoot at the TOP of the first page (overlapping the row) and
                                              skips intermediate pages when one row spans pages; with
                                              bounded rows the tfoot repeats correctly at the end of the
-                                             table on every non-final sheet. Chunk 20 was measured to
-                                             still trigger the bug (20 lines ~300pt); 16 is the largest
+                                             table on every non-final sheet. Measured in full Odoo CSS:
+                                             16 lines (~400pt) + thead + tfoot exceeds the 448pt usable
+                                             page height and still triggers the bug; 15 is the largest
                                              verified-safe size. -->
                                         <t t-set="name_lines" t-value="(line.name or '').split('\n')"/>
-                                        <t t-set="name_chunks" t-value="[name_lines[i:i+16] for i in range(0, len(name_lines), 16)]"/>
+                                        <t t-set="name_chunks" t-value="[name_lines[i:i+15] for i in range(0, len(name_lines), 15)]"/>
                                         <t t-foreach="name_chunks" t-as="chunk">
                                             <t t-if="chunk_index == 0">
                                                 <tr>
