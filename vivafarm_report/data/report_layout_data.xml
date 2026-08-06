@@ -19,16 +19,19 @@
          reference (INV/2026/00058) used the default A4 paperformat
          (margin_left/right=0) — the ~26.2pt side inset and full-bleed wave
          (x=[0,595]) come from the template's own padding, not paperformat.
-         Any positive margin insets the header wave (measured 16pt each side). -->
+         Any positive margin insets the header wave (measured 16pt each side).
+         margin_top (107mm) places the body table at y=303.4 exactly like the
+         reference (old template flowed naturally: title 147.4 -> info 257.3
+         -> table 303.4); 90mm made the body overlap the taller header. -->
     <record id="paperformat_viva_invoice" model="report.paperformat">
         <field name="name">VivaFarm Tax Invoice A4</field>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
-        <field name="margin_top">90</field>
+        <field name="margin_top">107</field>
         <field name="margin_bottom">32</field>
         <field name="margin_left">0</field>
         <field name="margin_right">0</field>
-        <field name="header_spacing">90</field>
+        <field name="header_spacing">107</field>
         <field name="dpi">90</field>
     </record>
 </odoo>
