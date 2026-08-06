@@ -19,6 +19,24 @@ class AccountMove(models.Model):
         day_month = format_date(self.env, value, lang_code='th_TH', date_format='dd/MMM')
         return '%s/%s' % (day_month, value.year + 543)
 
+    def _get_state_display(self, state):
+        """State name in the report language.
+
+        ``res.country.state.name`` is NOT translatable in Odoo 19 — the base
+        data stores Thai names (e.g. ``กรุงเทพมหานคร``). For en_US reports,
+        map the states we use to their English names; fall back to the stored
+        name for any other state or language.
+        """
+        if not state:
+            return ''
+        if self.env.lang == 'en_US':
+            return {
+                'กรุงเทพมหานคร': 'Bangkok',
+                'สมุทรปราการ': 'Samut Prakan',
+                'ภูเก็ต': 'Phuket',
+            }.get(state.name, state.name)
+        return state.name
+
     def _get_tax_invoice_copies(self):
         """Copies to print for a tax invoice (Thai practice: 3 copies).
 
