@@ -17,6 +17,7 @@ class ResPartner(models.Model):
         if self.env.lang == 'en_US':
             return {
                 'กรุงเทพมหานคร': 'Bangkok',
+                'กระบี่': 'Krabi',
                 'สมุทรปราการ': 'Samut Prakan',
                 'ภูเก็ต': 'Phuket',
             }.get(state.name, state.name)
