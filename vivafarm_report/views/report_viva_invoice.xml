@@ -518,11 +518,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row" style="margin-top: 2px; clear: both;">
+                            <div class="row" style="margin-top: 5px; clear: both;">
                                 <div class="col-12" style="width: 100%;">
                                     <!-- ── Signature blocks (VivaFarm specific) ── -->
                                     <div style="page-break-inside: avoid;">
-                                        <div class="text-muted" style="font-size: 12px; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
+                                        <div class="text-muted" style="font-size: 12px; font-weight: bold; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
                                             <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
                                             <t t-else="">Signatures below constitute acceptance in accordance with the Terms &amp; Conditions of this document.</t>
                                         </div>
