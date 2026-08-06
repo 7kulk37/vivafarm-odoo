@@ -26,7 +26,13 @@ class AccountMove(models.Model):
         if self.move_type != 'out_invoice':
             return False
         product_lines = self.invoice_line_ids.filtered(lambda l: l.display_type == 'product')
-        return len(product_lines) >= MULTIPAGE_PRODUCT_LINES
+        if len(product_lines) >= MULTIPAGE_PRODUCT_LINES:
+            return True
+        # A long description (>30 newlines) can make the line-item table span
+        # pages even with few lines — mirror the template's has_long_desc
+        # heuristic so the continuation note + grouped ending still apply.
+        return any(line.name and line.name.count('\n') > 30
+                   for line in self.invoice_line_ids if line.name)
 
     def _get_thai_date_display(self, field_name):
         """Date in Thai tax-invoice style: '03/ส.ค./2569' (Buddhist Era year = CE + 543).
