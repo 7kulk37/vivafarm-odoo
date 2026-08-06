@@ -43,9 +43,8 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div class="mt-1">
-                                <t t-if="lang == 'th_TH'">สาขา: สำนักงานใหญ่ (00000)</t>
-                                <t t-else="">branch: Headquarter (00000)</t>
+                            <div class="mt-1" t-if="o.partner_id.l10n_th_branch_name">
+                                <span t-esc="o.partner_id.l10n_th_branch_name"/>
                             </div>
                         </t>
                     </div>
@@ -58,9 +57,8 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div class="mt-1">
-                                <t t-if="lang == 'th_TH'">สาขา: สำนักงานใหญ่ (00000)</t>
-                                <t t-else="">branch: Headquarter (00000)</t>
+                            <div class="mt-1" t-if="o.partner_id.l10n_th_branch_name">
+                                <span t-esc="o.partner_id.l10n_th_branch_name"/>
                             </div>
                         </t>
                     </div>
@@ -73,9 +71,8 @@
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                                 <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                             </div>
-                            <div class="mt-1">
-                                <t t-if="lang == 'th_TH'">สาขา: สำนักงานใหญ่ (00000)</t>
-                                <t t-else="">branch: Headquarter (00000)</t>
+                            <div class="mt-1" t-if="o.partner_id.l10n_th_branch_name">
+                                <span t-esc="o.partner_id.l10n_th_branch_name"/>
                             </div>
                         </t>
                     </div>
