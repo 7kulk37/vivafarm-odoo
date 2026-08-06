@@ -19,7 +19,7 @@
                 /* Compact T&amp;C so the signature section fits on one page (TH + EN).
                    Stored narration uses inline font-size:10px — override with !important. */
                 #terms_note h4 { margin-top: 4px !important; margin-bottom: 2px !important; font-size: 12px !important; font-weight: bold !important; }
-                #terms_note ol { font-size: 12px !important; line-height: 1.2 !important; margin-bottom: 1px !important; padding-left: 13px !important; }
+                #terms_note ol { font-size: 12px !important; line-height: 1.2 !important; margin-bottom: 1px !important; padding-left: 17px !important; }
                 #terms_note li { font-size: 12px !important; line-height: 1.2 !important; margin-bottom: 0 !important; }
             </style>
             <div class="row">
