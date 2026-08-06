@@ -23,12 +23,27 @@ class AccountMove(models.Model):
         on the last sheet, and non-final sheets carry a continuation note.
         The report uses this flag to show the continuation note (tfoot) and
         to keep the ending block on the last sheet.
+
+        The ending block (totals + payment + T&C + signatures) is taller when
+        the totals table carries extra rows: a discount adds 2 rows
+        (Discount + Total After Discount) and each additional VAT/exempt row
+        beyond the baseline tax row adds height. Every extra row consumes
+        ~1 product-line equivalent (~26pt), so they count toward the
+        single-sheet capacity.
         """
         self.ensure_one()
         if self.move_type != 'out_invoice':
             return False
         product_lines = self.invoice_line_ids.filtered(lambda l: l.display_type == 'product')
-        if len(product_lines) >= MULTIPAGE_PRODUCT_LINES:
+        tt = self._get_tax_invoice_totals()
+        extra_rows = 0
+        if tt['discount']:
+            extra_rows += 2  # Discount + Total After Discount rows
+        # Baseline totals table always has exactly one tax row (VAT or
+        # VAT-exempt); only rows beyond that add height.
+        extra_rows += max(0, len(tt['vat_rows']) + len(tt['exempt_rows']) - 1)
+        effective_lines = len(product_lines) + extra_rows
+        if effective_lines >= MULTIPAGE_PRODUCT_LINES:
             return True
         # A long description (>30 newlines) can make the line-item table span
         # pages even with few lines — mirror the template's has_long_desc
