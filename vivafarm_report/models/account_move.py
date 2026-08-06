@@ -4,9 +4,10 @@ from odoo import models
 #: VivaFarm tax invoice. Calibrated on staging with the real business layout
 #: (exempt 0% VAT, 30-day payment term, no discounts): the ending block
 #: (totals + payment + T&C + signatures) measures ~309pt and each product row
-#: ~26.2pt, so 6 rows fit (signature block ends y=742pt vs 751pt usable) and
-#: 7 rows overflow. Only product lines count — sections/notes share a row.
-MULTIPAGE_PRODUCT_LINES = 7
+#: ~26.2pt. Reference geometry (margin_top 107mm) leaves ~4 lines per sheet:
+#: 4-line sig ends 739pt vs 751pt usable, 5-line ~766pt still fits, 6-line
+#: ~792pt overflows. Only product lines count — sections/notes share a row.
+MULTIPAGE_PRODUCT_LINES = 5
 
 
 class AccountMove(models.Model):
