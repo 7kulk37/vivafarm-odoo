@@ -25,7 +25,7 @@ msgstr "<span>คำอธิบาย</span>"
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
 msgid "<span>Quantity</span>"
-msgstr "<span>จำนวน</span>"
+msgstr "<span>จำนวน(หน่วย)</span>"
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
@@ -45,7 +45,7 @@ msgstr "<span>ภาษี</span>"
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
 msgid "<span>Amount</span>"
-msgstr "<span>จำนวน</span>"
+msgstr "<span>จำนวนเงิน</span>"
 
 #. module: vivafarm_report
 #: model_terms:ir.ui.view,arch_db:vivafarm_report.viva_invoice_document
