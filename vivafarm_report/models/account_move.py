@@ -7,7 +7,7 @@ from odoo import models
 #: ~26.2pt. Reference geometry (margin_top 107mm) leaves ~4 lines per sheet:
 #: 4-line sig ends 739pt vs 751pt usable, 5-line ~766pt still fits, 6-line
 #: ~792pt overflows. Only product lines count — sections/notes share a row.
-MULTIPAGE_PRODUCT_LINES = 5
+MULTIPAGE_PRODUCT_LINES = 6
 
 
 class AccountMove(models.Model):
