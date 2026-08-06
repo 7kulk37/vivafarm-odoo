@@ -22,7 +22,7 @@
              multi-page tax invoice carries elements (1)-(5) per ป.86/2542 ข้อ 9(2). -->
         <t t-set="header_shape_height" t-value="'200'"/>
         <div t-attf-class="header o_company_#{company.id}_layout {{report_type != 'pdf' and 'h-0'}}" style="position: relative; padding-top: 41px;">
-            <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 w-100 z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
+            <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 {{report_type == 'pdf' and 'vw-100' or 'w-100'}} z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
                 <path d="M1000 230.734C937.384 240.621 803.83 250.266 562.185 220.602C311.343 189.809 104.626 201.375 0 211.598V0.5H1000V230.734Z" t-att-fill="company.primary_color" fill-opacity=".1"/>
             </svg>
 
@@ -58,8 +58,10 @@
                 </div>
             </t>
 
-            <!-- Document title (nowrap: must stay one line at 13mm side margins) -->
-            <h2 t-out="layout_document_title" t-att-style="'font-size: 28px; line-height: 1.5; margin-top: 28px; margin-bottom: 12px; white-space: nowrap;'"/>
+            <!-- Document title (nowrap: must stay one line at side margins).
+                 margin-top calibrated so title lands at y=147.4 like the
+                 reference perfect-1-page fit (INV/2026/00058) -->
+            <h2 t-out="layout_document_title" t-att-style="'font-size: 28px; line-height: 1.5; margin-top: 61px; margin-bottom: 12px; white-space: nowrap;'"/>
 
             <!-- Address row: billing (address) LEFT, shipping (information_block) RIGHT -->
             <div t-if="address" class="address row mb-2" title="This block is not always present depending on the printed document.">
@@ -92,10 +94,11 @@
                 </t>
             </div>
 
-            <!-- Info section (dates / references): repeated on every page -->
+            <!-- Info section (dates / references): repeated on every page.
+                 margin-top: 18px matches the reference perfect-1-page fit. -->
             <div
                 id="informations" class="row mb-2 mx-0"
-                t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.secondary_color))"
+                t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px; margin-top: 18px; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.secondary_color))"
                 t-if="o.invoice_date or (o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted') or o.delivery_date or o.invoice_origin or o.partner_id.ref or o.ref or o.invoice_incoterm_id">
                 <div class="col" t-if="o.invoice_date" name="invoice_date">
                     <t t-if="o.move_type == 'out_invoice'"><strong>Invoice Date</strong></t>
