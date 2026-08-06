@@ -185,8 +185,10 @@
                    default layouts' thead th rule is scoped to .o_table_bold, which
                    o_main_table doesn't use. Make the header row visually distinct
                    (bold + top border) so it reads as a header, matching the tax
-                   invoice's fw-bold thead. No-op for the tax invoice (already bold). */
-                .article table.o_main_table thead th {
+                   invoice's fw-bold thead. :not(.fw-bold) excludes the tax invoice,
+                   whose th already carry fw-bold — adding a border there would
+                   shift its table down and break the reference geometry. */
+                .article table.o_main_table thead th:not(.fw-bold) {
                     font-weight: 700 !important;
                     border-top: 3px solid #212529 !important;
                 }
