@@ -5,4 +5,24 @@
         <field name="view_id" ref="vivafarm_report.external_layout_viva"/>
         <field name="image">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYPgPAAEDAQAIicLsAAAAASUVORK5CYII=</field>
     </record>
+
+    <!-- Tax invoice paperformat: copy of base.paperformat_euro with tighter
+         vertical margins so the invoice content reclaims ~67pt per page.
+         Scoped to the tax invoice report only (default=False; the report
+         action sets paperformat_id explicitly). Never mark this default. -->
+    <record id="paperformat_viva_invoice" model="report.paperformat">
+        <field name="name">VivaFarm Tax Invoice (tight)</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="dpi">90</field>
+        <field name="margin_top">40</field>
+        <field name="margin_bottom">20</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">52</field>
+        <field name="css_margins" eval="True"/>
+        <field name="disable_shrinking" eval="False"/>
+    </record>
 </odoo>
