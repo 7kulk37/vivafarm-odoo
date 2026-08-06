@@ -32,19 +32,29 @@
                                 <t t-else="">Shipping Address</t>
                             </strong>
                                 <div t-field="o.partner_shipping_id.name">Branch name</div>
-                                <div t-field="o.partner_shipping_id" t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/>
+                                <div t-if="o.partner_shipping_id.street or o.partner_shipping_id.street2">
+                                    <span t-field="o.partner_shipping_id.street"/><t t-if="o.partner_shipping_id.street and o.partner_shipping_id.street2">, </t><span t-field="o.partner_shipping_id.street2"/>
+                                </div>
+                                <div t-if="o.partner_shipping_id.city or o.partner_shipping_id.state_id or o.partner_shipping_id.zip">
+                                    <span t-field="o.partner_shipping_id.city"/><t t-if="o.partner_shipping_id.city and (o.partner_shipping_id.state_id or o.partner_shipping_id.zip)">, </t><span t-field="o.partner_shipping_id.state_id"/><t t-if="o.partner_shipping_id.state_id and o.partner_shipping_id.zip"> </t><span t-field="o.partner_shipping_id.zip"/>
+                                </div>
+                                <div t-if="o.partner_shipping_id.country_id" t-field="o.partner_shipping_id.country_id">Thailand</div>
                             </div>
                         </t>
                     </div>
                     <div class="col-6" name="address_not_same_as_shipping">
                         <t t-set="address">
-                            <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                            <div t-field="o.partner_id.name">Customer name</div>
+                            <div t-if="o.partner_id.street or o.partner_id.street2">
+                                <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                            </div>
+                            <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip">
+                                <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-field="o.partner_id.state_id"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/>
+                            </div>
+                            <div t-if="o.partner_id.country_id" t-field="o.partner_id.country_id">Thailand</div>
                             <div t-if="o.partner_id.vat" id="partner_vat_address_not_same_as_shipping">
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
-                                <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
-                            </div>
-                            <div class="mt-1" t-if="o.partner_id.l10n_th_branch_name">
-                                <span t-esc="o.partner_id.l10n_th_branch_name"/>
+                                <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/><t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
                             </div>
                         </t>
                     </div>
@@ -52,13 +62,17 @@
                 <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">
                     <div class="offset-col-6 col-6" name="address_same_as_shipping">
                         <t t-set="address">
-                            <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                            <div t-field="o.partner_id.name">Customer name</div>
+                            <div t-if="o.partner_id.street or o.partner_id.street2">
+                                <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                            </div>
+                            <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip">
+                                <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-field="o.partner_id.state_id"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/>
+                            </div>
+                            <div t-if="o.partner_id.country_id" t-field="o.partner_id.country_id">Thailand</div>
                             <div t-if="o.partner_id.vat" id="partner_vat_address_same_as_shipping">
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
-                                <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
-                            </div>
-                            <div class="mt-1" t-if="o.partner_id.l10n_th_branch_name">
-                                <span t-esc="o.partner_id.l10n_th_branch_name"/>
+                                <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/><t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
                             </div>
                         </t>
                     </div>
@@ -66,13 +80,17 @@
                 <t t-else="">
                     <div class="offset-col-6 col-6" name="no_shipping">
                         <t t-set="address">
-                            <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                            <div t-field="o.partner_id.name">Customer name</div>
+                            <div t-if="o.partner_id.street or o.partner_id.street2">
+                                <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                            </div>
+                            <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip">
+                                <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-field="o.partner_id.state_id"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/>
+                            </div>
+                            <div t-if="o.partner_id.country_id" t-field="o.partner_id.country_id">Thailand</div>
                             <div t-if="o.partner_id.vat" id="partner_vat_no_shipping">
                                 <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
-                                <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
-                            </div>
-                            <div class="mt-1" t-if="o.partner_id.l10n_th_branch_name">
-                                <span t-esc="o.partner_id.l10n_th_branch_name"/>
+                                <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/><t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
                             </div>
                         </t>
                     </div>
