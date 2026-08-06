@@ -531,7 +531,7 @@
                                                 <t t-if="lang == 'th_TH'">ลูกค้า/ผู้รับสินค้า</t>
                                                 <t t-else="">Received by Customer</t>
                                             </strong><br/>
-                                            <div style="min-height: 24px; max-height: 24px;"></div>
+                                            <div style="min-height: 40px; max-height: 40px;"></div>
                                             <div style="font-size: 10px; margin-top: 0;">
                                                 <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
                                                 <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
@@ -545,10 +545,10 @@
                                                 <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
                                                 <t t-else="">Authorized Signatory</t>
                                             </strong><br/>
-                                            <div style="min-height: 24px; max-height: 24px;">
+                                            <div style="min-height: 40px; max-height: 40px;">
                                                 <img t-if="o.company_id.l10n_th_signature_image"
                                                      t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
-                                                     style="max-height: 24px;"
+                                                     style="max-height: 40px;"
                                                      alt="Authorized Signature"/>
                                             </div>
                                             <div style="font-size: 10px; margin-top: 0;">
