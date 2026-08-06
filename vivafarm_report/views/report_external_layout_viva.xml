@@ -20,12 +20,10 @@
              Contains logo + company + copy badge + document title +
              customer/shipping addresses + info section, so every sheet of a
              multi-page tax invoice carries elements (1)-(5) per ป.86/2542 ข้อ 9(2).
-             The document-specific parts (badge/title/address/info) render ONLY
-             for the tax invoice report (report_xml_id); standard reports
-             (Commercial Invoice, Invoice PDF, ...) get the Viva branding
-             (logo + wave + company) and render their own title/address/info
-             in the body. -->
-        <t t-set="is_tax_invoice" t-value="is_tax_invoice or report_xml_id == 'vivafarm_report.report_viva_invoice'"/>
+             The same full header is used by standard reports (Commercial
+             Invoice, Invoice PDF) when this layout is the company's global
+             document layout — the standard body's own info section is hidden
+             via CSS in the article (see below) to avoid duplication. -->
         <t t-set="header_shape_height" t-value="'200'"/>
         <div t-attf-class="header o_company_#{company.id}_layout {{report_type != 'pdf' and 'h-0'}}" style="position: relative; padding: 41px 19pt 0;">
             <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 {{report_type == 'pdf' and 'vw-100' or 'w-100'}} z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
@@ -52,7 +50,7 @@
                     </div>
                 </div>
             </div>
-            <t t-if="is_tax_invoice and copy_kind">
+            <t t-if="copy_kind">
                 <t t-set="badge_color" t-value="company.primary_color if copy_kind == 'original' else ('#d9534f' if copy_kind == 'company' else '#2980b9')"/>
                 <div t-att-style="'position: absolute; top: 33px; right: 45px; border: 2px solid %s; border-radius: 4px; padding: 2px 12px; font-weight: bold; font-size: 11px; background: #fff; white-space: nowrap; color: %s;' % (badge_color, badge_color)">
                     <t t-if="lang == 'th_TH'">
@@ -67,10 +65,10 @@
             <!-- Document title (nowrap: must stay one line at side margins).
                  margin-top calibrated so title lands at y=147.4 like the
                  reference perfect-1-page fit (INV/2026/00058) -->
-            <h2 t-if="is_tax_invoice" t-out="layout_document_title" t-att-style="'font-size: 28px; line-height: 1.5; margin-top: 83px; margin-bottom: 12px; white-space: nowrap;'"/>
+            <h2 t-out="layout_document_title" t-att-style="'font-size: 28px; line-height: 1.5; margin-top: 83px; margin-bottom: 12px; white-space: nowrap;'"/>
 
             <!-- Address row: billing (address) LEFT, shipping (information_block) RIGHT -->
-            <div t-if="is_tax_invoice and address" class="address row mb-2" title="This block is not always present depending on the printed document.">
+            <div t-if="address" class="address row mb-2" title="This block is not always present depending on the printed document.">
                 <t t-if="information_block">
                     <div name="address" class="col-6">
                         <strong class="d-block mt-1" style="font-size: 16px; font-weight: bold;">
@@ -103,7 +101,7 @@
             <!-- Info section (dates / references): repeated on every page.
                  margin-top: 18px matches the reference perfect-1-page fit. -->
             <div
-                t-if="is_tax_invoice and (o.invoice_date or (o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted') or o.delivery_date or o.invoice_origin or o.partner_id.ref or o.ref or o.invoice_incoterm_id)"
+                t-if="o.invoice_date or (o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted') or o.delivery_date or o.invoice_origin or o.partner_id.ref or o.ref or o.invoice_incoterm_id"
                 id="informations" class="row mb-2 mx-0"
                 t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px; margin-top: 18px; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.secondary_color))">
                 <div class="col" t-if="o.invoice_date" name="invoice_date">
@@ -175,6 +173,13 @@
         <t t-set="layout_background_url" t-value="'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else                 '/base/static/img/demo_logo_report.png' if company.layout_background == 'Demo logo' else ''"/>
         <div t-attf-class="article o_report_layout_wave o_table_striped o_company_#{company.id}_layout {{'o_report_layout_background' if company.layout_background != 'Blank' else ''}}" t-attf-style="{{report_type != 'pdf' and 'margin-top:' + header_shape_height + 'px;'}}                 {{ 'background-image: url(%s);' % layout_background_url if layout_background_url else ''}} padding: 0 19pt;" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
             <t t-set="custom_layout_address" t-value="true"/>
+            <style>
+                /* Standard report bodies (report_invoice_document) render their own
+                   info section (#informations); the Viva header already shows it —
+                   hide the body's copy to avoid duplication. The tax invoice body
+                   has no #informations, so this is a no-op there. */
+                #informations { display: none !important; }
+            </style>
             <div class="oe_structure"/>
             <t t-out="0"/>
         </div>
