@@ -99,9 +99,13 @@
             </div>
 
             <!-- Info section (dates / references): repeated on every page.
+                 INVOICE-ONLY: fields below exist only on account.move. Other
+                 documents (sale.order, stock.picking, purchase.order,
+                 hr.expense, ...) share this layout through the company's
+                 external_report_layout_id and would crash on o.invoice_date.
                  margin-top: 18px matches the reference perfect-1-page fit. -->
             <div
-                t-if="o.invoice_date or (o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted') or o.delivery_date or o.invoice_origin or o.partner_id.ref or o.ref or o.invoice_incoterm_id"
+                t-if="o and o._name == 'account.move' and (o.invoice_date or (o.invoice_date_due and o.move_type == 'out_invoice' and o.state == 'posted') or o.delivery_date or o.invoice_origin or o.partner_id.ref or o.ref or o.invoice_incoterm_id)"
                 id="informations" class="row mb-2 mx-0"
                 t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px; margin-top: 18px; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.secondary_color))">
                 <div class="col" t-if="o.invoice_date" name="invoice_date">
