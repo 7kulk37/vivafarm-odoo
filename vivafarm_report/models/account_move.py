@@ -121,9 +121,15 @@ class AccountMove(models.Model):
         exempt_rows = []
         for subtotal in tt.get('subtotals') or []:
             for group in subtotal.get('tax_groups') or []:
-                if 'WHT' in (group.get('group_name') or '').upper():
-                    continue  # withholding tax: not shown on a VAT tax invoice
                 taxes = self.env['account.tax'].browse(group.get('involved_tax_ids') or [])
+                # Withholding-tax groups carry NEGATIVE tax amounts (e.g.
+                # '1% WH T' = -1.0). Detect by sign, NOT by group name — names
+                # are translated (th_TH: 'หัก ณ ที่จ่าย 1%'), so a substring
+                # check behaves differently per language (EN hid the 0% EXEMPT
+                # row while TH showed it). 0% EXEMPT (amount 0.0) must NOT be
+                # skipped even if it sits in a WHT-named group (data drift).
+                if taxes and any(t.amount < 0 for t in taxes):
+                    continue  # withholding tax: not shown on a VAT tax invoice
                 label = ', '.join(t.name for t in taxes) or group.get('group_name') or ''
                 amount = group.get('tax_amount_currency') or 0.0
                 if amount:
