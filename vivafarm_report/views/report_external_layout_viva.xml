@@ -16,14 +16,17 @@
             </t>
         </t>
 
-        <!-- HEADER (repeated on every page via wkhtmltopdf header-html).
-             Contains logo + company + copy badge + document title +
-             customer/shipping addresses + info section, so every sheet of a
-             multi-page tax invoice carries elements (1)-(5) per ป.86/2542 ข้อ 9(2).
-             The same full header is used by standard reports (Commercial
-             Invoice, Invoice PDF) when this layout is the company's global
-             document layout — the standard body's own info section is hidden
-             via CSS in the article (see below) to avoid duplication. -->
+        <!-- ════════════════════════════════════════════════════════════════
+             BRANCH 1 — TAX INVOICE (is_tax_invoice is set only by the
+             vivafarm_report.viva_invoice wrapper; undefined elsewhere).
+             Full repeating header: logo + company + copy badge + document
+             title + customer/shipping addresses + info section, so every
+             sheet of a multi-page tax invoice carries elements (1)-(5) per
+             ป.86/2542 ข้อ 9(2). The wrapper's paperformat_viva_invoice
+             (margin_top 107mm) holds this tall header. Content kept
+             verbatim from v53 — byte-identical PDF output.
+             ════════════════════════════════════════════════════════════════ -->
+        <t t-if="is_tax_invoice">
         <t t-set="header_shape_height" t-value="'200'"/>
         <div t-attf-class="header o_company_#{company.id}_layout" style="position: relative; padding: 41px 19pt 0;">
             <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 {{report_type == 'pdf' and 'vw-100' or 'w-100'}} z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
@@ -172,19 +175,58 @@
                 </div>
             </div>
         </div>
+        </t>
+
+        <!-- ════════════════════════════════════════════════════════════════
+             BRANCH 2 — STANDARD DOCUMENTS (sale.order, stock.picking,
+             account.move Invoice PDF, purchase.order, hr.expense, ...).
+             These templates call web.external_layout → external_layout_viva
+             and hand `address`/`information_block`/`layout_document_title`
+             as t-sets, expecting the layout to render them in the BODY
+             article (the standard Odoo contract — see external_layout_striped:
+             header = logo + company only). They also assume the company's
+             default paperformat (52mm A4 top margin), NOT the 107mm tax
+             invoice paperformat. Rendering their address fragments inside a
+             107mm header overlay overflowed into the body table (SO shipping
+             address painted over the table header; Delivery Slip customer
+             block landed on the company block). So: compact Viva header,
+             addresses + title flow in the body article.
+             ════════════════════════════════════════════════════════════════ -->
+        <t t-else="">
+        <t t-set="header_shape_height" t-value="'140'"/>
+        <div t-attf-class="header o_company_#{company.id}_layout" style="position: relative; padding: 18px 19pt 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 {{report_type == 'pdf' and 'vw-100' or 'w-100'}} z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
+                <path d="M1000 230.734C937.384 240.621 803.83 250.266 562.185 220.602C311.343 189.809 104.626 201.375 0 211.598V0.5H1000V230.734Z" t-att-fill="company.primary_color" fill-opacity=".1"/>
+            </svg>
+
+            <div class="d-flex justify-content-between">
+                <div style="width: 90px; flex-shrink: 0; text-align: center;">
+                    <img t-if="company.logo" class="o_company_logo mb-1" t-att-src="image_data_uri(company.logo)" alt="Logo" style="height: 55px; width: auto;"/>
+                </div>
+                <div class="flex-grow-1 text-start">
+                    <div style="font-size: 10px; line-height: 1.15;">
+                        <div style="font-weight: bold; font-size: 14px; margin-bottom: 3px;">Viva la Finca CO.,LTD.</div>
+                        <div style="font-weight: bold; font-size: 13px;">บริษัท วิว่า ลา ฟินก้า จำกัด</div>
+                        <div style="margin-top: 3px;">
+                            สำนักงานใหญ่ : 500 ซอยมัสยิด หมู่ 1 ตำบลคลองเขม้า อำเภอเหนือคลอง จังหวัดกระบี่ 81130
+                        </div>
+                        <div style="margin-top: 1px;">
+                            Head office : 500 Soi Masjid, Moo 1, Khlong Khamot, Nuea Khlong District, Krabi 81130, Thailand
+                        </div>
+                        <div style="margin-top: 2px;">
+                            tel: 088-448-4846 &#160; TAX ID: 1819900144296
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </t>
 
         <!-- BODY -->
         <t t-set="layout_background_url" t-value="'data:image/png;base64,%s' % company.layout_background_image.decode('utf-8') if company.layout_background_image and company.layout_background == 'Custom' else                 '/base/static/img/demo_logo_report.png' if company.layout_background == 'Demo logo' else ''"/>
         <div t-attf-class="article o_report_layout_wave o_table_striped o_company_#{company.id}_layout {{'o_report_layout_background' if company.layout_background != 'Blank' else ''}}" t-attf-style="{{ 'background-image: url(%s);' % layout_background_url if layout_background_url else ''}} padding: 0 19pt;" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
             <t t-set="custom_layout_address" t-value="true"/>
             <style>
-                /* Standard report bodies (report_invoice_document) render their own
-                   info section (#informations); the Viva header already shows it —
-                   hide the body's copy to avoid duplication. Scoped to .article so
-                   the header's own info section stays visible in the HTML preview
-                   (single DOM). The tax invoice body has no #informations, so this
-                   is a no-op there. */
-                .article #informations { display: none !important; }
                 /* Standard report tables (o_main_table) have no bold header — the
                    default layouts' thead th rule is scoped to .o_table_bold, which
                    o_main_table doesn't use. Make the header row visually distinct
@@ -197,6 +239,16 @@
                     border-top: 3px solid #212529 !important;
                 }
             </style>
+            <!-- Standard documents: addresses + title flow in the BODY article
+                 (standard Odoo contract, same as external_layout_striped).
+                 The tax invoice branch keeps its own header addresses/info and
+                 must NOT render web.address_layout here (would duplicate). -->
+            <t t-if="not is_tax_invoice">
+                <div class="pt-2">
+                    <t t-call="web.address_layout"/>
+                    <h2 t-if="layout_document_title" class="o_folder_title mt-2 text-nowrap" t-out="layout_document_title"/>
+                </div>
+            </t>
             <div class="oe_structure"/>
             <t t-out="0"/>
         </div>
