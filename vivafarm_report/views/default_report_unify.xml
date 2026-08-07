@@ -227,7 +227,10 @@
              shipping right). -->
         <xpath expr="//div[hasclass('row')][.//t[@t-set='information_block']]" position="replace">
             <t t-set="information_block">
-                <strong>Customer</strong>
+                <!-- Label follows the document direction: vendor bills
+                     (in_invoice/in_refund) show the vendor, customer
+                     invoices (out_invoice/out_refund) show the customer. -->
+                <strong><t t-if="o.move_type in ('in_invoice', 'in_refund')">Vendor</t><t t-else="">Customer</t></strong>
                 <address class="mb-0" t-field="o.partner_id"
                     t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
                 <div t-if="o.partner_id.vat" id="partner_vat_unified">
