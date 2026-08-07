@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Default-report address unification (v57) — first condition only.
+
+        Rule (user-approved):
+        - ALL reports: CUSTOMER address on the LEFT (information_block slot)
+        - SHIPPING address on the RIGHT (address slot) — only when a separate
+          shipping/delivery partner exists
+        - INVOICE address NOT shown
+
+        Why: stock Odoo report templates each fill web.address_layout's two
+        slots differently (sale: customer right + invoicing/shipping left;
+        account: customer right + shipping left; stock: customer left +
+        delivery right). These overrides normalize sale.order and account
+        invoice to the rule. stock.report_delivery_document already complies
+        (customer left, delivery right) → untouched.
+
+        Pending (NOT in this step, per user): Tax ID label unification (the
+        delivery note's 'ภาษีมูลค่าเพิ่ม (VAT):' comes from the contact widget's
+        vat field), title placement, purchase/expense/other reports.
+    -->
+
+    <!-- web.address_layout: render the address row when EITHER slot is filled.
+         Stock renders the row only t-if="address". The unified rule sets
+         customer in information_block (left) and shipping in address (right)
+         ONLY when it differs — a lone customer block must still render.
+         Also drop the grey placeholder box when the right slot is empty
+         (t-esc fallback shows it for empty strings, which would print a
+         'Address block / Usually contains the address...' box on every
+         sale order / invoice that has no separate shipping address). -->
+    <template id="address_layout_unify" inherit_id="web.address_layout">
+        <xpath expr="//div[@t-if='address']" position="attributes">
+            <attribute name="t-if">address or information_block</attribute>
+        </xpath>
+        <xpath expr="//div[@name='address']/t[@t-esc='address or None']" position="replace">
+            <t t-if="address" t-esc="address"/>
+        </xpath>
+    </template>
+
+    <!-- Sale Order: customer LEFT, shipping RIGHT, no invoicing address. -->
+    <template id="report_saleorder_unify" inherit_id="sale.report_saleorder_document">
+        <!-- address slot (right): customer -> shipping (only when different) -->
+        <xpath expr="//t[@t-set='address']" position="replace">
+            <t t-set="address">
+                <t t-if="doc.partner_shipping_id and doc.partner_shipping_id != doc.partner_id">
+                    <strong>Shipping Address</strong>
+                    <div t-field="doc.partner_shipping_id"
+                        t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}'/>
+                </t>
+            </t>
+        </xpath>
+        <!-- information_block slot (left): invoicing+shipping -> customer only.
+             Target the <t t-if="..."> wrapper that CONTAINS the
+             information_block t-set and replace it outright, so customer is
+             always set (even when shipping/invoicing == customer).
+             NB: must anchor on t[@t-if] — a bare //t[.//t[@t-set=...]] also
+             matches the template root <t t-call="web.external_layout"> and
+             replaces the WHOLE template (blank page). -->
+        <xpath expr="//t[@t-if][.//t[@t-set='information_block']]" position="replace">
+            <t t-set="information_block">
+                <strong>Customer</strong>
+                <div t-field="doc.partner_id" class="mb-0"
+                    t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}' />
+                <p t-if="doc.partner_id.vat" class="mb-0">
+                    <t t-if="doc.company_id.account_fiscal_country_id.vat_label" t-out="doc.company_id.account_fiscal_country_id.vat_label"/>
+                    <t t-else="">Tax ID</t>: <span t-field="doc.partner_id.vat"/>
+                </p>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Invoice PDF: customer LEFT, shipping RIGHT.
+         NOTE: must inherit l10n_th.report_invoice_document (primary=True
+         template — the Thai localization's own copy of the base account
+         template). It appends the partner branch name (l10n_th_branch_name)
+         after the VAT; that span is replicated here. Inheriting the base
+         account template instead breaks l10n_th's xpaths (they anchor on
+         divs this override removes). -->
+    <template id="report_invoice_unify" inherit_id="l10n_th.report_invoice_document">
+        <!-- Replace the whole hand-wrapped address row (shipping left,
+             customer right) with the unified slots (customer left,
+             shipping right). -->
+        <xpath expr="//div[hasclass('row')][.//t[@t-set='information_block']]" position="replace">
+            <t t-set="information_block">
+                <strong>Customer</strong>
+                <address class="mb-0" t-field="o.partner_id"
+                    t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                <div t-if="o.partner_id.vat" id="partner_vat_unified">
+                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
+                    <span t-esc="o.partner_id.l10n_th_branch_name"/>
+                </div>
+                <div t-if="o.partner_id.country_code == 'MA' and o.partner_id.company_registry">
+                    ICE: <a t-field="o.partner_id.company_registry"/>
+                </div>
+            </t>
+            <t t-if="o.partner_shipping_id and o.partner_shipping_id != o.partner_id">
+                <t t-set="address">
+                    <strong class="d-block">Shipping Address</strong>
+                    <div t-field="o.partner_shipping_id"
+                        t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}'/>
+                </t>
+            </t>
+        </xpath>
+    </template>
+</odoo>
