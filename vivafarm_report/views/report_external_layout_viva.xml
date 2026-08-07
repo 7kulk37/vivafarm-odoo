@@ -193,27 +193,33 @@
              addresses + title flow in the body article.
              ════════════════════════════════════════════════════════════════ -->
         <t t-else="">
-        <t t-set="header_shape_height" t-value="'140'"/>
-        <div t-attf-class="header o_company_#{company.id}_layout" style="position: relative; padding: 18px 19pt 0;">
+        <t t-set="header_shape_height" t-value="'200'"/>
+        <div t-attf-class="header o_company_#{company.id}_layout" style="position: relative; padding: 41px 19pt 0;">
             <svg xmlns="http://www.w3.org/2000/svg" t-attf-class="{{report_type == 'pdf' and 'position-fixed' or 'position-absolute'}} start-0 top-0 {{report_type == 'pdf' and 'vw-100' or 'w-100'}} z-n1" preserveAspectRatio="none" t-att-height="header_shape_height" viewBox="0 0 1000 240" fill="none">
                 <path d="M1000 230.734C937.384 240.621 803.83 250.266 562.185 220.602C311.343 189.809 104.626 201.375 0 211.598V0.5H1000V230.734Z" t-att-fill="company.primary_color" fill-opacity=".1"/>
             </svg>
 
+            <!-- Company block: IDENTICAL styles to the tax invoice branch
+                 (logo 130px, name 20/19px, address 14px, margins 8/4/6) so
+                 every report's header matches the Tax Invoice. Standard docs
+                 render no badge/title/addresses here — those flow in the
+                 body article. Kept as duplicate markup (not a shared t-call)
+                 so the tax invoice branch's rendered HTML stays byte-identical. -->
             <div class="d-flex justify-content-between">
-                <div style="width: 90px; flex-shrink: 0; text-align: center;">
-                    <img t-if="company.logo" class="o_company_logo mb-1" t-att-src="image_data_uri(company.logo)" alt="Logo" style="height: 55px; width: auto;"/>
+                <div style="width: 160px; flex-shrink: 0; text-align: center;">
+                    <img t-if="company.logo" class="o_company_logo mb-2" t-att-src="image_data_uri(company.logo)" alt="Logo" style="height: 130px; width: auto;"/>
                 </div>
                 <div class="flex-grow-1 text-start">
-                    <div style="font-size: 10px; line-height: 1.15;">
-                        <div style="font-weight: bold; font-size: 14px; margin-bottom: 3px;">Viva la Finca CO.,LTD.</div>
-                        <div style="font-weight: bold; font-size: 13px;">บริษัท วิว่า ลา ฟินก้า จำกัด</div>
-                        <div style="margin-top: 3px;">
+                    <div style="font-size: 14px; line-height: 1.0;">
+                        <div style="font-weight: bold; font-size: 20px; margin-bottom: 8px;">Viva la Finca CO.,LTD.</div>
+                        <div style="font-weight: bold; font-size: 19px;">บริษัท วิว่า ลา ฟินก้า จำกัด</div>
+                        <div style="margin-top: 8px;">
                             สำนักงานใหญ่ : 500 ซอยมัสยิด หมู่ 1 ตำบลคลองเขม้า อำเภอเหนือคลอง จังหวัดกระบี่ 81130
                         </div>
-                        <div style="margin-top: 1px;">
+                        <div style="margin-top: 4px;">
                             Head office : 500 Soi Masjid, Moo 1, Khlong Khamot, Nuea Khlong District, Krabi 81130, Thailand
                         </div>
-                        <div style="margin-top: 2px;">
+                        <div style="margin-top: 6px;">
                             tel: 088-448-4846 &#160; TAX ID: 1819900144296
                         </div>
                     </div>
