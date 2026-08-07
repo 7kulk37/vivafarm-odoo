@@ -663,7 +663,7 @@ class Cultivation(models.Model):
             if labor_cogs_acc and labor_liab_acc and stock_journal:
                 labor_je = self.env['account.move'].create({
                     'journal_id': stock_journal.id,
-                    'date': fields.Date.today(),
+                    'date': self.harvest_date,
                     'ref': f'LABOR-ALLOC-{self.id}',
                     'line_ids': [
                         (0, 0, {'account_id': labor_cogs_acc.id, 'debit': labor_share, 'credit': 0.0,
