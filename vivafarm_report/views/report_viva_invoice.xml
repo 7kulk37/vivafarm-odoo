@@ -552,7 +552,13 @@
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-set="lang" t-value="o.partner_id.lang"/>
-                <t t-foreach="o._get_tax_invoice_copies()" t-as="copy">
+                <!-- Proforma previews (portal Preview / Send-proforma, proforma flag
+                     set by account's ir_actions_report._get_rendering_context) render a
+                     SINGLE copy without the copy badge, like the default Invoice PDF.
+                     Real posted tax invoices keep the 3-copy triplicate. -->
+                <t t-set="copies"
+                   t-value="proforma and [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}] or o._get_tax_invoice_copies()"/>
+                <t t-foreach="copies" t-as="copy">
                     <t t-set="copy_kind" t-value="copy['key']"/>
                     <t t-call="vivafarm_report.viva_invoice_document" t-lang="lang"/>
                 </t>
