@@ -64,6 +64,107 @@
         </xpath>
     </template>
 
+    <!-- Purchase Order (v59): vendor LEFT, shipping RIGHT (only when
+         dest_address_id). Stock purchase template fills address (right) with
+         the vendor and information_block (left) with the shipping address —
+         the reverse of the unified rule. Same pattern as sale order:
+         counterparty (vendor) left with literal Tax ID line, shipping right.
+         NB: purchase templates also do NOT set a 'lang' variable — they use
+         o.with_context(lang=o.partner_id.lang). Language test via
+         o.partner_id.lang.
+         NB2: purchase_stock (installed) inserts a <t t-else=""> after the
+         <t t-if="o.dest_address_id"> wrapper. Replacing that wrapper orphans
+         the t-else → 't-elif must be preceded by t-if'. So replace only the
+         inner t-set content, keeping the t-if/t-else chain intact. -->
+    <template id="report_purchaseorder_unify" inherit_id="purchase.report_purchaseorder_document" priority="99">
+        <!-- address slot (right): vendor -> shipping (only when present) -->
+        <xpath expr="//t[@t-set='address']" position="replace">
+            <t t-set="address">
+                <t t-if="o.dest_address_id">
+                    <strong class="d-block mt-3"><t t-if="o.partner_id.lang == 'th_TH'">ที่อยู่จัดส่ง</t><t t-else="">Shipping address</t></strong>
+                    <div t-field="o.dest_address_id"
+                        t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}' name="purchase_shipping_address"/>
+                </t>
+            </t>
+        </xpath>
+        <!-- information_block content (left): shipping -> vendor (always set).
+             Target ALL t-set information_block nodes: purchase_stock's
+             t-else branch (no dest_address) also sets information_block to
+             the warehouse address — that must become vendor too, or a PO
+             without dest_address shows warehouse left instead of vendor.
+             NB: locate_node returns only the FIRST xpath match, so the
+             t-else branch needs its own xpath. -->
+        <xpath expr="//t[@t-if='o.dest_address_id']/t[@t-set='information_block']" position="replace">
+            <t t-set="information_block">
+                <strong><t t-if="o.partner_id.lang == 'th_TH'">ผู้จำหน่าย</t><t t-else="">Vendor</t></strong>
+                <div t-field="o.partner_id"
+                    t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}'/>
+                <p t-if="o.partner_id.vat" class="mb-0">
+                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label"/>
+                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
+                </p>
+            </t>
+        </xpath>
+        <!-- t-else branch (no dest_address): purchase_stock fills
+             information_block with the warehouse address — replace with
+             vendor too, so the pattern is vendor LEFT / shipping RIGHT
+             (right empty when no dest). -->
+        <xpath expr="//t[@t-else='']/t[@t-set='information_block']" position="replace">
+            <t t-set="information_block">
+                <strong><t t-if="o.partner_id.lang == 'th_TH'">ผู้จำหน่าย</t><t t-else="">Vendor</t></strong>
+                <div t-field="o.partner_id"
+                    t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}'/>
+                <p t-if="o.partner_id.vat" class="mb-0">
+                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label"/>
+                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
+                </p>
+            </t>
+        </xpath>
+    </template>
+
+    <!-- Purchase Quotation (v59): same swap as purchase order, plus the
+         Requested Ship Date moves with the shipping block to the right. -->
+    <template id="report_purchasequotation_unify" inherit_id="purchase.report_purchasequotation_document" priority="99">
+        <xpath expr="//t[@t-set='address']" position="replace">
+            <t t-set="address">
+                <t t-if="o.dest_address_id">
+                    <strong class="d-block mt-3"><t t-if="o.partner_id.lang == 'th_TH'">ที่อยู่จัดส่ง</t><t t-else="">Shipping address</t></strong>
+                    <div t-field="o.dest_address_id"
+                        t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}' name="purchase_shipping_address"/>
+                    <div>
+                        <strong><t t-if="o.partner_id.lang == 'th_TH'">วันที่ขอจัดส่ง:</t><t t-else="">Requested Ship Date:</t></strong>
+                        <span t-field="o.date_planned" t-options="{'date_only': 'true'}"/>
+                    </div>
+                </t>
+            </t>
+        </xpath>
+        <xpath expr="//t[@t-if='o.dest_address_id']/t[@t-set='information_block']" position="replace">
+            <t t-set="information_block">
+                <strong><t t-if="o.partner_id.lang == 'th_TH'">ผู้จำหน่าย</t><t t-else="">Vendor</t></strong>
+                <div t-field="o.partner_id"
+                    t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}'/>
+                <p t-if="o.partner_id.vat" class="mb-0">
+                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label"/>
+                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
+                </p>
+            </t>
+        </xpath>
+        <!-- t-else branch (no dest_address): purchase_stock fills
+             information_block with the warehouse address — replace with
+             vendor too. -->
+        <xpath expr="//t[@t-else='']/t[@t-set='information_block']" position="replace">
+            <t t-set="information_block">
+                <strong><t t-if="o.partner_id.lang == 'th_TH'">ผู้จำหน่าย</t><t t-else="">Vendor</t></strong>
+                <div t-field="o.partner_id"
+                    t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}'/>
+                <p t-if="o.partner_id.vat" class="mb-0">
+                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label"/>
+                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
+                </p>
+            </t>
+        </xpath>
+    </template>
+
     <!-- web.address_layout: render the address row when EITHER slot is filled.
          Stock renders the row only t-if="address". The unified rule sets
          customer in information_block (left) and shipping in address (right)
