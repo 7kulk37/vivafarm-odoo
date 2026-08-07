@@ -337,7 +337,7 @@ class Cultivation(models.Model):
             'location_id': self._get_stock_loc().id,
             'location_dest_id': prod_loc.id,
             'company_id': self.env.company.id,
-            'date': fields.Datetime.now(),
+            'date': self.plant_date,
             'procure_method': 'make_to_stock',
             'move_line_ids': [(0, 0, {
                 'product_id': seed_lot.product_id.id,
@@ -358,7 +358,7 @@ class Cultivation(models.Model):
             'location_id': prod_loc.id,
             'location_dest_id': stock_loc.id,
             'company_id': self.env.company.id,
-            'date': fields.Datetime.now(),
+            'date': self.plant_date,
             'procure_method': 'make_to_stock',
         }
 
@@ -466,7 +466,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': stock_loc.id,
                 'company_id': self.env.company.id,
-                'date': fields.Datetime.now(),
+                'date': self.plant_date,
                 'procure_method': 'make_to_stock',
                 'move_line_ids': [(0, 0, {
                     'product_id': self.crop_id.id,
@@ -564,7 +564,7 @@ class Cultivation(models.Model):
             'location_id': stock_loc.id,
             'location_dest_id': prod_loc.id,
             'company_id': self.env.company.id,
-            'date': fields.Datetime.now(),
+            'date': self.harvest_date,
             'procure_method': 'make_to_stock',
             'move_line_ids': [(0, 0, {
                 'product_id': live_lot.product_id.id,
@@ -586,7 +586,7 @@ class Cultivation(models.Model):
             'location_id': prod_loc.id,
             'location_dest_id': packed_loc.id,
             'company_id': self.env.company.id,
-            'date': fields.Datetime.now(),
+            'date': self.harvest_date,
             'procure_method': 'make_to_stock',
         }
 
@@ -601,7 +601,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': spoilage_loc.id,
                 'company_id': self.env.company.id,
-                'date': fields.Datetime.now(),
+                'date': self.harvest_date,
                 'procure_method': 'make_to_stock',
                 'move_line_ids': [(0, 0, {
                     'product_id': live_lot.product_id.id,
@@ -624,7 +624,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
-                'date': fields.Datetime.now(),
+                'date': self.harvest_date,
                 'procure_method': 'make_to_stock',
             })
 
@@ -637,7 +637,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
-                'date': fields.Datetime.now(),
+                'date': self.harvest_date,
                 'procure_method': 'make_to_stock',
             })
 
@@ -650,7 +650,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
-                'date': fields.Datetime.now(),
+                'date': self.harvest_date,
                 'procure_method': 'make_to_stock',
             })
 
@@ -899,7 +899,7 @@ class Cultivation(models.Model):
                     'location_id': prod_loc.id,
                     'location_dest_id': stock_loc.id,
                     'company_id': self.env.company.id,
-                    'date': fields.Datetime.now(),
+                    'date': self.harvest_date,
                     'procure_method': 'make_to_stock',
                     'move_line_ids': [(0, 0, {
                         'product_id': self.seed_lot_id.product_id.id,
