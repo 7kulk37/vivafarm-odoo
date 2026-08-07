@@ -16,10 +16,53 @@
         invoice to the rule. stock.report_delivery_document already complies
         (customer left, delivery right) → untouched.
 
-        Pending (NOT in this step, per user): Tax ID label unification (the
-        delivery note's 'ภาษีมูลค่าเพิ่ม (VAT):' comes from the contact widget's
-        vat field), title placement, purchase/expense/other reports.
+        Pending (NOT in this step, per user): title placement,
+        purchase/expense/other reports.
     -->
+
+    <!-- Delivery Note (v58): match sale order / invoice patterns.
+         1. VAT line: stock's customer block passes "vat" to the contact
+            widget, which renders vat_label = country.vat_label or _('VAT')
+            → the Thai 'ภาษีมูลค่าเพิ่ม (VAT):' line (TH country has empty
+            vat_label). Sale order / invoice render a literal 'Tax ID:' line
+            instead. Drop "vat" from the widget fields and add the same
+            literal line → consistent 'Tax ID: 0105555…'.
+         2. Untranslated labels: stock's th.po leaves <strong>Shipping
+            Date</strong>, <strong>Customer</strong>, <strong>Delivery
+            Address</strong>, <strong>Operator:</strong> with EMPTY msgstr
+            → they render English even for Thai partners. Explicit
+            lang == 'th_TH' conditionals (same pattern as report_viva_invoice).
+            NB: stock does NOT set a 'lang' template variable (unlike the
+            viva wrapper) — it only re-sets o's context via
+            o.with_context(lang=o._get_report_lang()). So the language test
+            must use o._get_report_lang(), not the 'lang' variable. -->
+    <template id="report_delivery_unify" inherit_id="stock.report_delivery_document">
+        <!-- VAT line: drop "vat" from contact widget, add literal Tax ID line -->
+        <xpath expr="//div[@name='partner_header']/div[@t-field='partner.commercial_partner_id']" position="replace">
+            <div t-field="partner.commercial_partner_id"
+                 t-options='{"widget": "contact", "fields": ["address", "name", "phone"], "no_marker": True, "phone_icons": True}'/>
+            <p t-if="partner.commercial_partner_id.vat" class="mb-0">
+                <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label"/>
+                <t t-else="">Tax ID</t>: <span t-field="partner.commercial_partner_id.vat"/>
+            </p>
+        </xpath>
+        <!-- Customer label -->
+        <xpath expr="//div[@name='customer_address']/strong" position="replace">
+            <strong><t t-if="o._get_report_lang() == 'th_TH'">ลูกค้า</t><t t-else="">Customer</t></strong>
+        </xpath>
+        <!-- Delivery Address label -->
+        <xpath expr="//div[@name='outgoing_delivery_address']/strong" position="replace">
+            <strong><t t-if="o._get_report_lang() == 'th_TH'">ที่อยู่จัดส่ง</t><t t-else="">Delivery Address</t></strong>
+        </xpath>
+        <!-- Shipping Date label -->
+        <xpath expr="//div[@name='div_sched_date']/strong" position="replace">
+            <strong><t t-if="o._get_report_lang() == 'th_TH'">วันที่จัดส่ง</t><t t-else="">Shipping Date</t></strong>
+        </xpath>
+        <!-- Operator label -->
+        <xpath expr="//div[@name='div_operator']/strong" position="replace">
+            <strong><t t-if="o._get_report_lang() == 'th_TH'">ผู้ปฏิบัติงาน:</t><t t-else="">Operator:</t></strong>
+        </xpath>
+    </template>
 
     <!-- web.address_layout: render the address row when EITHER slot is filled.
          Stock renders the row only t-if="address". The unified rule sets
