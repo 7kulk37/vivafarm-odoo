@@ -18,35 +18,35 @@
                             </div>
                         </div>
 
-                        <table class="table table-sm o_main_table">
+                        <table class="table table-sm o_main_table" style="table-layout: fixed;">
                             <thead>
                                 <tr>
-                                    <th>
+                                    <th style="width: 9%;">
                                         <t t-if="lang == 'th_TH'">วันที่</t>
                                         <t t-else="">Date</t>
                                     </th>
-                                    <th>
+                                    <th style="width: 12%;">
                                         <t t-if="lang == 'th_TH'">พนักงาน</t>
                                         <t t-else="">Worker</t>
                                     </th>
-                                    <th>
+                                    <th style="width: 15%;">
                                         <t t-if="lang == 'th_TH'">เลขบัตรประชาชน</t>
                                         <t t-else="">ID Number</t>
                                     </th>
-                                    <th>
+                                    <th style="width: 30%;">
                                         <t t-if="lang == 'th_TH'">งานที่ทำ</t>
                                         <t t-else="">Task</t>
                                     </th>
-                                    <th class="text-end">
+                                    <th class="text-end" style="width: 8%;">
                                         <t t-if="lang == 'th_TH'">ชั่วโมง</t>
                                         <t t-else="">Hours</t>
                                     </th>
-                                    <th class="text-end">
+                                    <th class="text-end" style="width: 14%;">
                                         <t t-if="lang == 'th_TH'">ค่าจ้าง</t>
                                         <t t-else="">Wage</t>
                                     </th>
-                                    <th>
-                                        <t t-if="lang == 'th_TH'">อบรมความปลอดภัย</t>
+                                    <th class="text-center" style="width: 9%;">
+                                        <t t-if="lang == 'th_TH'">อบรม</t>
                                         <t t-else="">Safety</t>
                                     </th>
                                 </tr>
@@ -59,7 +59,7 @@
                                     <td t-esc="r['task']"/>
                                     <td class="text-end" t-esc="r['hours']"/>
                                     <td class="text-end" t-esc="r['wage']"/>
-                                    <td t-esc="r['safety']"/>
+                                    <td class="text-center" t-esc="r['safety']"/>
                                 </tr>
                             </tbody>
                             <tfoot>
