@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Worker Daily Log (GAP 5.5, Labor Law 76) -->
+    <template id="report_worker_log"
+              name="Worker Daily Log (GAP 5.5)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">บันทึกการทำงาน / Worker Daily Log</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Worker Daily Log (บันทึกการทำงาน)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="date_from"/> – <span t-esc="date_to"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">พนักงาน</t>
+                                        <t t-else="">Worker</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">เลขบัตรประชาชน</t>
+                                        <t t-else="">ID Number</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">งานที่ทำ</t>
+                                        <t t-else="">Task</t>
+                                    </th>
+                                    <th class="text-end">
+                                        <t t-if="lang == 'th_TH'">ชั่วโมง</t>
+                                        <t t-else="">Hours</t>
+                                    </th>
+                                    <th class="text-end">
+                                        <t t-if="lang == 'th_TH'">ค่าจ้าง</t>
+                                        <t t-else="">Wage</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">อบรมความปลอดภัย</t>
+                                        <t t-else="">Safety</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="rows" t-as="r">
+                                    <td t-esc="r['date']"/>
+                                    <td t-esc="r['worker']"/>
+                                    <td t-esc="r['id_number']"/>
+                                    <td t-esc="r['task']"/>
+                                    <td class="text-end" t-esc="r['hours']"/>
+                                    <td class="text-end" t-esc="r['wage']"/>
+                                    <td t-esc="r['safety']"/>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td colspan="4" class="text-end">
+                                        <t t-if="lang == 'th_TH'">รวม</t>
+                                        <t t-else="">Total</t>
+                                    </td>
+                                    <td class="text-end" t-esc="totals['hours']"/>
+                                    <td class="text-end" t-esc="totals['wage']"/>
+                                    <td/>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Wizard view -->
+    <record id="gap_report_wizard_form" model="ir.ui.view">
+        <field name="name">gap.report.wizard.form</field>
+        <field name="model">gap.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="GAP Report">
+                <group>
+                    <group>
+                        <field name="report_type"/>
+                    </group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="worker_name" invisible="report_type != 'worker_log'"/>
+                        <field name="bench_id" invisible="report_type != 'input_log'"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_report_gap" string="Print" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Report action -->
+    <record id="action_report_worker_log" model="ir.actions.report">
+        <field name="name">Worker Daily Log</field>
+        <field name="model">gap.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_worker_log</field>
+        <field name="report_file">vivafarm_gap_reports.report_worker_log</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="print_report_name">'WorkerLog_%s_%s' % (object.date_from, object.date_to)</field>
+    </record>
+
+    <!-- Menu under Hydroponic -->
+    <record id="action_gap_report_wizard" model="ir.actions.act_window">
+        <field name="name">GAP Log Reports</field>
+        <field name="res_model">gap.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+    <menuitem id="menu_gap_report_wizard"
+              name="Log Reports"
+              parent="vivafarm_cultivation.menu_farm_root"
+              action="action_gap_report_wizard"
+              sequence="50"/>
+</odoo>
