@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Wage Slip / Pay Slip (Labor Law 76) -->
+    <template id="report_wage_slip"
+              name="Wage Slip / Pay Slip">
+        <t t-call="web.html_container">
+            <t t-foreach="rows" t-as="r">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">สลิปเงินเดือน / Wage Slip</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Wage Slip (สลิปเงินเดือน)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="r['period']"/>
+                            </div>
+                        </div>
+
+                        <!-- Summary -->
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">พนักงาน</t>
+                                        <t t-else="">Employee</t>
+                                    </td>
+                                    <td t-esc="r['worker']"/>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">รอบการจ่าย</t>
+                                        <t t-else="">Period</t>
+                                    </td>
+                                    <td t-esc="r['period']"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">วันที่จ่าย</t>
+                                        <t t-else="">Payment Date</t>
+                                    </td>
+                                    <td t-esc="r['payment_date']"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ช่องทางจ่าย</t>
+                                        <t t-else="">Payment Mode</t>
+                                    </td>
+                                    <td t-esc="r['payment_mode'] or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Daily detail -->
+                        <table class="table table-sm o_main_table" style="table-layout: fixed;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </th>
+                                    <th style="width: 55%;">
+                                        <t t-if="lang == 'th_TH'">งานที่ทำ</t>
+                                        <t t-else="">Task</t>
+                                    </th>
+                                    <th class="text-end" style="width: 15%;">
+                                        <t t-if="lang == 'th_TH'">ชั่วโมง</t>
+                                        <t t-else="">Hours</t>
+                                    </th>
+                                    <th class="text-end" style="width: 15%;">
+                                        <t t-if="lang == 'th_TH'">ค่าจ้าง</t>
+                                        <t t-else="">Wage</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="r['log_rows']" t-as="l">
+                                    <td t-esc="l['date']"/>
+                                    <td t-esc="l['task']"/>
+                                    <td class="text-end" t-esc="l['hours']"/>
+                                    <td class="text-end" t-esc="'{:,.2f}'.format(l['wage'])"/>
+                                </tr>
+                                <tr t-if="not r['log_rows']">
+                                    <td colspan="4" class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ไม่มีรายการทำงาน</t>
+                                        <t t-else="">No work logs for this period</t>
+                                    </td>
+                                </tr>
+                                <tr class="fw-bold">
+                                    <td colspan="2">
+                                        <t t-if="lang == 'th_TH'">รวม</t>
+                                        <t t-else="">Total</t>
+                                    </td>
+                                    <td class="text-end" t-esc="r['total_hours']"/>
+                                    <td class="text-end" t-esc="'{:,.2f}'.format(r['total_wage'])"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Cross-check note -->
+                        <div t-if="r['expense_total'] != r['total_wage']" class="text-muted small mt-1">
+                            <t t-if="lang == 'th_TH'">หมายเหตุ: ยอดที่จ่าย</t>
+                            <t t-else="">Note: paid total</t>
+                            <span t-esc="'{:,.2f}'.format(r['expense_total'])"/>
+                            <t t-if="lang == 'th_TH'">ต่างจากยอดตามบันทึก</t>
+                            <t t-else="">differs from logged total</t>
+                            <span t-esc="'{:,.2f}'.format(r['total_wage'])"/>
+                        </div>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_wage_slip" model="ir.actions.report">
+        <field name="name">Wage Slip</field>
+        <field name="model">hr.expense</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_wage_slip</field>
+        <field name="report_file">vivafarm_gap_reports.report_wage_slip</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="binding_model_id" ref="hr_expense.model_hr_expense"/>
+    </record>
+</odoo>
