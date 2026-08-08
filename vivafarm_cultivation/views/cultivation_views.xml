@@ -78,6 +78,7 @@
                                        readonly="state != 'draft'"
                                        domain="[('product_id', '=', seed_product_id)]"
                                        context="{'default_product_id': seed_product_id}"/>
+                                <field name="seed_lot_hex" readonly="1"/>
                                 <field name="grams_to_sow" readonly="state != 'draft'"/>
                                 <field name="target_plant_count"
                                        readonly="state not in ('draft', 'germinated')"/>

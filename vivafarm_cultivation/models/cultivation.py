@@ -34,6 +34,12 @@ class Cultivation(models.Model):
         help='Calculated from plant_date + recipe total_grow_duration')
     plant_date = fields.Date(string='Plant Date', required=True)
     seed_lot_id = fields.Many2one('stock.lot', string='Seed Lot')
+    seed_lot_hex = fields.Char(
+        string='Seed Lot Hex',
+        compute='_compute_seed_lot_hex',
+        readonly=True,
+        help='Auto-generated hex code (e.g. GO-00A) from the selected seed lot',
+    )
     seed_product_id = fields.Many2one(
         'product.product', string='Seed Product',
         readonly=True,
@@ -164,6 +170,12 @@ class Cultivation(models.Model):
             ], order='id asc', limit=1)
             if lot:
                 self.seed_lot_id = lot.id
+
+    @api.depends('seed_lot_id')
+    def _compute_seed_lot_hex(self):
+        """Expose the lot's auto-generated hex code (e.g. GO-00A)."""
+        for record in self:
+            record.seed_lot_hex = record.seed_lot_id.x_seed_lot or False
 
     @api.depends('plant_date', 'recipe_id')
     def _compute_target_dates(self):

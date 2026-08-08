@@ -51,5 +51,37 @@
             </field>
         </record>
 
+        <!-- Receipt move-line list: per-product grey placeholder on Lot/Serial Number -->
+        <record id="view_stock_move_line_operation_tree_inherit_farm" model="ir.ui.view">
+            <field name="name">stock.move.line.operation.tree.inherit.farm</field>
+            <field name="model">stock.move.line</field>
+            <field name="inherit_id" ref="stock.view_stock_move_line_operation_tree"/>
+            <field name="arch" type="xml">
+                <field name="lot_name" position="attributes">
+                    <attribute name="options">{'placeholder_field': 'lot_name_placeholder'}</attribute>
+                    <attribute name="widget">char_with_placeholder_field</attribute>
+                </field>
+                <field name="lot_name" position="after">
+                    <field name="lot_name_placeholder" column_invisible="True"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Desktop Detailed Operations list (the Moves button): same per-product placeholder -->
+        <record id="view_stock_move_line_detailed_operation_tree_inherit_farm" model="ir.ui.view">
+            <field name="name">stock.move.line.detailed.operation.tree.inherit.farm</field>
+            <field name="model">stock.move.line</field>
+            <field name="inherit_id" ref="stock.view_stock_move_line_detailed_operation_tree"/>
+            <field name="arch" type="xml">
+                <field name="lot_name" position="attributes">
+                    <attribute name="options">{'placeholder_field': 'lot_name_placeholder'}</attribute>
+                    <attribute name="widget">char_with_placeholder_field</attribute>
+                </field>
+                <field name="lot_name" position="after">
+                    <field name="lot_name_placeholder" column_invisible="True"/>
+                </field>
+            </field>
+        </record>
+
     </data>
 </odoo>
