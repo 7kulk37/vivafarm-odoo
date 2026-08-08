@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Bind the existing Inventory Valuation client action (494) to a menu.
+         The action has existed since stock_account but nothing linked it —
+         the audit found it unreachable from the UI. Menu goes under
+         Inventory > Reporting, gated to stock managers. -->
+    <record id="menu_inventory_valuation_report" model="ir.ui.menu">
+        <field name="name">Inventory Valuation</field>
+        <field name="parent_id" ref="stock.menu_warehouse_report"/>
+        <field name="action" ref="stock_account.action_report_stock_valuation"/>
+        <field name="groups_id" eval="[(4, ref('stock.group_stock_manager'))]"/>
+        <field name="sequence">40</field>
+    </record>
+</odoo>
