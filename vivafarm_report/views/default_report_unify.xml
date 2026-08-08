@@ -120,6 +120,20 @@
                 </p>
             </t>
         </xpath>
+        <!-- Expected Arrival label (v61): upstream th.po leaves the
+             tag-wrapped key "<strong>Expected Arrival:</strong>" with an
+             EMPTY msgstr → renders English for Thai partners. Explicit
+             conditional (same pattern as v58/v59). -->
+        <xpath expr="//div[@t-if='o.date_planned']/strong" position="replace">
+            <strong><t t-if="o.partner_id.lang == 'th_TH'">วันที่คาดว่าจะได้รับ:</t><t t-else="">Expected Arrival:</t></strong>
+        </xpath>
+        <!-- Payment Terms label (v61): same upstream gap — the tag-wrapped
+             key "<strong>Payment Terms: </strong>" has an EMPTY msgstr.
+             The value itself renders from o.payment_term_id (blank only when
+             the PO has no payment term set). -->
+        <xpath expr="//strong[contains(text(), 'Payment Terms')]" position="replace">
+            <strong><t t-if="o.partner_id.lang == 'th_TH'">เงื่อนไขการชำระเงิน: </t><t t-else="">Payment Terms: </t></strong>
+        </xpath>
     </template>
 
     <!-- Purchase Quotation (v59): same swap as purchase order, plus the
