@@ -18,6 +18,7 @@ class GapReportWizard(models.TransientModel):
 
     report_type = fields.Selection([
         ('worker_log', 'Worker Daily Log (บันทึกการทำงาน)'),
+        ('input_log', 'Daily Input Log EC/pH (บันทึกค่า EC/pH)'),
     ], string='Report', required=True, default='worker_log')
     date_from = fields.Date(string='From', required=True)
     date_to = fields.Date(string='To', required=True)
@@ -49,7 +50,9 @@ class GapReportWizard(models.TransientModel):
     def action_report_gap(self):
         """Print the selected GAP report for the chosen period."""
         self.ensure_one()
-        report_name = 'vivafarm_gap_reports.report_worker_log'
+        report_name = 'vivafarm_gap_reports.report_input_log' \
+            if self.report_type == 'input_log' \
+            else 'vivafarm_gap_reports.report_worker_log'
         return self.env['ir.actions.report']._get_report_from_name(
             report_name
         ).report_action(self)
@@ -104,4 +107,54 @@ class ReportWorkerLog(models.AbstractModel):
             'date_from': wizard.date_from,
             'date_to': wizard.date_to,
             'report_type': wizard.report_type,
+        }
+
+
+class ReportInputLog(models.AbstractModel):
+    """Data model for the Daily Input Log (EC/pH) QWeb report.
+
+    Period report over farm.input.log records, optionally filtered by
+    bench/location. 1350+ records exist in the demo year, so the wizard
+    defaults to a single month — wide periods render multi-page but stay
+    within wkhtmltopdf limits.
+    """
+
+    _name = 'report.vivafarm_gap_reports.report_input_log'
+    _description = 'Daily Input Log EC/pH Report Data'
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['gap.report.wizard'].browse(docids)
+        domain = [
+            ('state', '=', 'confirmed'),
+            ('date', '>=', wizard.date_from),
+            ('date', '<=', wizard.date_to),
+        ]
+        if wizard.bench_id:
+            domain.append(('bench_id', '=', wizard.bench_id.id))
+        logs = self.env['farm.input.log'].search(domain, order='date, bench_id, id')
+        rows = []
+        for log in logs:
+            rows.append({
+                'date': log.date,
+                'bench': log.bench_id.name or '',
+                'lot': log.lot_id.name or '',
+                'crop': log.crop_id.name or '',
+                'ec': log.ec_value,
+                'ph': log.ph_value,
+                'nutrient': log.nutrient_adjustment,
+                'acid': log.acid_adjustment,
+                'raw_water': log.raw_water_liters,
+                'mixing': log.mixing_liters,
+                'notes': log.notes or '',
+            })
+        return {
+            'doc_ids': wizard.ids,
+            'doc_model': self._name,
+            'docs': wizard,
+            'rows': rows,
+            'date_from': wizard.date_from,
+            'date_to': wizard.date_to,
+            'report_type': wizard.report_type,
+            'bench_filter': wizard.bench_id.name or '',
         }

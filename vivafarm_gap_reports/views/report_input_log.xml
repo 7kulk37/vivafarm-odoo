@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Daily Input Log EC/pH (GAP 5.3) -->
+    <template id="report_input_log"
+              name="Daily Input Log EC/pH (GAP 5.3)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">บันทึกค่า EC/pH / Daily Input Log</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Daily Input Log EC/pH (บันทึกค่า EC/pH)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="date_from"/> – <span t-esc="date_to"/>
+                                <t t-if="bench_filter">
+                                    <span class="ms-1">| <span t-esc="bench_filter"/></span>
+                                </t>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm o_main_table"
+                               style="table-layout: fixed; font-size: 8px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </th>
+                                    <th style="width: 7%;">
+                                        <t t-if="lang == 'th_TH'">แปลง</t>
+                                        <t t-else="">Bench</t>
+                                    </th>
+                                    <th style="width: 12%;">
+                                        <t t-if="lang == 'th_TH'">ล็อต</t>
+                                        <t t-else="">Lot</t>
+                                    </th>
+                                    <th style="width: 14%;">
+                                        <t t-if="lang == 'th_TH'">พืช</t>
+                                        <t t-else="">Crop</t>
+                                    </th>
+                                    <th class="text-end" style="width: 6%;">EC</th>
+                                    <th class="text-end" style="width: 6%;">pH</th>
+                                    <th class="text-end" style="width: 9%;">
+                                        <t t-if="lang == 'th_TH'">สารอาหาร (มล.)</t>
+                                        <t t-else="">Nutrient (ml)</t>
+                                    </th>
+                                    <th class="text-end" style="width: 8%;">
+                                        <t t-if="lang == 'th_TH'">กรด (มล.)</t>
+                                        <t t-else="">Acid (ml)</t>
+                                    </th>
+                                    <th class="text-end" style="width: 9%;">
+                                        <t t-if="lang == 'th_TH'">น้ำดิบ (ล.)</t>
+                                        <t t-else="">Raw Water (L)</t>
+                                    </th>
+                                    <th class="text-end" style="width: 8%;">
+                                        <t t-if="lang == 'th_TH'">ผสม (ล.)</t>
+                                        <t t-else="">Mixing (L)</t>
+                                    </th>
+                                    <th style="width: 13%;">
+                                        <t t-if="lang == 'th_TH'">บันทึก</t>
+                                        <t t-else="">Notes</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="rows" t-as="r">
+                                    <td t-esc="r['date']"/>
+                                    <td t-esc="r['bench']"/>
+                                    <td t-esc="r['lot']"/>
+                                    <td t-esc="r['crop']"/>
+                                    <td class="text-end" t-esc="r['ec']"/>
+                                    <td class="text-end" t-esc="r['ph']"/>
+                                    <td class="text-end" t-esc="r['nutrient']"/>
+                                    <td class="text-end" t-esc="r['acid']"/>
+                                    <td class="text-end" t-esc="r['raw_water']"/>
+                                    <td class="text-end" t-esc="r['mixing']"/>
+                                    <td t-esc="r['notes']"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_input_log" model="ir.actions.report">
+        <field name="name">Daily Input Log EC/pH</field>
+        <field name="model">gap.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_input_log</field>
+        <field name="report_file">vivafarm_gap_reports.report_input_log</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="print_report_name">'InputLog_%s_%s' % (object.date_from, object.date_to)</field>
+    </record>
+</odoo>
