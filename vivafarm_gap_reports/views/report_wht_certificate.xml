@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Withholding Tax Certificate (ภ.ง.ด. 50/53) — per vendor bill -->
+    <template id="report_wht_certificate"
+              name="Withholding Tax Certificate (ภ.ง.ด.)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">ใบหักภาษี ณ ที่จ่าย / WHT Certificate</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Withholding Tax Certificate (ใบหักภาษี ณ ที่จ่าย)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="o.name"/>
+                            </div>
+                        </div>
+
+                        <!-- Payer / Payee -->
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">ผู้ถูกหักภาษี</t>
+                                        <t t-else="">Payee</t>
+                                    </td>
+                                    <td t-esc="o.partner_id.name or ''"/>
+                                    <td class="text-muted" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">เลขประจำตัวผู้เสียภาษี</t>
+                                        <t t-else="">Tax ID</t>
+                                    </td>
+                                    <td t-esc="o.partner_id.vat or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">วันที่ใบกำกับ</t>
+                                        <t t-else="">Invoice Date</t>
+                                    </td>
+                                    <td t-esc="o.invoice_date or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">วันที่ชำระ</t>
+                                        <t t-else="">Payment Date</t>
+                                    </td>
+                                    <td t-esc="o.date or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ยอดรวม</t>
+                                        <t t-else="">Total</t>
+                                    </td>
+                                    <td colspan="3" class="fw-bold">
+                                        <span t-esc="o.currency_id.symbol or ''"/>
+                                        <span t-esc="'{:,.2f}'.format(o.amount_total)"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- WHT lines -->
+                        <table class="table table-sm o_main_table" style="table-layout: fixed;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">
+                                        <t t-if="lang == 'th_TH'">ประเภทภาษี</t>
+                                        <t t-else="">Tax Type</t>
+                                    </th>
+                                    <th style="width: 15%;">
+                                        <t t-if="lang == 'th_TH'">อัตรา</t>
+                                        <t t-else="">Rate</t>
+                                    </th>
+                                    <th class="text-end" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">ฐานภาษี</t>
+                                        <t t-else="">Base</t>
+                                    </th>
+                                    <th class="text-end" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">ภาษีหัก ณ ที่จ่าย</t>
+                                        <t t-else="">WHT Amount</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.line_ids" t-as="l">
+                                    <t t-if="l.tax_line_id and l.tax_line_id.amount &lt; 0">
+                                        <td t-esc="l.tax_line_id.name"/>
+                                        <td t-esc="'{}%'.format(-l.tax_line_id.amount)"/>
+                                        <td class="text-end" t-esc="'{:,.2f}'.format(l.tax_base_amount)"/>
+                                        <td class="text-end" t-esc="'{:,.2f}'.format(-l.amount_total)"/>
+                                    </t>
+                                </tr>
+                                <tr t-if="not any(l.tax_line_id and l.tax_line_id.amount &lt; 0 for l in o.line_ids)">
+                                    <td colspan="4" class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ไม่มีรายการหักภาษี ณ ที่จ่าย</t>
+                                        <t t-else="">No withholding tax on this bill</t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_wht_certificate" model="ir.actions.report">
+        <field name="name">Withholding Tax Certificate</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_wht_certificate</field>
+        <field name="report_file">vivafarm_gap_reports.report_wht_certificate</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+    </record>
+</odoo>

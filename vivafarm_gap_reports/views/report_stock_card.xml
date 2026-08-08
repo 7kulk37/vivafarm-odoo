@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Stock Card (AVCO) — running quantity/value balance per product -->
+    <template id="report_stock_card"
+              name="Stock Card (AVCO)">
+        <t t-call="web.html_container">
+            <t t-foreach="rows" t-as="r">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">บัญชีสินค้า / Stock Card</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Stock Card (บัญชีสินค้า)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="r['name']"/>
+                                <t t-if="r['default_code']">
+                                    <span class="ms-1" t-esc="'(' + r['default_code'] + ')'"/>
+                                </t>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm o_main_table" style="table-layout: fixed;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 13%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </th>
+                                    <th style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">เอกสาร</t>
+                                        <t t-else="">Document</t>
+                                    </th>
+                                    <th style="width: 27%;">
+                                        <t t-if="lang == 'th_TH'">รายการ</t>
+                                        <t t-else="">Description</t>
+                                    </th>
+                                    <th class="text-end" style="width: 10%;">
+                                        <t t-if="lang == 'th_TH'">จำนวนรับ</t>
+                                        <t t-else="">In</t>
+                                    </th>
+                                    <th class="text-end" style="width: 10%;">
+                                        <t t-if="lang == 'th_TH'">จำนวนจ่าย</t>
+                                        <t t-else="">Out</t>
+                                    </th>
+                                    <th class="text-end" style="width: 10%;">
+                                        <t t-if="lang == 'th_TH'">คงเหลือ</t>
+                                        <t t-else="">Balance</t>
+                                    </th>
+                                    <th class="text-end" style="width: 10%;">
+                                        <t t-if="lang == 'th_TH'">มูลค่า</t>
+                                        <t t-else="">Value</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="r['rows']" t-as="m">
+                                    <td t-esc="m['date']"/>
+                                    <td t-esc="m['reference']"/>
+                                    <td t-esc="m['description']"/>
+                                    <td class="text-end">
+                                        <t t-if="m['qty'] &gt; 0" t-esc="m['qty']"/>
+                                    </td>
+                                    <td class="text-end">
+                                        <t t-if="m['qty'] &lt; 0" t-esc="-m['qty']"/>
+                                    </td>
+                                    <td class="text-end" t-esc="m['running_qty']"/>
+                                    <td class="text-end" t-esc="m['running_value']"/>
+                                </tr>
+                                <tr t-if="not r['rows']">
+                                    <td colspan="7" class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ไม่มีการเคลื่อนไหว</t>
+                                        <t t-else="">No movements for this product</t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td colspan="3">
+                                        <t t-if="lang == 'th_TH'">รวม</t>
+                                        <t t-else="">Total</t>
+                                    </td>
+                                    <td class="text-end" t-esc="r['total_qty']"/>
+                                    <td/>
+                                    <td class="text-end" t-esc="r['total_qty']"/>
+                                    <td class="text-end" t-esc="r['total_value']"/>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_stock_card" model="ir.actions.report">
+        <field name="name">Stock Card</field>
+        <field name="model">product.product</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_stock_card</field>
+        <field name="report_file">vivafarm_gap_reports.report_stock_card</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="binding_model_id" ref="product.model_product_product"/>
+    </record>
+</odoo>

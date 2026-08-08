@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm GAP Reports',
-    'version': '19.0.1.0.9',
+    'version': '19.0.1.0.10',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Printable GAP audit reports: cultivation record, worker/input logs, material transformation, scrap, petty cash, lot traceability',
     'description': """
@@ -32,6 +32,8 @@
         'views/report_petty_cash_voucher.xml',
         'views/report_lot_traceability.xml',
         'views/menu_inventory_valuation.xml',
+        'views/report_stock_card.xml',
+        'views/report_wht_certificate.xml',
     ],
     'installable': True,
     'application': False,
