@@ -63,11 +63,11 @@
          The eh_report_footer div (class eh_pdf_footer) is NOT extracted to
          the wkhtmltopdf footer frame (only divs with a standalone 'footer'
          class token are), so it stays in the body — duplicate footer. -->
-    <template id="eh_account_assets_pro.report_asset_register" inherit_id="eh_account_assets_pro.report_asset_register">
+    <template id="report_asset_register_no_eh_footer" inherit_id="eh_account_assets_pro.report_asset_register">
         <xpath expr="//t[@t-call='eh_account_base.eh_report_footer']" position="replace"/>
     </template>
 
-    <template id="eh_account_assets_pro.report_asset_card" inherit_id="eh_account_assets_pro.report_asset_card">
+    <template id="report_asset_card_no_eh_footer" inherit_id="eh_account_assets_pro.report_asset_card">
         <xpath expr="//t[@t-call='eh_account_base.eh_report_footer']" position="replace"/>
     </template>
 </odoo>
