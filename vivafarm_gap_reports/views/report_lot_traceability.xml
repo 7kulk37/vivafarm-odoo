@@ -100,7 +100,7 @@
                                 <t t-else="">Customers</t>
                             </h6>
                             <span t-foreach="r['customers']" t-as="c" t-esc="c"/>
-                            <t t-if="not c_loop_last">, </t>
+                            <t t-if="not c_loop['last']">, </t>
                         </div>
 
                         <!-- Move history -->
