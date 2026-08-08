@@ -40,15 +40,25 @@
         <field name="print_report_name">'TaxRegister_%s_%s' % (object.date_from, object.date_to)</field>
     </record>
 
+    <record id="action_report_vat30" model="ir.actions.report">
+        <field name="name">Thai VAT Report ภ.พ.30</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_vat30</field>
+        <field name="report_file">vivafarm_report.report_vat30</field>
+        <field name="paperformat_id" ref="paperformat_viva_invoice"/>
+        <field name="print_report_name">'VAT30_%s_%s' % (object.date_from, object.date_to)</field>
+    </record>
+
     <record id="action_tax_report_wizard" model="ir.actions.act_window">
-        <field name="name">Thai Tax Register</field>
+        <field name="name">Thai Tax Report</field>
         <field name="res_model">tax.report.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
 
     <menuitem id="menu_tax_register_sales"
-              name="Sales / Purchase Register (รายงานภาษีขาย/ภาษีซื้อ)"
+              name="Thai Tax Reports (รายงานภาษีขาย/ซื้อ, ภ.พ.30)"
               parent="account.account_reports_taxes_and_fiscal_menu"
               sequence="10"
               action="action_tax_report_wizard"

@@ -20,6 +20,7 @@ class TaxReportWizard(models.TransientModel):
     register_type = fields.Selection([
         ('sales', 'Sales Register (รายงานภาษีขาย)'),
         ('purchase', 'Purchase Register (รายงานภาษีซื้อ)'),
+        ('vat30', 'VAT Report (ภ.พ.30)'),
     ], string='Register', required=True, default='sales')
     date_from = fields.Date(string='From', required=True)
     date_to = fields.Date(string='To', required=True)
@@ -41,14 +42,19 @@ class TaxReportWizard(models.TransientModel):
         return res
 
     def action_report_tax_register(self):
-        """Print the register for the selected period (wizard footer button).
+        """Print the register/VAT report for the selected period.
 
-        Returns the report action bound to this wizard model so the QWeb
-        template renders with the wizard's date range as the report data.
+        Single footer button dispatches by ``register_type``: Sales/Purchase
+        registers use ``report_tax_register``, the VAT Report uses
+        ``report_vat30``. Returns the report action bound to this wizard so
+        the QWeb template renders with the wizard's date range as data.
         """
         self.ensure_one()
+        report_name = 'vivafarm_report.report_vat30' \
+            if self.register_type == 'vat30' \
+            else 'vivafarm_report.report_tax_register'
         return self.env['ir.actions.report']._get_report_from_name(
-            'vivafarm_report.report_tax_register'
+            report_name
         ).report_action(self)
 
 
@@ -115,4 +121,119 @@ class ReportTaxRegister(models.AbstractModel):
             'date_from': wizard.date_from,
             'date_to': wizard.date_to,
             'register_type': register_type,
+        }
+
+
+class ReportVAT30(models.AbstractModel):
+    """Data model for the Thai VAT report (แบบ ภ.พ.30).
+
+    Computes the statutory 12 lines from posted tax lines in the selected
+    period, classified by the l10n_th tags attached to each tax's
+    repartition lines:
+
+      1  Sales amount (ทั้งหมด)
+      2  Less sales subject to 0% rate
+      3  Less exempted sales
+      4  Taxable sales amount (1 - 2 - 3)
+      5  Output tax
+      6  Purchase amount entitled to input-tax deduction
+      7  Input tax (per invoice of line 6)
+      8  Tax payable (5 > 7)
+      9  Excess tax payable (5 < 7)
+     10  Excess tax carried forward (previous period)
+     11  Net tax payable (8 > 10)
+     12  Net excess tax ((10 > 8) or (9 + 10))
+
+    Lines 10/12 use the previous period's excess as a simplification (the
+    farm's cash-basis VAT has no carried-forward balance in the demo data).
+    """
+
+    _name = 'report.vivafarm_report.report_vat30'
+    _description = 'Thai VAT Report ภ.พ.30 Data'
+
+    @api.model
+    def _get_tax_line_domain(self, wizard, move_types):
+        return [
+            ('parent_state', '=', 'posted'),
+            ('tax_line_id', '!=', False),
+            ('date', '>=', wizard.date_from),
+            ('date', '<=', wizard.date_to),
+            ('move_id.move_type', 'in', move_types),
+        ]
+
+    @api.model
+    def _compute(self, wizard):
+        """Return the 12 statutory lines as {code: amount} floats.
+
+        Zero-amount taxes (0% / exempt) create NO tax lines in Odoo, so
+        lines 1–3 are computed from invoice lines + their tax_ids, while
+        lines 5/7 (output/input tax amounts) come from posted tax lines.
+        """
+        res = {n: 0.0 for n in range(1, 13)}
+
+        # --- Sales side (out_invoice / out_refund) ---
+        moves = self.env['account.move'].search([
+            ('state', '=', 'posted'),
+            ('invoice_date', '>=', wizard.date_from),
+            ('invoice_date', '<=', wizard.date_to),
+            ('move_type', 'in', ('out_invoice', 'out_refund')),
+        ])
+        for m in moves:
+            res[1] += m.amount_untaxed
+            for line in m.invoice_line_ids:
+                for tax in line.tax_ids:
+                    names = set()
+                    for rl in tax.invoice_repartition_line_ids + tax.refund_repartition_line_ids:
+                        for tag in rl.tag_ids:
+                            names.add(tag.name)
+                    if '2. Less sales subject to 0% tax rate' in names:
+                        res[2] += line.price_subtotal
+                    if '3. Less exempted sales' in names:
+                        res[3] += line.price_subtotal
+
+        # --- Tax amounts from posted tax lines ---
+        lines = self.env['account.move.line'].search(
+            self._get_tax_line_domain(
+                wizard, ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'))
+        )
+        for line in lines:
+            tax = line.tax_line_id
+            names = set()
+            for rl in tax.invoice_repartition_line_ids + tax.refund_repartition_line_ids:
+                for tag in rl.tag_ids:
+                    names.add(tag.name)
+            is_sale = line.move_id.move_type in ('out_invoice', 'out_refund')
+            if is_sale:
+                # Sale-side tax lines carry negative base/balance (credit);
+                # flip so statutory amounts are positive. Refunds stay
+                # negative, correctly reducing output tax.
+                if '5. Output tax' in names:
+                    res[5] += -line.balance
+            else:
+                if '6. Purchase amount that is entitled to deduction of input tax from output tax in tax computation' in names:
+                    res[6] += line.tax_base_amount
+                if '7. Input tax (according to invoice of purchase amount in 6.)' in names:
+                    res[7] += line.balance
+        res[4] = res[1] - res[2] - res[3]
+        res[8] = max(res[5] - res[7], 0.0)
+        res[9] = max(res[7] - res[5], 0.0)
+        res[10] = 0.0
+        res[11] = max(res[8] - res[10], 0.0)
+        res[12] = max(res[10] - res[8], 0.0) + res[9]
+        return res
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['tax.report.wizard'].browse(docids)
+        currency = self.env.company.currency_id
+        amounts = self._compute(wizard)
+        return {
+            'doc_ids': wizard.ids,
+            'doc_model': self._name,
+            'docs': wizard,
+            'date_from': wizard.date_from,
+            'date_to': wizard.date_to,
+            'register_type': 'vat30',
+            'amounts': amounts,
+            'amount': lambda n: format_amount(self.env, amounts[n], currency),
         }

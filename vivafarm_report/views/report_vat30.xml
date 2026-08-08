@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_vat30"
+              name="Thai VAT Report ภ.พ.30">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title" t-value="'VAT Report (ภ.พ.30)'"/>
+                    <div class="page">
+                        <div class="vat30-title">
+                            <span class="vat30-title-th">แบบแสดงรายการภาษีมูลค่าเพิ่ม ภ.พ.30</span>
+                        </div>
+                        <div class="vat30-subtitle">
+                            <span>VAT Report (ภ.พ.30) — ตามประมวลรัษฎากร / pursuant to the Revenue Code</span>
+                        </div>
+                        <div class="vat30-period">
+                            <span>ประจำเดือนภาษี / Tax period: <t t-esc="date_from"/> – <t t-esc="date_to"/></span>
+                        </div>
+
+                        <table class="table table-sm table-bordered vat30-table">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">ข้อ</th>
+                                    <th>รายการ / Description</th>
+                                    <th class="text-right">จำนวนเงิน / Amount (บาท)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center">1</td>
+                                    <td>ยอดขายในเดือนนี้ / Total sales amount</td>
+                                    <td class="text-right"><t t-esc="amount(1)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">2</td>
+                                    <td>ลบ ยอดขายที่เสียภาษีในอัตราร้อยละ 0 / Less sales subject to 0% tax rate</td>
+                                    <td class="text-right"><t t-esc="amount(2)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">3</td>
+                                    <td>ลบ ยอดขายที่ได้รับยกเว้น / Less exempted sales</td>
+                                    <td class="text-right"><t t-esc="amount(3)"/></td>
+                                </tr>
+                                <tr class="vat30-total">
+                                    <td class="text-center">4</td>
+                                    <td>ยอดขายที่ต้องเสียภาษี (1 – 2 – 3) / Taxable sales amount</td>
+                                    <td class="text-right"><t t-esc="amount(4)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">5</td>
+                                    <td>ภาษีขายเดือนนี้ / Output tax</td>
+                                    <td class="text-right"><t t-esc="amount(5)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">6</td>
+                                    <td>ยอดซื้อที่มีสิทธินำภาษีซื้อ / Purchase amount entitled to input-tax deduction</td>
+                                    <td class="text-right"><t t-esc="amount(6)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">7</td>
+                                    <td>ภาษีซื้อเดือนนี้ (ตามใบกำกับภาษีของยอดซื้อตามข้อ 6) / Input tax</td>
+                                    <td class="text-right"><t t-esc="amount(7)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">8</td>
+                                    <td>ภาษีที่ต้องชำระ (ถ้าข้อ 5 มากกว่าข้อ 7) / Tax payable</td>
+                                    <td class="text-right"><t t-esc="amount(8)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">9</td>
+                                    <td>ภาษีที่ชำระเกิน (ถ้าข้อ 5 น้อยกว่าข้อ 7) / Excess tax payable</td>
+                                    <td class="text-right"><t t-esc="amount(9)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">10</td>
+                                    <td>ภาษีที่ชำระเกินนำส่งมาจากเดือนก่อน / Excess carried forward</td>
+                                    <td class="text-right"><t t-esc="amount(10)"/></td>
+                                </tr>
+                                <tr class="vat30-total">
+                                    <td class="text-center">11</td>
+                                    <td>ภาษีที่ต้องชำระสุทธิ (ถ้าข้อ 8 มากกว่าข้อ 10) / Net tax payable</td>
+                                    <td class="text-right"><t t-esc="amount(11)"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">12</td>
+                                    <td>ภาษีที่ชำระเกินสุทธิ (ถ้าข้อ 10 มากกว่าข้อ 8 หรือ ข้อ 9 + ข้อ 10) / Net excess tax</td>
+                                    <td class="text-right"><t t-esc="amount(12)"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="vat30-note">
+                            <span>คำเตือน / Note: รายงานนี้จัดทำจากข้อมูลในระบบบัญชี ควรตรวจสอบกับเอกสารต้นฉบับก่อนยื่นแบบ — This report is generated from accounting data; verify against source documents before filing.</span>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
