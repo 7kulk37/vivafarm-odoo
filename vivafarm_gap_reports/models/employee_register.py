@@ -31,7 +31,7 @@ class ReportEmployeeRegister(models.AbstractModel):
             start = ''
             version = self.env['hr.version'].search(
                 [('employee_id', '=', emp.id), ('active', '=', True)],
-                limit=1, order='date_start desc')
+                limit=1, order='id desc')
             if version and version.date_start:
                 start = version.date_start
             # Wage rate from worker logs
