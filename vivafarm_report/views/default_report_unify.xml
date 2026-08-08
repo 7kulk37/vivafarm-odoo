@@ -134,6 +134,18 @@
         <xpath expr="//strong[contains(text(), 'Payment Terms')]" position="replace">
             <strong><t t-if="o.partner_id.lang == 'th_TH'">เงื่อนไขการชำระเงิน: </t><t t-else="">Payment Terms: </t></strong>
         </xpath>
+        <!-- Order Deadline label (v62): upstream th.po translates
+             "<strong>Order Deadline:</strong>" as "กำหนดเวลาการสั่งซื้อ:"
+             — user wants the shorter "กำหนดเวลาสั่งซื้อ:" (no การ). -->
+        <xpath expr="//div[@t-elif='o.date_order']/strong" position="replace">
+            <strong><t t-if="o.partner_id.lang == 'th_TH'">กำหนดเวลาสั่งซื้อ:</t><t t-else="">Order Deadline:</t></strong>
+        </xpath>
+        <!-- Your Order Reference label (v62): upstream th.po leaves the
+             tag-wrapped key "<strong>Your Order Reference</strong>" with an
+             EMPTY msgstr → renders English for Thai partners. -->
+        <xpath expr="//div[@t-if='o.partner_ref']/strong" position="replace">
+            <strong><t t-if="o.partner_id.lang == 'th_TH'">เลขที่อ้างอิงของท่าน</t><t t-else="">Your Order Reference</t></strong>
+        </xpath>
     </template>
 
     <!-- Purchase Quotation (v59): same swap as purchase order, plus the
