@@ -35,7 +35,7 @@ class ReportLotTraceability(models.AbstractModel):
                 picking = ml.move_id.picking_id
                 move_rows.append({
                     'date': ml.date,
-                    'picking': picking.name if picking else (ml.move_id.name or ''),
+                    'picking': picking.name if picking else (ml.move_id.reference or ''),
                     'from': ml.location_id.name or '',
                     'to': ml.location_dest_id.name or '',
                     'qty': ml.quantity,
