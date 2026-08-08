@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Material Transformation Record (GAP 5.2) -->
+    <template id="report_material_transformation"
+              name="Material Transformation Record (GAP 5.2)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">บันทึกการแปรรูปวัตถุดิบ / Material Transformation</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Material Transformation Record (บันทึกการแปรรูปวัตถุดิบ)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="o.ref or o.display_name"/>
+                            </div>
+                        </div>
+
+                        <!-- Overview -->
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </td>
+                                    <td t-esc="o.date"/>
+                                    <td class="text-muted" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">สถานะ</t>
+                                        <t t-else="">Status</t>
+                                    </td>
+                                    <td t-esc="o.state"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">สูตร</t>
+                                        <t t-else="">Recipe</t>
+                                    </td>
+                                    <td t-esc="o.consumable_recipe_id.name or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ตัวคูณสูตร</t>
+                                        <t t-else="">Multiplier</t>
+                                    </td>
+                                    <td t-esc="o.recipe_multiplier or 1.0"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="row mb-3">
+                            <!-- Input -->
+                            <div class="col-6">
+                                <h6 class="fw-bold">
+                                    <t t-if="lang == 'th_TH'">วัตถุดิบ</t>
+                                    <t t-else="">Raw Material</t>
+                                </h6>
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ผลิตภัณฑ์</t>
+                                                <t t-else="">Product</t>
+                                            </td>
+                                            <td t-esc="o.product_id.name or ''"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ปริมาณ</t>
+                                                <t t-else="">Quantity</t>
+                                            </td>
+                                            <td>
+                                                <span t-esc="o.quantity"/>
+                                                <t t-if="o.source_is_buffer">
+                                                    <span class="text-muted">
+                                                        <t t-if="lang == 'th_TH'"> (จากบัฟเฟอร์)</t>
+                                                        <t t-else=""> (from buffer)</t>
+                                                    </span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Output -->
+                            <div class="col-6">
+                                <h6 class="fw-bold">
+                                    <t t-if="lang == 'th_TH'">ผลิตภัณฑ์ระหว่างผลิต</t>
+                                    <t t-else="">Intermediate Output</t>
+                                </h6>
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ผลิตภัณฑ์</t>
+                                                <t t-else="">Product</t>
+                                            </td>
+                                            <td t-esc="o.intermediate_product_id.name or ''"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ปริมาณ</t>
+                                                <t t-else="">Quantity</t>
+                                            </td>
+                                            <td>
+                                                <span t-esc="o.intermediate_qty"/>
+                                                <span class="text-muted" t-esc="' (x' + str(o.conversion_factor) + ')'"/>
+                                            </td>
+                                        </tr>
+                                        <tr t-if="o.secondary_intermediate_product_id">
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ผลิตภัณฑ์รอง</t>
+                                                <t t-else="">Secondary</t>
+                                            </td>
+                                            <td>
+                                                <span t-esc="o.secondary_intermediate_product_id.name"/>
+                                                <span class="text-muted" t-esc="' (x' + str(o.secondary_conversion_factor) + ')'"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ปลายทาง</t>
+                                                <t t-else="">Destination</t>
+                                            </td>
+                                            <td>
+                                                <t t-if="o.destination_is_stock">
+                                                    <t t-if="lang == 'th_TH'">คลังสินค้า</t>
+                                                    <t t-else="">Stock</t>
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-if="lang == 'th_TH'">บัฟเฟอร์เพาะปลูก</t>
+                                                    <t t-else="">Cultivation Buffer</t>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Stock moves -->
+                        <div t-if="o.raw_picking_id or o.picking_id">
+                            <h6 class="fw-bold">
+                                <t t-if="lang == 'th_TH'">เอกสารสต็อก</t>
+                                <t t-else="">Stock Documents</t>
+                            </h6>
+                            <table class="table table-sm table-bordered mb-3">
+                                <tbody>
+                                    <tr t-if="o.raw_picking_id">
+                                        <td class="text-muted" style="width: 30%;">
+                                            <t t-if="lang == 'th_TH'">ใบเบิกวัตถุดิบ</t>
+                                            <t t-else="">Raw Input Move</t>
+                                        </td>
+                                        <td t-esc="o.raw_picking_id.name"/>
+                                    </tr>
+                                    <tr t-if="o.picking_id">
+                                        <td class="text-muted">
+                                            <t t-if="lang == 'th_TH'">ใบโอนผลิตภัณฑ์</t>
+                                            <t t-else="">Output Move</t>
+                                        </td>
+                                        <td t-esc="o.picking_id.name"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Notes -->
+                        <div t-if="o.notes" class="mb-3">
+                            <h6 class="fw-bold">
+                                <t t-if="lang == 'th_TH'">บันทึก</t>
+                                <t t-else="">Notes</t>
+                            </h6>
+                            <div t-esc="o.notes"/>
+                        </div>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_material_transformation" model="ir.actions.report">
+        <field name="name">Material Transformation Record</field>
+        <field name="model">material.transformation</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_material_transformation</field>
+        <field name="report_file">vivafarm_gap_reports.report_material_transformation</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="binding_model_id" ref="vivafarm_cultivation.model_material_transformation"/>
+    </record>
+</odoo>
