@@ -42,8 +42,8 @@ class ReportStockCard(models.AbstractModel):
                 'default_code': product.default_code or '',
                 'uom': product.uom_id.name or '',
                 'rows': card_rows,
-                'total_qty': running_qty,
-                'total_value': running_value,
+                'total_qty': round(running_qty, 2),
+                'total_value': round(running_value, 2),
             })
         return {
             'doc_ids': products.ids,
