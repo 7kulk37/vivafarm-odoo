@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Employee Register (บัญชีลูกจ้าง, Labor Law 114) -->
+    <template id="report_employee_register"
+              name="Employee Register (บัญชีลูกจ้าง)">
+        <t t-call="web.html_container">
+            <t t-foreach="rows" t-as="r">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">บัญชีลูกจ้าง / Employee Register</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Employee Register (บัญชีลูกจ้าง)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="r['name']"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t>
+                                        <t t-else="">Name</t>
+                                    </td>
+                                    <td t-esc="r['name']"/>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">เลขบัตรประชาชน</t>
+                                        <t t-else="">ID Card No.</t>
+                                    </td>
+                                    <td t-esc="r['identification'] or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ตำแหน่ง</t>
+                                        <t t-else="">Position</t>
+                                    </td>
+                                    <td t-esc="r['job_title'] or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">วันที่เริ่มงาน</t>
+                                        <t t-else="">Start Date</t>
+                                    </td>
+                                    <td t-esc="r['start'] or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">อัตราค่าจ้าง (บาท/ชม.)</t>
+                                        <t t-else="">Wage Rate (THB/hr)</t>
+                                    </td>
+                                    <td colspan="3">
+                                        <t t-if="r['rate']">
+                                            <span t-esc="'{:,.2f}'.format(r['rate'])"/>
+                                            <span class="text-muted small">
+                                                <t t-if="lang == 'th_TH'">(เฉลี่ยจาก</t>
+                                                <t t-else="">(avg from</t>
+                                                <span t-esc="r['log_count']"/>
+                                                <t t-if="lang == 'th_TH'">วันทำงาน)</t>
+                                                <t t-else=""> workdays)</t>
+                                            </span>
+                                        </t>
+                                        <t t-else=""/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h6 class="fw-bold">
+                            <t t-if="lang == 'th_TH'">ที่อยู่</t>
+                            <t t-else="">Address</t>
+                        </h6>
+                        <div t-esc="r['address'] or ''" class="border p-2 mb-3"/>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_employee_register" model="ir.actions.report">
+        <field name="name">Employee Register</field>
+        <field name="model">hr.employee</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_employee_register</field>
+        <field name="report_file">vivafarm_gap_reports.report_employee_register</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+    </record>
+</odoo>
