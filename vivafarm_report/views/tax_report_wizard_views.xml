@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_tax_report_wizard_form" model="ir.ui.view">
+        <field name="name">tax.report.wizard.form</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Thai Tax Register">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Thai Tax Register</h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="register_type" widget="radio" options="{'horizontal': true}"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_report_tax_register"
+                            type="object"
+                            string="Print"
+                            class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_tax_register" model="ir.actions.report">
+        <field name="name">Thai Tax Register</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_tax_register</field>
+        <field name="report_file">vivafarm_report.report_tax_register</field>
+        <field name="paperformat_id" ref="paperformat_viva_invoice"/>
+        <field name="print_report_name">'TaxRegister_%s_%s' % (object.date_from, object.date_to)</field>
+    </record>
+
+    <record id="action_tax_report_wizard" model="ir.actions.act_window">
+        <field name="name">Thai Tax Register</field>
+        <field name="res_model">tax.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_tax_register_sales"
+              name="Sales / Purchase Register (รายงานภาษีขาย/ภาษีซื้อ)"
+              parent="account.account_reports_taxes_and_fiscal_menu"
+              sequence="10"
+              action="action_tax_report_wizard"
+              groups="account.group_account_user"/>
+</odoo>

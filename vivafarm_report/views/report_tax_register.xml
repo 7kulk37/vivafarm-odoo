@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_tax_register"
+              name="Thai Tax Register (Sales/Purchase)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">
+                        <t t-if="register_type == 'purchase'">รายงานภาษีซื้อ</t>
+                        <t t-else="">รายงานภาษีขาย</t>
+                    </t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>
+                                    <t t-if="register_type == 'purchase'">Purchase Register (รายงานภาษีซื้อ)</t>
+                                    <t t-else="">Sales Register (รายงานภาษีขาย)</t>
+                                </strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="date_from"/> – <span t-esc="date_to"/>
+                            </div>
+                        </div>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">เลขที่</t>
+                                        <t t-else="">Number</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">คู่ค้า</t>
+                                        <t t-else="">Partner</t>
+                                    </th>
+                                    <th class="text-end">
+                                        <t t-if="lang == 'th_TH'">มูลค่าสินค้า/บริการ</t>
+                                        <t t-else="">Base Amount</t>
+                                    </th>
+                                    <th class="text-end">
+                                        <t t-if="lang == 'th_TH'">ภาษี</t>
+                                        <t t-else="">VAT</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="rows" t-as="r">
+                                    <td t-esc="r['date']"/>
+                                    <td t-esc="r['name']"/>
+                                    <td t-esc="r['partner']"/>
+                                    <td class="text-end" t-esc="r['base']"/>
+                                    <td class="text-end" t-esc="r['tax']"/>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td colspan="3" class="text-end">
+                                        <t t-if="lang == 'th_TH'">รวม</t>
+                                        <t t-else="">Total</t>
+                                    </td>
+                                    <td class="text-end" t-esc="totals['base']"/>
+                                    <td class="text-end" t-esc="totals['tax']"/>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
