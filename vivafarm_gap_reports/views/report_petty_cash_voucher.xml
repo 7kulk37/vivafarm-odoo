@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Petty Cash Voucher (Thai-compliant) -->
+    <template id="report_petty_cash_voucher"
+              name="Petty Cash Voucher (ใบสำคัญจ่าย)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">ใบสำคัญจ่าย / Petty Cash Voucher</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Petty Cash Voucher (ใบสำคัญจ่าย)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="o.name"/>
+                            </div>
+                        </div>
+
+                        <!-- Voucher header: date / fund / payee / amount -->
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </td>
+                                    <td t-esc="o.date"/>
+                                    <td class="text-muted" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">กองทุน</t>
+                                        <t t-else="">Fund</t>
+                                    </td>
+                                    <td t-esc="o.fund_id.name or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">จ่ายให้</t>
+                                        <t t-else="">Payee</t>
+                                    </td>
+                                    <td t-esc="o.payee"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">สถานะ</t>
+                                        <t t-else="">Status</t>
+                                    </td>
+                                    <td t-esc="o.state"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
+                                        <t t-else="">Amount</t>
+                                    </td>
+                                    <td colspan="3" class="fw-bold">
+                                        <span t-esc="o.currency_id.symbol or ''"/>
+                                        <span t-esc="'{:,.2f}'.format(o.amount)"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">บัญชีค่าใช้จ่าย</t>
+                                        <t t-else="">Expense Account</t>
+                                    </td>
+                                    <td t-esc="o.expense_account_id.name or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ใบเสร็จแนบ</t>
+                                        <t t-else="">Receipt Attached</t>
+                                    </td>
+                                    <td>
+                                        <t t-if="o.receipt_attached">
+                                            <t t-if="lang == 'th_TH'">มี</t>
+                                            <t t-else="">Yes</t>
+                                        </t>
+                                        <t t-else="">
+                                            <t t-if="lang == 'th_TH'">ไม่มี</t>
+                                            <t t-else="">No</t>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold">
+                                <t t-if="lang == 'th_TH'">รายละเอียด</t>
+                                <t t-else="">Description</t>
+                            </h6>
+                            <div t-esc="o.description" class="border p-2"/>
+                        </div>
+
+                        <!-- Signature blocks -->
+                        <table class="table table-sm table-borderless mt-5">
+                            <tbody>
+                                <tr>
+                                    <td class="text-center" style="width: 33%;">
+                                        <div class="mb-5">
+                                            <t t-if="lang == 'th_TH'">ผู้รับเงิน</t>
+                                            <t t-else="">Received by</t>
+                                        </div>
+                                        <div>
+                                            <t t-if="lang == 'th_TH'">ลงชื่อ</t>
+                                            <t t-else="">Signature</t>
+                                        </div>
+                                        <div class="text-muted mt-4">
+                                            <span t-esc="o.payee"/>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" style="width: 33%;">
+                                        <div class="mb-5">
+                                            <t t-if="lang == 'th_TH'">ผู้จ่าย</t>
+                                            <t t-else="">Paid by</t>
+                                        </div>
+                                        <div>
+                                            <t t-if="lang == 'th_TH'">ลงชื่อ</t>
+                                            <t t-else="">Signature</t>
+                                        </div>
+                                        <div class="text-muted mt-4">
+                                            <t t-if="lang == 'th_TH'">ตำแหน่ง</t>
+                                            <t t-else="">Position</t>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" style="width: 33%;">
+                                        <div class="mb-5">
+                                            <t t-if="lang == 'th_TH'">ผู้ตรวจสอบ</t>
+                                            <t t-else="">Approved by</t>
+                                        </div>
+                                        <div>
+                                            <t t-if="lang == 'th_TH'">ลงชื่อ</t>
+                                            <t t-else="">Signature</t>
+                                        </div>
+                                        <div class="text-muted mt-4">
+                                            <t t-if="lang == 'th_TH'">ตำแหน่ง</t>
+                                            <t t-else="">Position</t>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_petty_cash_voucher" model="ir.actions.report">
+        <field name="name">Petty Cash Voucher</field>
+        <field name="model">vivafarm.petty.cash.voucher</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_petty_cash_voucher</field>
+        <field name="report_file">vivafarm_gap_reports.report_petty_cash_voucher</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="binding_model_id" ref="vivafarm_petty_cash.model_vivafarm_petty_cash_voucher"/>
+    </record>
+</odoo>
