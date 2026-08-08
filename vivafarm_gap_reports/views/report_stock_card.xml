@@ -74,8 +74,6 @@
                                         <t t-else="">No movements for this product</t>
                                     </td>
                                 </tr>
-                            </tbody>
-                            <tfoot>
                                 <tr class="fw-bold">
                                     <td colspan="3">
                                         <t t-if="lang == 'th_TH'">รวม</t>
@@ -86,7 +84,7 @@
                                     <td class="text-end" t-esc="r['total_qty']"/>
                                     <td class="text-end" t-esc="r['total_value']"/>
                                 </tr>
-                            </tfoot>
+                            </tbody>
                         </table>
 
                         <div class="oe_structure"/>

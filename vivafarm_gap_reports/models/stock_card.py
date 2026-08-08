@@ -30,10 +30,10 @@ class ReportStockCard(models.AbstractModel):
                     'date': a.date,
                     'reference': a.reference or '',
                     'description': a.description or '',
-                    'qty': a.quantity,
-                    'value': a.value,
-                    'running_qty': running_qty,
-                    'running_value': running_value,
+                    'qty': round(a.quantity, 2),
+                    'value': round(a.value, 2),
+                    'running_qty': round(running_qty, 2),
+                    'running_value': round(running_value, 2),
                     'unit_cost': (running_value / running_qty) if running_qty else 0.0,
                 })
             rows.append({
