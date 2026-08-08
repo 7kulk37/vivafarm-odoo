@@ -11,13 +11,15 @@
          enough top margin. No third-party module edits. -->
 
     <!-- A4 Landscape with a top margin tall enough for the Viva company
-         block (measured ~159pt on the register). 65mm = 184pt clears it. -->
+         block (measured ~159pt on the register). 65mm = 184pt clears it.
+         margin_bottom 32mm matches the invoice so the Viva footer frame
+         (company.report_footer + Page X/Y) is not clipped. -->
     <record id="paperformat_viva_asset_landscape" model="report.paperformat">
         <field name="name">VivaFarm Asset Register A4 Landscape</field>
         <field name="format">A4</field>
         <field name="orientation">Landscape</field>
         <field name="margin_top">65</field>
-        <field name="margin_bottom">15</field>
+        <field name="margin_bottom">32</field>
         <field name="margin_left">0</field>
         <field name="margin_right">0</field>
         <field name="header_spacing">65</field>
@@ -28,13 +30,14 @@
     <!-- A4 Portrait with the same 65mm top margin as the landscape register
          (clears the ~96pt Viva company block with a small gap). The card
          previously used paperformat_viva_invoice (107mm) which left ~209pt
-         of dead space under the header. -->
+         of dead space under the header. margin_bottom 32mm matches the
+         invoice so the Viva footer frame is not clipped. -->
     <record id="paperformat_viva_asset_portrait" model="report.paperformat">
         <field name="name">VivaFarm Asset Card A4 Portrait</field>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
         <field name="margin_top">65</field>
-        <field name="margin_bottom">15</field>
+        <field name="margin_bottom">32</field>
         <field name="margin_left">0</field>
         <field name="margin_right">0</field>
         <field name="header_spacing">65</field>
@@ -52,4 +55,19 @@
     <record id="eh_account_assets_pro.action_report_asset_card" model="ir.actions.report">
         <field name="paperformat_id" ref="paperformat_viva_asset_portrait"/>
     </record>
+
+    <!-- Remove the hardcoded ERP Heritage footer from both asset templates.
+         The footer must come from the company document layout
+         (Settings > General > Company > Document Layout = company.report_footer),
+         which the Viva external layout already renders in the footer frame.
+         The eh_report_footer div (class eh_pdf_footer) is NOT extracted to
+         the wkhtmltopdf footer frame (only divs with a standalone 'footer'
+         class token are), so it stays in the body — duplicate footer. -->
+    <template id="eh_account_assets_pro.report_asset_register" inherit_id="eh_account_assets_pro.report_asset_register">
+        <xpath expr="//t[@t-call='eh_account_base.eh_report_footer']" position="replace"/>
+    </template>
+
+    <template id="eh_account_assets_pro.report_asset_card" inherit_id="eh_account_assets_pro.report_asset_card">
+        <xpath expr="//t[@t-call='eh_account_base.eh_report_footer']" position="replace"/>
+    </template>
 </odoo>
