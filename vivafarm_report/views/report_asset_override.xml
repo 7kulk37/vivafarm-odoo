@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Asset Register / Asset Card header-overlap fix (2026-08-08).
+         The ERP Heritage asset reports call web.external_layout, which renders
+         the company default layout (VivaFarm Layout on VivaFarm DBs). The
+         ERP Heritage paperformats (30-35mm top) were sized for their own
+         short header band, so the taller Viva company block overlaps the
+         report title (measured: register band bottom y=159pt vs title top
+         y=86pt; card band bottom y=190pt vs title top y=101pt).
+         Fix: point the two asset report actions at Viva paperformats with
+         enough top margin. No third-party module edits. -->
+
+    <!-- A4 Landscape with a top margin tall enough for the Viva company
+         block (measured ~159pt on the register). 65mm = 184pt clears it. -->
+    <record id="paperformat_viva_asset_landscape" model="report.paperformat">
+        <field name="name">VivaFarm Asset Register A4 Landscape</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">65</field>
+        <field name="margin_bottom">15</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_spacing">65</field>
+        <field name="dpi">90</field>
+        <field name="css_margins" eval="False"/>
+    </record>
+
+    <!-- Asset Register (landscape) → Viva landscape paperformat -->
+    <record id="eh_account_assets_pro.action_report_asset_register" model="ir.actions.report">
+        <field name="paperformat_id" ref="paperformat_viva_asset_landscape"/>
+    </record>
+
+    <!-- Asset Card (portrait) → Viva tax-invoice paperformat (107mm top,
+         proven to hold the Viva company block on the tax invoice) -->
+    <record id="eh_account_assets_pro.action_report_asset_card" model="ir.actions.report">
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+    </record>
+</odoo>
