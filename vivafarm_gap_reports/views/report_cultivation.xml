@@ -247,6 +247,6 @@
         <field name="report_name">vivafarm_gap_reports.report_cultivation</field>
         <field name="report_file">vivafarm_gap_reports.report_cultivation</field>
         <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
-        <field name="binding_model_id" ref="model_vivafarm_cultivation"/>
+        <field name="binding_model_id" ref="vivafarm_cultivation.model_vivafarm_cultivation"/>
     </record>
 </odoo>
