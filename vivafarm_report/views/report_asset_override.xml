@@ -12,14 +12,14 @@
 
     <!-- A4 Landscape with a top margin tall enough for the Viva company
          block (measured ~159pt on the register). 65mm = 184pt clears it.
-         margin_bottom 32mm matches the invoice so the Viva footer frame
-         (company.report_footer + Page X/Y) is not clipped. -->
+         margin_bottom 24mm is the minimum that keeps the Viva footer frame
+         (company.report_footer + Page X/Y) visible without clipping. -->
     <record id="paperformat_viva_asset_landscape" model="report.paperformat">
         <field name="name">VivaFarm Asset Register A4 Landscape</field>
         <field name="format">A4</field>
         <field name="orientation">Landscape</field>
         <field name="margin_top">65</field>
-        <field name="margin_bottom">32</field>
+        <field name="margin_bottom">24</field>
         <field name="margin_left">0</field>
         <field name="margin_right">0</field>
         <field name="header_spacing">65</field>
@@ -30,14 +30,14 @@
     <!-- A4 Portrait with the same 65mm top margin as the landscape register
          (clears the ~96pt Viva company block with a small gap). The card
          previously used paperformat_viva_invoice (107mm) which left ~209pt
-         of dead space under the header. margin_bottom 32mm matches the
-         invoice so the Viva footer frame is not clipped. -->
+         of dead space under the header. margin_bottom 24mm is the minimum
+         that keeps the Viva footer frame visible without clipping. -->
     <record id="paperformat_viva_asset_portrait" model="report.paperformat">
         <field name="name">VivaFarm Asset Card A4 Portrait</field>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
         <field name="margin_top">65</field>
-        <field name="margin_bottom">32</field>
+        <field name="margin_bottom">24</field>
         <field name="margin_left">0</field>
         <field name="margin_right">0</field>
         <field name="header_spacing">65</field>
