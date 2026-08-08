@@ -86,7 +86,7 @@
                                         <td t-esc="l.tax_line_id.name"/>
                                         <td t-esc="'{}%'.format(-l.tax_line_id.amount)"/>
                                         <td class="text-end" t-esc="'{:,.2f}'.format(l.tax_base_amount)"/>
-                                        <td class="text-end" t-esc="'{:,.2f}'.format(-l.amount_total)"/>
+                                        <td class="text-end" t-esc="'{:,.2f}'.format(-l.balance)"/>
                                     </t>
                                 </tr>
                                 <tr t-if="not any(l.tax_line_id and l.tax_line_id.amount &lt; 0 for l in o.line_ids)">
