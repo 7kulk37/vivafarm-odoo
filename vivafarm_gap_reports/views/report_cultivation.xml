@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- GAP 5.1 — Cultivation Record (seed-to-harvest) -->
+    <template id="report_cultivation"
+              name="Cultivation Record (GAP 5.1)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">บันทึกการเพาะปลูก / Cultivation Record</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Cultivation Record (บันทึกการเพาะปลูก)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="o.name"/>
+                            </div>
+                        </div>
+
+                        <!-- 1. Overview -->
+                        <table class="table table-sm table-bordered mb-3">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">สถานะ</t>
+                                        <t t-else="">Status</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">สูตร</t>
+                                        <t t-else="">Recipe</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">วันที่เพาะ</t>
+                                        <t t-else="">Plant Date</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">วันที่ย้ายปลูก</t>
+                                        <t t-else="">Transplant Date</t>
+                                    </th>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">วันที่เก็บเกี่ยว</t>
+                                        <t t-else="">Harvest Date</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td t-esc="o.state"/>
+                                    <td t-esc="o.recipe_id.name or ''"/>
+                                    <td t-esc="o.plant_date or ''"/>
+                                    <td t-esc="o.transplanted_date or ''"/>
+                                    <td t-esc="o.harvest_date or ''"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="row mb-3">
+                            <!-- 2. Seed input -->
+                            <div class="col-6">
+                                <h6 class="fw-bold">
+                                    <t t-if="lang == 'th_TH'">เมล็ดพันธุ์</t>
+                                    <t t-else="">Seed Input</t>
+                                </h6>
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ผลิตภัณฑ์</t>
+                                                <t t-else="">Seed Product</t>
+                                            </td>
+                                            <td t-esc="o.seed_product_id.name or ''"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ล็อตเมล็ด</t>
+                                                <t t-else="">Seed Lot</t>
+                                            </td>
+                                            <td>
+                                                <span t-esc="o.seed_lot_id.name or ''"/>
+                                                <t t-if="o.seed_lot_hex">
+                                                    <span class="text-muted" t-esc="' (' + o.seed_lot_hex + ')'"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ปริมาณเพาะ (กรัม)</t>
+                                                <t t-else="">Grams to Sow</t>
+                                            </td>
+                                            <td t-esc="o.grams_to_sow"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ปริมาณใช้จริง (กรัม)</t>
+                                                <t t-else="">Grams Consumed</t>
+                                            </td>
+                                            <td t-esc="o.grams_consumed or 0.0"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- 3. Live plants -->
+                            <div class="col-6">
+                                <h6 class="fw-bold">
+                                    <t t-if="lang == 'th_TH'">ต้นกล้า</t>
+                                    <t t-else="">Live Plants</t>
+                                </h6>
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">พืช</t>
+                                                <t t-else="">Crop</t>
+                                            </td>
+                                            <td t-esc="o.crop_id.name or ''"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ล็อตต้นกล้า</t>
+                                                <t t-else="">Live Lot</t>
+                                            </td>
+                                            <td t-esc="o.live_lot_id.name or ''"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">จำนวนต้น</t>
+                                                <t t-else="">Plants</t>
+                                            </td>
+                                            <td>
+                                                <span t-esc="o.plant_count or o.target_plant_count or 0"/>
+                                                <t t-if="o.transplant_amount">
+                                                    <span class="text-muted" t-esc="' (' + str(o.transplant_amount) + ' transplanted)'"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">สถานที่</t>
+                                                <t t-else="">Location</t>
+                                            </td>
+                                            <td>
+                                                <span t-esc="o.nursery_id.name or ''"/>
+                                                <t t-if="o.bench_id">
+                                                    <span class="text-muted" t-esc="' / ' + o.bench_id.name"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <!-- 4. Harvest -->
+                            <div class="col-6">
+                                <h6 class="fw-bold">
+                                    <t t-if="lang == 'th_TH'">ผลผลิต</t>
+                                    <t t-else="">Harvest</t>
+                                </h6>
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ผลิตภัณฑ์สำเร็จรูป</t>
+                                                <t t-else="">Packed Product</t>
+                                            </td>
+                                            <td t-esc="o.packed_product_id.name or ''"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ล็อตบรรจุ</t>
+                                                <t t-else="">Packed Lot</t>
+                                            </td>
+                                            <td>
+                                                <span t-esc="o.packed_lot_id.name or ''"/>
+                                                <t t-if="o.packed_lot_weight_g">
+                                                    <span class="text-muted" t-esc="' (' + str(o.packed_lot_weight_g) + ' g)'"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">น้ำหนัก (กก.)</t>
+                                                <t t-else="">Packed Kg</t>
+                                            </td>
+                                            <td t-esc="o.packed_kg or 0.0"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">ของเสีย</t>
+                                                <t t-else="">Spoilage Units</t>
+                                            </td>
+                                            <td t-esc="o.spoilage_units or 0"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- 5. Consumables -->
+                            <div class="col-6">
+                                <h6 class="fw-bold">
+                                    <t t-if="lang == 'th_TH'">สารอาหารและกรด</t>
+                                    <t t-else="">Nutrient &amp; Acid</t>
+                                </h6>
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">สารอาหารรวม (กรัม)</t>
+                                                <t t-else="">Total Nutrient (g)</t>
+                                            </td>
+                                            <td t-esc="o.total_nutrient_consumed or 0.0"/>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">
+                                                <t t-if="lang == 'th_TH'">กรดรวม (มล.)</t>
+                                                <t t-else="">Total Acid (ml)</t>
+                                            </td>
+                                            <td t-esc="o.total_acid_consumed or 0.0"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 6. Notes -->
+                        <div t-if="o.notes" class="mb-3">
+                            <h6 class="fw-bold">
+                                <t t-if="lang == 'th_TH'">บันทึก</t>
+                                <t t-else="">Notes</t>
+                            </h6>
+                            <div t-esc="o.notes"/>
+                        </div>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action: adds a Print entry in the form header dropdown -->
+    <record id="action_report_cultivation" model="ir.actions.report">
+        <field name="name">Cultivation Record</field>
+        <field name="model">vivafarm.cultivation</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_cultivation</field>
+        <field name="report_file">vivafarm_gap_reports.report_cultivation</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="binding_model_id" ref="model_vivafarm_cultivation"/>
+    </record>
+</odoo>
