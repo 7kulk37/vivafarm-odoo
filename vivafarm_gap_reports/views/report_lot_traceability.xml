@@ -99,8 +99,7 @@
                                 <t t-if="lang == 'th_TH'">ลูกค้าที่ได้รับ</t>
                                 <t t-else="">Customers</t>
                             </h6>
-                            <span t-foreach="r['customers']" t-as="c" t-esc="c"/>
-                            <t t-if="not c_loop['last']">, </t>
+                            <span t-esc="r['customers_str']"/>
                         </div>
 
                         <!-- Move history -->

@@ -63,6 +63,7 @@ class ReportLotTraceability(models.AbstractModel):
                 'packed_kg': cul.packed_kg if cul else 0.0,
                 'move_rows': move_rows,
                 'customers': sorted(customers),
+                'customers_str': ', '.join(sorted(customers)),
             })
         return {
             'doc_ids': lots.ids,
