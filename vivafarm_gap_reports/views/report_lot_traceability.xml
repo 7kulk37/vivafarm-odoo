@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Product Traceability / Lot History (GAP 5.6) -->
+    <template id="report_lot_traceability"
+              name="Product Traceability / Lot History (GAP 5.6)">
+        <t t-call="web.html_container">
+            <t t-foreach="rows" t-as="r">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">ประวัติล็อต / Lot Traceability</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Lot Traceability / Lot History (ประวัติล็อต)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="r['name']"/>
+                            </div>
+                        </div>
+
+                        <!-- Genealogy -->
+                        <h6 class="fw-bold">
+                            <t t-if="lang == 'th_TH'">สายการผลิต</t>
+                            <t t-else="">Production Chain</t>
+                        </h6>
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">ล็อตบรรจุ</t>
+                                        <t t-else="">Packed Lot</t>
+                                    </td>
+                                    <td>
+                                        <span t-esc="r['name']"/>
+                                        <t t-if="r['hex']">
+                                            <span class="text-muted" t-esc="' (' + r['hex'] + ')'"/>
+                                        </t>
+                                    </td>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">ผลิตภัณฑ์</t>
+                                        <t t-else="">Product</t>
+                                    </td>
+                                    <td t-esc="r['product']"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">รหัสการเพาะปลูก</t>
+                                        <t t-else="">Cultivation</t>
+                                    </td>
+                                    <td t-esc="r['cultivation'] or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">พืช</t>
+                                        <t t-else="">Crop</t>
+                                    </td>
+                                    <td t-esc="r['crop'] or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">เมล็ดพันธุ์</t>
+                                        <t t-else="">Seed Lot</t>
+                                    </td>
+                                    <td t-esc="r['seed_lot'] or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ต้นกล้า</t>
+                                        <t t-else="">Live Lot</t>
+                                    </td>
+                                    <td t-esc="r['live_lot'] or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">แปลง</t>
+                                        <t t-else="">Bench</t>
+                                    </td>
+                                    <td t-esc="r['bench'] or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">วันที่เพาะ</t>
+                                        <t t-else="">Plant Date</t>
+                                    </td>
+                                    <td t-esc="r['plant_date'] or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">วันที่เก็บเกี่ยว</t>
+                                        <t t-else="">Harvest Date</t>
+                                    </td>
+                                    <td t-esc="r['harvest_date'] or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">น้ำหนัก (กก.)</t>
+                                        <t t-else="">Packed Kg</t>
+                                    </td>
+                                    <td t-esc="r['packed_kg'] or 0.0"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Customers -->
+                        <div t-if="r['customers']" class="mb-3">
+                            <h6 class="fw-bold">
+                                <t t-if="lang == 'th_TH'">ลูกค้าที่ได้รับ</t>
+                                <t t-else="">Customers</t>
+                            </h6>
+                            <span t-foreach="r['customers']" t-as="c" t-esc="c"/>
+                            <t t-if="not c_loop_last">, </t>
+                        </div>
+
+                        <!-- Move history -->
+                        <h6 class="fw-bold">
+                            <t t-if="lang == 'th_TH'">ประวัติการเคลื่อนไหว</t>
+                            <t t-else="">Movement History</t>
+                        </h6>
+                        <table class="table table-sm o_main_table" style="table-layout: fixed;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 10%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </th>
+                                    <th style="width: 14%;">
+                                        <t t-if="lang == 'th_TH'">เอกสาร</t>
+                                        <t t-else="">Document</t>
+                                    </th>
+                                    <th style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">จาก</t>
+                                        <t t-else="">From</t>
+                                    </th>
+                                    <th style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">ไปยัง</t>
+                                        <t t-else="">To</t>
+                                    </th>
+                                    <th class="text-end" style="width: 10%;">
+                                        <t t-if="lang == 'th_TH'">จำนวน</t>
+                                        <t t-else="">Qty</t>
+                                    </th>
+                                    <th style="width: 10%;">
+                                        <t t-if="lang == 'th_TH'">สถานะ</t>
+                                        <t t-else="">State</t>
+                                    </th>
+                                    <th style="width: 16%;">
+                                        <t t-if="lang == 'th_TH'">คู่ค้า</t>
+                                        <t t-else="">Partner</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="r['move_rows']" t-as="m">
+                                    <td t-esc="m['date']"/>
+                                    <td t-esc="m['picking']"/>
+                                    <td t-esc="m['from']"/>
+                                    <td t-esc="m['to']"/>
+                                    <td class="text-end" t-esc="m['qty']"/>
+                                    <td t-esc="m['state']"/>
+                                    <td t-esc="m['partner']"/>
+                                </tr>
+                                <tr t-if="not r['move_rows']">
+                                    <td colspan="7" class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ไม่มีการเคลื่อนไหว</t>
+                                        <t t-else="">No moves for this lot</t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_lot_traceability" model="ir.actions.report">
+        <field name="name">Lot Traceability</field>
+        <field name="model">stock.lot</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_lot_traceability</field>
+        <field name="report_file">vivafarm_gap_reports.report_lot_traceability</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <field name="binding_model_id" ref="stock.model_stock_lot"/>
+    </record>
+</odoo>
