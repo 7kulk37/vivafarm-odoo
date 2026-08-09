@@ -14,6 +14,14 @@
                         class="oe_highlight"
                         invisible="state != 'posted' or move_type not in ('out_invoice', 'out_refund')"/>
             </button>
+            <!-- Replaces Invoice (ป.86/2542 ข้อ 25): set on the re-issued
+                 invoice to print the replacement note on the tax invoice. -->
+            <field name="payment_reference" position="after">
+                <field name="replacement_of_id"
+                       placeholder="Replaces Invoice (ข้อ 25)"
+                       options="{'no_create': True}"
+                       invisible="move_type not in ('out_invoice',)"/>
+            </field>
         </field>
     </record>
 

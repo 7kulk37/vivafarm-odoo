@@ -1,4 +1,4 @@
-from odoo import models
+from odoo import fields, models
 
 #: Maximum number of product line items that fit on a single A4 sheet for the
 #: VivaFarm tax invoice. Calibrated on staging with the real business layout
@@ -13,6 +13,17 @@ MULTIPAGE_PRODUCT_LINES = 5
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
+
+    #: Original tax invoice this document was re-issued to replace (Thai
+    #: Revenue Code ป.86/2542 ข้อ 25(2)/(3)): when a posted tax invoice has
+    #: essential elements wrong, it must be voided and a NEW invoice issued
+    #: with a NEW number and the SAME date, carrying the note "เป็นการยกเลิก
+    #: และออกใบกำกับภาษีฉบับใหม่แทนฉบับเดิมเลขที่ ...". The report renders
+    #: that note from this field (full-width, wraps freely — unlike `ref`,
+    #: which ellipsizes inside the header frame).
+    replacement_of_id = fields.Many2one(
+        'account.move', string='Replaces Invoice', ondelete='set null',
+        help="Original tax invoice this document was re-issued to replace (ป.86/2542 ข้อ 25).")
 
     def _is_multipage(self):
         """Whether this tax invoice spans more than one sheet per copy.
