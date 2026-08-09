@@ -99,7 +99,7 @@
                     </div>
                     <div class="col-4" style="width: 33%; padding-left: 3px;">
                         <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">แหล่งที่มา</t>
+                            <t t-if="lang == 'th_TH'">อ้างอิง</t>
                             <t t-else="">Source</t>
                         </strong>
                         <div style="font-size: 14px; line-height: 1.35;">
