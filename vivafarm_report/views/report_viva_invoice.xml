@@ -350,8 +350,14 @@
                                                     <tr t-if="payment_vals['is_exchange'] == 0">
                                                         <td>
                                                             <i class="oe_form_field text-end oe_payment_label">
-                                                                <t t-if="payment_vals['is_refund']">Reversed on </t>
-                                                                <t t-else="">Paid on </t>
+                                                                <t t-if="payment_vals['is_refund']">
+                                                                    <t t-if="lang == 'th_TH'">กลับรายการเมื่อ </t>
+                                                                    <t t-else="">Reversed on </t>
+                                                                </t>
+                                                                <t t-else="">
+                                                                    <t t-if="lang == 'th_TH'">ชำระเมื่อ </t>
+                                                                    <t t-else="">Paid on </t>
+                                                                </t>
                                                                 <t t-out="payment_vals['date']" t-options='{"widget": "date"}'>2026-09-19</t>
                                                             </i>
                                                         </td>
@@ -362,7 +368,10 @@
                                                 </t>
                                                 <t t-if="len(payments_vals) > 0">
                                                     <tr class="fw-bold">
-                                                        <td>Amount Due</td>
+                                                        <td>
+                                                            <t t-if="lang == 'th_TH'">ยอดค้างชำระ</t>
+                                                            <t t-else="">Amount Due</t>
+                                                        </td>
                                                         <td class="text-end">
                                                             <span t-field="o.amount_residual">0.00</span>
                                                         </td>
@@ -552,6 +561,10 @@
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-set="lang" t-value="o.partner_id.lang"/>
+                <!-- Show payment history ("Paid on ..." + "Amount Due") in the
+                     totals table, like the standard Invoice PDF
+                     (account.report_invoice_with_payments sets this flag). -->
+                <t t-set="print_with_payments" t-value="True"/>
                 <!-- Proforma previews (portal Preview / Send-proforma, proforma flag
                      set by account's ir_actions_report._get_rendering_context) render a
                      SINGLE copy without the copy badge, like the default Invoice PDF.
