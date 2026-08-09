@@ -22,6 +22,22 @@
                        options="{'no_create': True}"
                        invisible="move_type not in ('out_invoice',)"/>
             </field>
+            <!-- Re-issue (ป.86/2542 ข้อ 25): the compliant alternative to
+                 Reset to Draft on a posted-then-cancelled customer invoice.
+                 Reset to Draft reuses the same number on re-post (forbidden
+                 by ข้อ 25(2)); this button copies + re-dates + links via
+                 replacement_of_id so the replacement gets a NEW number and
+                 prints the 'ออกแทนใบกำกับภาษีฉบับเดิมเลขที่ ...' note.
+                 Visible exactly when Reset to Draft is hidden for cancelled
+                 customer invoices. -->
+            <button name="button_draft" position="after">
+                <button name="action_reissue"
+                        string="Re-issue"
+                        type="object"
+                        groups="account.group_account_invoice"
+                        class="btn-primary"
+                        invisible="move_type != 'out_invoice' or state != 'cancel' or not posted_before"/>
+            </button>
         </field>
     </record>
 

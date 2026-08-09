@@ -1,4 +1,5 @@
-from odoo import fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 #: Maximum number of product line items that fit on a single A4 sheet for the
 #: VivaFarm tax invoice. Calibrated on staging with the real business layout
@@ -175,4 +176,60 @@ class AccountMove(models.Model):
             'exempt_rows': exempt_rows,
             'is_exempt': not vat_rows,
             'grand_total': tt.get('total_amount_currency', net_total),
+        }
+
+    @api.depends('restrict_mode_hash_table', 'state', 'inalterable_hash', 'posted_before')
+    def _compute_show_reset_to_draft_button(self):
+        """Hide 'Reset to Draft' on posted-then-cancelled customer invoices.
+
+        Thai Revenue Code ป.86/2542 ข้อ 25(2): a replacement tax invoice must
+        carry a NEW number. Odoo's reset-to-draft on a posted-then-cancelled
+        invoice reuses the same number on re-post — the exact situation the
+        rule forbids. Hide the button there; the 'Re-issue' button
+        (action_reissue) provides the compliant path instead. Draft invoices
+        that were cancelled (never posted, no number consumed) keep the
+        standard button — resetting them is harmless. Vendor bills and
+        journal entries keep standard Odoo behaviour.
+        """
+        super()._compute_show_reset_to_draft_button()
+        for move in self:
+            if (move.move_type == 'out_invoice' and move.state == 'cancel'
+                    and move.posted_before):
+                move.show_reset_to_draft_button = False
+
+    def action_reissue(self):
+        """Compliant re-issue of a voided tax invoice (ป.86/2542 ข้อ 25).
+
+        Called from the 'Re-issue' button on a posted-then-cancelled customer
+        invoice. Copies the voided invoice, keeps the original invoice date
+        (ข้อ 25(2) — the replacement is dated the same day), links it via
+        replacement_of_id so the report prints the 'ออกแทนใบกำกับภาษีฉบับเดิม
+        เลขที่ ...' note (ข้อ 25(3)), and posts it to consume a fresh number.
+
+        :return: action opening the new invoice's form view.
+        """
+        self.ensure_one()
+        if not (self.move_type == 'out_invoice' and self.state == 'cancel'
+                and self.posted_before):
+            raise UserError(
+                _("Re-issue is only available on a cancelled customer invoice "
+                  "that was previously posted."))
+        new_invoice = self.with_context(
+            include_business_fields=True,
+            skip_invoice_sync=self.move_type == 'entry',
+        ).copy({
+            'replacement_of_id': self.id,
+        })
+        new_invoice.write({
+            'invoice_date': self.invoice_date,
+            'date': self.invoice_date or self.date,
+            'ref': False,
+        })
+        new_invoice.action_post()
+        return {
+            'name': _('Re-issued Invoice'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'res_id': new_invoice.id,
+            'view_mode': 'form',
         }
