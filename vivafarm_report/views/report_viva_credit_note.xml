@@ -126,11 +126,11 @@
                     <thead>
                         <tr>
                             <th style="width: 5%;"><span><t t-if="lang == 'th_TH'">ลำดับ</t><t t-else="">NO.</t></span></th>
-                            <th style="width: 45%;"><span>Description</span></th>
-                            <th class="text-end" style="width: 12%;"><span>Quantity</span></th>
-                            <th class="text-end" style="width: 12%;"><span>Unit Price</span></th>
-                            <th class="text-end" style="width: 10%;"><span>Taxes</span></th>
-                            <th class="text-end" style="width: 16%;"><span>Amount</span></th>
+                            <th style="width: 45%;"><span><t t-if="lang == 'th_TH'">คำอธิบาย</t><t t-else="">Description</t></span></th>
+                            <th class="text-end" style="width: 12%;"><span><t t-if="lang == 'th_TH'">จำนวน(หน่วย)</t><t t-else="">Quantity</t></span></th>
+                            <th class="text-end" style="width: 12%;"><span><t t-if="lang == 'th_TH'">ราคาต่อหน่วย</t><t t-else="">Unit Price</t></span></th>
+                            <th class="text-end" style="width: 10%;"><span><t t-if="lang == 'th_TH'">ภาษี</t><t t-else="">Taxes</t></span></th>
+                            <th class="text-end" style="width: 16%;"><span><t t-if="lang == 'th_TH'">จำนวนเงิน</t><t t-else="">Amount</t></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -221,8 +221,8 @@
                     <div class="col-6" style="width: 50%; padding-right: 3px;">
                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
                             <strong>
-                                <t t-if="lang == 'th_TH'">ผู้รับเงิน</t>
-                                <t t-else="">Received by</t>
+                                <t t-if="lang == 'th_TH'">ลูกค้า</t>
+                                <t t-else="">Received by customer</t>
                             </strong><br/>
                             <div style="min-height: 50px; max-height: 50px;"></div>
                             <div style="font-size: 14px; margin-top: 0;">
