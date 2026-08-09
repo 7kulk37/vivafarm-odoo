@@ -12,6 +12,7 @@
     <template id="viva_payment_receipt_document"
               name="VivaFarm Payment Receipt Document">
         <t t-call="vivafarm_report.external_layout_viva">
+            <t t-set="is_payment_receipt" t-value="True"/>
             <t t-set="o" t-value="o.with_context(lang=lang)"/>
             <t t-set="values" t-value="o._get_payment_receipt_report_values()"/>
             <t t-set="invoices" t-value="o.reconciled_invoice_ids or o.reconciled_bill_ids"/>
@@ -29,17 +30,7 @@
                         <t t-if="lang == 'th_TH'">ใบเสร็จรับเงิน</t>
                         <t t-else="">Payment Receipt</t>
                     </strong>
-                    <t t-if="copy_kind">
-                        <span t-att-style="'border: 1.5px solid %s; border-radius: 4px; padding: 1px 8px; font-size: 11px; font-weight: bold; color: %s; margin-left: 8px; vertical-align: middle;' % (('#212529' if copy_kind == 'original' else '#d9534f'), ('#212529' if copy_kind == 'original' else '#d9534f'))">
-                            <t t-if="lang == 'th_TH'"><t t-out="copy['th_marker']"/> / <t t-out="copy['th_recipient']"/></t>
-                            <t t-else=""><t t-out="copy['en_marker']"/> / <t t-out="copy['en_recipient']"/></t>
-                        </span>
-                    </t>
                 </h3>
-                <div class="text-center text-muted" style="font-size: 12px; margin-bottom: 8px;">
-                    <t t-if="lang == 'th_TH'">เลขที่ <span t-field="o.name"/> · วันที่ <span t-esc="o._get_thai_date_display('date')"/></t>
-                    <t t-else="">No. <span t-field="o.name"/> · Date <span t-field="o.date"/></t>
-                </div>
 
                 <!-- Customer block -->
                 <div class="row" style="margin: 0 0 8px 0;">
@@ -96,7 +87,7 @@
                     <thead>
                         <tr>
                             <th style="width: 6%;"><span><t t-if="lang == 'th_TH'">ลำดับ</t><t t-else="">No.</t></span></th>
-                            <th style="width: 24%;"><span><t t-if="lang == 'th_TH'">วันที่ใบกำกับภาษี</t><t t-else="">Tax Invoice Date</t></span></th>
+                            <th style="width: 24%;"><span><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></th>
                             <th style="width: 30%;"><span><t t-if="lang == 'th_TH'">เลขที่ใบกำกับภาษี</t><t t-else="">Tax Invoice No.</t></span></th>
                             <th t-if="otherCurrency" class="text-end" style="width: 20%;"><span><t t-if="lang == 'th_TH'">จำนวนเงิน (สกุลเงิน)</t><t t-else="">Amount In Currency</t></span></th>
                             <th class="text-end" style="width: 20%;"><span><t t-if="lang == 'th_TH'">จำนวนเงิน</t><t t-else="">Amount</t></span></th>

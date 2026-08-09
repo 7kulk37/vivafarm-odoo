@@ -19,16 +19,17 @@ class AccountPayment(models.Model):
         return '%s/%s' % (day_month, (value.year + 543) % 100)
 
     def _get_payment_receipt_copies(self):
-        """Copies to print for a payment receipt (Thai practice: 2 copies).
+        """Copies to print for a payment receipt (Thai practice: 3 copies).
 
-        Matches the B.3 receipt template: ต้นฉบับ/สำหรับลูกค้า (Original /
-        For Customer) + สำเนา/สำหรับบริษัท (Copy / For Company). The tax
-        invoice prints 3 copies; the receipt template uses 2.
+        Matches the tax invoice triplicate: ต้นฉบับ/สำหรับลูกค้า (Original /
+        For Customer) + สำเนา/สำหรับบริษัท (Copy / For Company) + สำเนา/
+        สำหรับบัญชี (Copy / For Accounting).
         """
         self.ensure_one()
         return [
             {'key': 'original', 'th_marker': 'ต้นฉบับ', 'en_marker': 'Original', 'th_recipient': 'สำหรับลูกค้า', 'en_recipient': 'For Customer'},
             {'key': 'company',  'th_marker': 'สำเนา',   'en_marker': 'Copy',     'th_recipient': 'สำหรับบริษัท', 'en_recipient': 'For Company'},
+            {'key': 'account',  'th_marker': 'สำเนา',   'en_marker': 'Copy',     'th_recipient': 'สำหรับบัญชี', 'en_recipient': 'For Accounting'},
         ]
 
     def _compute_payment_receipt_title(self):
