@@ -151,38 +151,67 @@
                     </tbody>
                 </table>
 
-                <!-- Totals -->
-                <div class="row" style="margin: 0 0 6px 0;">
-                    <div class="col-12" style="width: 100%; text-align: right;">
-                        <div style="font-size: 14px; line-height: 1.5;">
-                            <div>
-                                <t t-if="lang == 'th_TH'">ยอดรวมก่อนภาษี: </t>
-                                <t t-else="">Untaxed Amount: </t>
-                                <span t-field="o.amount_untaxed"/>
-                            </div>
-                            <div>
-                                <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม 7%: </t>
-                                <t t-else="">VAT 7%: </t>
-                                <span t-field="o.amount_tax"/>
-                            </div>
-                            <div style="font-weight: bold; font-size: 16px;">
-                                <t t-if="lang == 'th_TH'">ยอดรวม: </t>
-                                <t t-else="">Total: </t>
-                                <span t-field="o.amount_total"/>
+                <!-- Totals — same structure as the Tax Invoice:
+                     right-elements block, border-top, o_total_table
+                     (Total Amount / VAT / Grand Total), amount-in-words
+                     with border-bottom. Reuses _get_tax_invoice_totals()
+                     (credit-note amounts are positive in Odoo, same rows). -->
+                <div class="overflow-hidden">
+                    <div id="right-elements" t-attf-class="#{'col-5' if report_type == 'pdf' else 'col-12 col-md-5'} ms-5 d-inline-block float-end" t-att-style="'border-top: 2px solid %s; margin-top: 12pt;' % (o.company_id.primary_color or '#000000')">
+                        <div id="total" class="clearfix row">
+                            <div class="ms-auto">
+                                <table class="o_total_table table table-borderless avoid-page-break-inside">
+                                    <t t-set="tt_rows" t-value="o._get_tax_invoice_totals()"/>
+                                    <t t-set="currency" t-value="o.currency_id"/>
+                                    <tr>
+                                        <td>
+                                            <t t-if="lang == 'th_TH'">รวมเงิน</t>
+                                            <t t-else="">Total Amount</t>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-out="tt_rows['gross_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                        </td>
+                                    </tr>
+                                    <t t-foreach="tt_rows['vat_rows']" t-as="vrow">
+                                        <tr>
+                                            <td>
+                                                <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม <t t-out="vrow['rate_label']"/></t>
+                                                <t t-else="">VAT <t t-out="vrow['rate_label']"/></t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="vrow['amount']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="tt_rows['exempt_rows']" t-as="erow">
+                                        <tr style="white-space: nowrap;">
+                                            <td>
+                                                <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม: ( <t t-out="erow['label']"/> )</t>
+                                                <t t-else="">VAT: ( <t t-out="erow['label']"/> )</t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-options='{"widget": "monetary", "display_currency": currency}' t-out="0.0"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <tr class="o_total">
+                                        <td><strong>
+                                            <t t-if="lang == 'th_TH'">จำนวนรวมทั้งสิ้น</t>
+                                            <t t-else="">Grand Total</t>
+                                        </strong></td>
+                                        <td class="text-end">
+                                            <strong t-out="tt_rows['grand_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                        </td>
+                                    </tr>
+                                </table>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Total in words -->
-                <div class="row" style="margin: 0 0 6px 0;">
-                    <div class="col-12" style="width: 100%; text-align: right;">
-                        <strong style="font-size: 16px;">
-                            <t t-if="lang == 'th_TH'">ตัวอักษรยอดลดหนี้</t>
-                            <t t-else="">Credit amount in Words</t>
-                        </strong>
-                        <div style="font-size: 16px; line-height: 1.35;">
-                            <span t-esc="o.currency_id.with_context(lang=lang).amount_to_text(o.amount_total)"/>
+                        <div class="mb-2" t-att-style="'border-bottom: 2px solid %s;' % (o.company_id.primary_color or '#000000')">
+                            <p class="text-end lh-sm" t-if="o.company_id.display_invoice_amount_total_words">
+                                <t t-if="lang == 'th_TH'">ตัวอักษรยอดลดหนี้: <br/></t>
+                                <t t-else="">Credit amount in words: <br/></t>
+                                <span class="text-muted lh-sm" style="font-size: 0.875em;">(<span t-field="o.amount_total_words">Eight Hundred Baht</span>)</span>
+                            </p>
                         </div>
                     </div>
                 </div>
