@@ -13,7 +13,7 @@
                     number and stays voided (ป.86/2542 ข้อ 25).
                     <br/><br/>
                     <strong>Note:</strong> this invoice has already been
-                    re-issued <field name="reissue_count"/> time(s) in this
+                    <strong>re-issued <field name="reissue_count"/> time(s)</strong> in this
                     chain. Repeated re-issues usually mean a mistake was
                     corrected on paper instead of fixed.
                 </div>
