@@ -87,6 +87,23 @@ class AccountMove(models.Model):
             ]
         return [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}]
 
+    def _get_credit_note_copies(self):
+        """Copies to print for a credit note (ใบลดหนี้): 3 copies.
+
+        Matches the tax invoice triplicate: ต้นฉบับ/สำหรับลูกค้า (Original /
+        For Customer) + สำเนา/สำหรับบริษัท (Copy / For Company) + สำเนา/
+        สำหรับบัญชี (Copy / For Accounting). Only posted customer credit
+        notes (out_refund) print 3 copies.
+        """
+        self.ensure_one()
+        if self.move_type == 'out_refund' and self.state == 'posted':
+            return [
+                {'key': 'original', 'th_marker': 'ต้นฉบับ', 'en_marker': 'Original', 'th_recipient': 'สำหรับลูกค้า', 'en_recipient': 'For Customer'},
+                {'key': 'company',  'th_marker': 'สำเนา',   'en_marker': 'Copy',     'th_recipient': 'สำหรับบริษัท', 'en_recipient': 'For Company'},
+                {'key': 'account',  'th_marker': 'สำเนา',   'en_marker': 'Copy',     'th_recipient': 'สำหรับบัญชี', 'en_recipient': 'For Accounting'},
+            ]
+        return [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}]
+
     def _get_tax_invoice_totals(self):
         """Rows for the Thai tax-invoice totals table (bilingual).
 

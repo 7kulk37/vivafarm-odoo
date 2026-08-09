@@ -239,6 +239,18 @@
                     </t>
                 </div>
             </t>
+            <!-- Copy badge (credit note): same position, gated on is_credit_note. -->
+            <t t-if="is_credit_note and copy_kind">
+                <t t-set="badge_color" t-value="company.primary_color if copy_kind == 'original' else ('#d9534f' if copy_kind == 'company' else '#2980b9')"/>
+                <div t-att-style="'position: absolute; top: 33px; right: 45px; border: 2px solid %s; border-radius: 4px; padding: 2px 12px; font-weight: bold; font-size: 11px; background: #fff; white-space: nowrap; color: %s;' % (badge_color, badge_color)">
+                    <t t-if="lang == 'th_TH'">
+                        <t t-out="copy['th_marker']"/> / <t t-out="copy['th_recipient']"/>
+                    </t>
+                    <t t-else="">
+                        <t t-out="copy['en_marker']"/> / <t t-out="copy['en_recipient']"/>
+                    </t>
+                </div>
+            </t>
         </div>
         </t>
 
