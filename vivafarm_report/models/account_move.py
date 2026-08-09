@@ -214,6 +214,19 @@ class AccountMove(models.Model):
             raise UserError(
                 _("Re-issue is only available on a cancelled customer invoice "
                   "that was previously posted."))
+        # Guard against double re-issue: if a POSTED replacement already
+        # exists, this voided invoice is done — creating another would mint
+        # two replacements for the same original (human-error guard).
+        # A cancelled (failed) replacement is fine: re-issue again.
+        existing = self.search([
+            ('replacement_of_id', '=', self.id),
+            ('state', '=', 'posted'),
+        ])
+        if existing:
+            raise UserError(
+                _("This invoice has already been re-issued as %s. "
+                  "Cancel that invoice first if you need to re-issue again.")
+                % existing[0].name)
         new_invoice = self.with_context(
             include_business_fields=True,
             skip_invoice_sync=self.move_type == 'entry',
