@@ -6,14 +6,16 @@
         <field name="arch" type="xml">
             <form string="Re-issue Confirmation">
                 <div class="alert alert-warning" role="alert">
-                    <strong>This invoice has already been re-issued
-                    <field name="reissue_count"/> time(s) in this chain.</strong>
+                    <strong>Re-issue <field name="move_id"/>?</strong>
                     <br/>
-                    Re-issuing again will create another replacement tax
-                    invoice (ป.86/2542 ข้อ 25). Repeated re-issues usually
-                    mean a mistake was corrected on paper instead of fixed.
+                    This will create a <strong>new</strong> invoice with a
+                    <strong>new number</strong>. The original keeps its
+                    number and stays voided (ป.86/2542 ข้อ 25).
                     <br/><br/>
-                    Invoice: <field name="move_id"/>
+                    <strong>Note:</strong> this invoice has already been
+                    re-issued <field name="reissue_count"/> time(s) in this
+                    chain. Repeated re-issues usually mean a mistake was
+                    corrected on paper instead of fixed.
                 </div>
                 <footer>
                     <button name="action_confirm" string="Re-issue anyway" type="object" class="btn-primary"/>
