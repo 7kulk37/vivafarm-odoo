@@ -26,6 +26,39 @@ class AccountMove(models.Model):
         'account.move', string='Replaces Invoice', ondelete='set null',
         help="Original tax invoice this document was re-issued to replace (ป.86/2542 ข้อ 25).")
 
+    #: Root of the re-issue chain (ป.86/2542 ข้อ 25). Every member of a chain
+    #: (the voided original and each re-issued replacement) carries the id of
+    #: the chain ROOT. Stored so the re-issue history is searchable — the
+    #: 'Re-issued' stat button on the invoice form lists every member, and
+    #: reissue_count shows how many times the chain has been re-issued.
+    reissue_root_id = fields.Many2one(
+        'account.move', string='Re-issue Chain Root', index=True, ondelete='set null')
+
+    #: Number of re-issues in this move's chain (excluding the original).
+    #: Non-stored: recomputed on access for the stat button / warning wizard.
+    reissue_count = fields.Integer(
+        compute='_compute_reissue_count', string='Times Re-issued')
+
+    @api.depends('reissue_root_id')
+    def _compute_reissue_count(self):
+        for move in self:
+            root = move.reissue_root_id or move.id
+            members = self.search([('reissue_root_id', '=', root)])
+            move.reissue_count = max(0, len(members) - 1)
+
+    def _get_reissue_chain(self):
+        """All moves in this move's re-issue chain (root + replacements).
+
+        The chain root is the ORIGINAL tax invoice; every replacement (and
+        the root itself) carries the same reissue_root_id, so the chain is a
+        flat search — no recursive walk needed. Returns records ordered by
+        id (chronological). If this move is not part of a chain, returns
+        just itself.
+        """
+        self.ensure_one()
+        root = self.reissue_root_id or self
+        return self.search([('reissue_root_id', '=', root.id)])
+
     def _is_multipage(self):
         """Whether this tax invoice spans more than one sheet per copy.
 
@@ -197,6 +230,50 @@ class AccountMove(models.Model):
                     and move.posted_before):
                 move.show_reset_to_draft_button = False
 
+    def action_open_reissue_chain(self):
+        """Open the list of all invoices in this move's re-issue chain.
+
+        Shows the original + every replacement so the full mistake trail is
+        visible from any member (not just the last re-issue).
+        """
+        self.ensure_one()
+        chain = self._get_reissue_chain()
+        return {
+            'name': _('Re-issue Chain'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', chain.ids)],
+            'context': {'create': False, 'delete': False},
+        }
+
+    def button_reissue(self):
+        """Entry point for the 'Re-issue' button.
+
+        First re-issue in a chain: perform it immediately (single click).
+        Any further re-issue in the same chain: open a soft-warning wizard
+        first so the user consciously confirms the extra mistake trail.
+        """
+        self.ensure_one()
+        chain = self._get_reissue_chain()
+        # chain includes the original; reissue_count = members - 1.
+        # If this move is itself a replacement (or the original already
+        # re-issued once), a re-issue here is 2nd+ in the chain.
+        is_first = self.reissue_count == 0
+        if is_first:
+            return self.action_reissue()
+        return {
+            'name': _('Re-issue Confirmation'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'reissue.warning',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_move_id': self.id,
+                'default_reissue_count': self.reissue_count,
+            },
+        }
+
     def action_reissue(self):
         """Compliant re-issue of a voided tax invoice (ป.86/2542 ข้อ 25).
 
@@ -232,6 +309,10 @@ class AccountMove(models.Model):
             skip_invoice_sync=self.move_type == 'entry',
         ).copy({
             'replacement_of_id': self.id,
+            # Chain root: the root of THIS move's chain (or itself when
+            # this is the original). Every replacement joins the same
+            # chain so the full history is searchable via reissue_root_id.
+            'reissue_root_id': self.reissue_root_id.id or self.id,
         })
         new_invoice.write({
             'invoice_date': self.invoice_date,

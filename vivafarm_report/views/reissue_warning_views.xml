@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_reissue_warning_form" model="ir.ui.view">
+        <field name="name">reissue.warning.form</field>
+        <field name="model">reissue.warning</field>
+        <field name="arch" type="xml">
+            <form string="Re-issue Confirmation">
+                <div class="alert alert-warning" role="alert">
+                    <strong>This invoice has already been re-issued
+                    <field name="reissue_count"/> time(s) in this chain.</strong>
+                    <br/>
+                    Re-issuing again will create another replacement tax
+                    invoice (ป.86/2542 ข้อ 25). Repeated re-issues usually
+                    mean a mistake was corrected on paper instead of fixed.
+                    <br/><br/>
+                    Invoice: <field name="move_id"/>
+                </div>
+                <footer>
+                    <button name="action_confirm" string="Re-issue anyway" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

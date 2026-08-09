@@ -1,2 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_tax_report_wizard,access_tax_report_wizard,model_tax_report_wizard,account.group_account_user,1,1,1,1
+access_reissue_warning,access_reissue_warning,model_reissue_warning,account.group_account_user,1,1,1,1
