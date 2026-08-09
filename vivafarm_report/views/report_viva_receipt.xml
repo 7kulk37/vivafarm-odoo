@@ -29,6 +29,12 @@
                         <t t-if="lang == 'th_TH'">ใบเสร็จรับเงิน</t>
                         <t t-else="">Payment Receipt</t>
                     </strong>
+                    <t t-if="copy_kind">
+                        <span t-att-style="'border: 1.5px solid %s; border-radius: 4px; padding: 1px 8px; font-size: 11px; font-weight: bold; color: %s; margin-left: 8px; vertical-align: middle;' % (('#212529' if copy_kind == 'original' else '#d9534f'), ('#212529' if copy_kind == 'original' else '#d9534f'))">
+                            <t t-if="lang == 'th_TH'"><t t-out="copy['th_marker']"/> / <t t-out="copy['th_recipient']"/></t>
+                            <t t-else=""><t t-out="copy['en_marker']"/> / <t t-out="copy['en_recipient']"/></t>
+                        </span>
+                    </t>
                 </h3>
                 <div class="text-center text-muted" style="font-size: 12px; margin-bottom: 8px;">
                     <t t-if="lang == 'th_TH'">เลขที่ <span t-field="o.name"/> · วันที่ <span t-esc="o._get_thai_date_display('date')"/></t>
