@@ -275,7 +275,7 @@
                  `ref` field ellipsizes inside the header frame and cannot
                  carry this note. -->
             <t t-if="o and o._name == 'account.move' and o.replacement_of_id">
-                <div t-att-style="'background: %s; border: 1.5px solid %s; border-radius: 6px; padding: 8px 12px; margin: 8px 0 10px; font-size: 13px; line-height: 1.45; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.primary_color), o.company_id.primary_color or '#000000')">
+                <div t-att-style="'background: %s; border: 3px solid %s; border-radius: 6px; padding: 8px 12px; margin: 8px 0 10px; font-size: 13px; line-height: 1.45; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.primary_color), o.company_id.primary_color or '#000000')">
                     <strong>
                         <t t-if="lang == 'th_TH'">ออกแทนใบกำกับภาษีฉบับเดิมเลขที่</t>
                         <t t-else="">Issued to replace tax invoice no.</t>
