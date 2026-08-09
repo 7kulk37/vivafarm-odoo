@@ -89,7 +89,7 @@
                         <tr>
                             <th style="width: 6%;"><span><t t-if="lang == 'th_TH'">ลำดับ</t><t t-else="">No.</t></span></th>
                             <th style="width: 24%;"><span><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></th>
-                            <th style="width: 30%;"><span><t t-if="lang == 'th_TH'">เลขที่ใบกำกับภาษี</t><t t-else="">Tax Invoice No.</t></span></th>
+                            <th style="width: 30%;"><span><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document No.</t></span></th>
                             <th t-if="otherCurrency" class="text-end" style="width: 20%;"><span><t t-if="lang == 'th_TH'">จำนวนเงิน (สกุลเงิน)</t><t t-else="">Amount In Currency</t></span></th>
                             <th class="text-end" style="width: 20%;"><span><t t-if="lang == 'th_TH'">จำนวนเงิน</t><t t-else="">Amount</t></span></th>
                         </tr>
@@ -99,7 +99,7 @@
                             <t t-if="inv.move_type != 'entry'">
                                 <tr>
                                     <td><span t-esc="inv_index + 1"/></td>
-                                    <td><span t-field="inv.invoice_date"/></td>
+                                    <td><t t-if="lang == 'th_TH'"><span t-esc="inv._get_thai_date_display('invoice_date')"/></t><t t-else=""><span t-field="inv.invoice_date"/></t></td>
                                     <td><span t-field="inv.name"/></td>
                                     <td t-if="otherCurrency"/>
                                     <td class="text-end"><span t-field="inv.amount_total"/></td>
@@ -108,7 +108,7 @@
                                 <tr t-foreach="inv._get_reconciled_invoices_partials()[0]" t-as="par">
                                     <t t-set="payment" t-value="par[2]"/>
                                     <td/>
-                                    <td><span t-field="payment.move_id.date"/></td>
+                                    <td><t t-if="lang == 'th_TH'"><span t-esc="payment.move_id._get_thai_date_display('date')"/></t><t t-else=""><span t-field="payment.move_id.date"/></t></td>
                                     <td><span t-field="payment.move_id.name"/></td>
                                     <t t-set="amountPayment" t-value="-(par[0].debit_amount_currency if par[2].debit > 0 else par[0].credit_amount_currency)"/>
                                     <t t-set="amountInvoice" t-value="-par[1]"/>
@@ -133,11 +133,11 @@
                 <!-- Total in words -->
                 <div class="row" style="margin: 0 0 6px 0;">
                     <div class="col-12" style="width: 100%; text-align: right;">
-                        <strong style="font-size: 15px;">
+                        <strong style="font-size: 16px;">
                             <t t-if="lang == 'th_TH'">ตัวอักษรยอดที่ชำระ</t>
                             <t t-else="">Paid amount in Words</t>
                         </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
+                        <div style="font-size: 16px; line-height: 1.35;">
                             <span t-esc="o.currency_id.with_context(lang=lang).amount_to_text(o.amount)"/>
                         </div>
                     </div>
