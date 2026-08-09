@@ -162,7 +162,7 @@
                 <div class="col" t-if="o.ref" name="reference">
                     <t t-if="lang == 'th_TH'"><strong>ข้อมูลอ้างอิง</strong></t>
                     <t t-else=""><strong>Reference</strong></t>
-                    <div t-field="o.ref">INV/2026/0001</div>
+                    <div t-field="o.ref" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">INV/2026/0001</div>
                 </div>
                 <div class="col" t-if="o.invoice_incoterm_id" name="incoterm_id">
                     <t t-if="lang == 'th_TH'"><strong>เงื่อนไขการส่งมอบ</strong></t>
