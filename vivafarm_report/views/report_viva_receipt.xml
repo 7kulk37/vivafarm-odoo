@@ -158,8 +158,8 @@
                     <div class="col-6" style="width: 50%; padding-right: 3px;">
                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
                             <strong>
-                                <t t-if="lang == 'th_TH'">ผู้รับเงิน</t>
-                                <t t-else="">Received by</t>
+                                <t t-if="lang == 'th_TH'">ผู้ชำระ/ลูกค้า</t>
+                                <t t-else="">Paid by customer</t>
                             </strong><br/>
                             <div style="min-height: 50px; max-height: 50px;"></div>
                             <div style="font-size: 14px; margin-top: 0;">
