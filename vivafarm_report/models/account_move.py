@@ -312,6 +312,11 @@ class AccountMove(models.Model):
             'ref': False,
         })
         new_invoice.action_post()
+        # reissue_count is non-stored; a new chain member does not change
+        # any field on the existing members, so invalidate their cache to
+        # keep the count fresh in the same session.
+        root = self.reissue_root_id or self
+        self.search([('reissue_root_id', '=', root.id)]).invalidate_recordset()
         return {
             'name': _('Re-issued Invoice'),
             'type': 'ir.actions.act_window',
