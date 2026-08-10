@@ -12,8 +12,18 @@
                         <div class="row mb-3">
                             <div class="col-6">
                                 <strong>
-                                    <t t-if="lang == 'th_TH'">ใบสำคัญจ่าย</t>
-                                    <t t-else="">Payment Voucher</t>
+                                    <t t-if="o.voucher_type == 'receipt'">
+                                        <t t-if="lang == 'th_TH'">ใบสำคัญรับ</t>
+                                        <t t-else="">Receipt Voucher</t>
+                                    </t>
+                                    <t t-elif="o.voucher_type == 'general'">
+                                        <t t-if="lang == 'th_TH'">ใบสำคัญทั่วไป</t>
+                                        <t t-else="">General Voucher</t>
+                                    </t>
+                                    <t t-else="">
+                                        <t t-if="lang == 'th_TH'">ใบสำคัญจ่าย</t>
+                                        <t t-else="">Payment Voucher</t>
+                                    </t>
                                 </strong>
                             </div>
                             <div class="col-6 text-end text-muted">
@@ -41,8 +51,14 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted">
-                                        <t t-if="lang == 'th_TH'">จ่ายให้</t>
-                                        <t t-else="">Payee</t>
+                                        <t t-if="o.voucher_type == 'receipt'">
+                                            <t t-if="lang == 'th_TH'">รับจาก</t>
+                                            <t t-else="">Received From</t>
+                                        </t>
+                                        <t t-else="">
+                                            <t t-if="lang == 'th_TH'">จ่ายให้</t>
+                                            <t t-else="">Payee</t>
+                                        </t>
                                     </td>
                                     <td t-esc="o.payee"/>
                                     <td class="text-muted">
@@ -108,6 +124,36 @@
                         <table class="table table-sm table-borderless mt-5">
                             <tbody>
                                 <tr>
+                                    <t t-if="o.voucher_type == 'receipt'">
+                                        <td class="text-center" style="width: 50%;">
+                                            <div class="mb-5">
+                                                <t t-if="lang == 'th_TH'">ผู้ส่งเงิน</t>
+                                                <t t-else="">Sent by</t>
+                                            </div>
+                                            <div>
+                                                <t t-if="lang == 'th_TH'">ลงชื่อ</t>
+                                                <t t-else="">Signature</t>
+                                            </div>
+                                            <div class="text-muted mt-4">
+                                                <span t-esc="o.payee"/>
+                                            </div>
+                                        </td>
+                                        <td class="text-center" style="width: 50%;">
+                                            <div class="mb-5">
+                                                <t t-if="lang == 'th_TH'">ผู้รับเงิน</t>
+                                                <t t-else="">Received by</t>
+                                            </div>
+                                            <div>
+                                                <t t-if="lang == 'th_TH'">ลงชื่อ</t>
+                                                <t t-else="">Signature</t>
+                                            </div>
+                                            <div class="text-muted mt-4">
+                                                <t t-if="lang == 'th_TH'">ตำแหน่ง</t>
+                                                <t t-else="">Position</t>
+                                            </div>
+                                        </td>
+                                    </t>
+                                    <t t-else="">
                                     <td class="text-center" style="width: 33%;">
                                         <div class="mb-5">
                                             <t t-if="lang == 'th_TH'">ผู้รับเงิน</t>
@@ -149,6 +195,7 @@
                                             <t t-else="">Position</t>
                                         </div>
                                     </td>
+                                    </t>
                                 </tr>
                             </tbody>
                         </table>

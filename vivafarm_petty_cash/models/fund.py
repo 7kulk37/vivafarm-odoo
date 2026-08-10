@@ -150,6 +150,17 @@ class VivafarmPettyCashVoucher(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'date desc, name desc'
 
+    voucher_type = fields.Selection(
+        [('payment', 'Payment (ใบสำคัญจ่าย)'),
+         ('receipt', 'Receipt (ใบสำคัญรับ)'),
+         ('general', 'General (ใบสำคัญทั่วไป)')],
+        string='Voucher Type',
+        required=True,
+        default='payment',
+        help='Thai voucher classification: ใบสำคัญจ่าย (cash paid), '
+             'ใบสำคัญรับ (cash received), ใบสำคัญทั่วไป (non-cash entry).',
+    )
+
     name = fields.Char(
         string='Voucher Number',
         required=True,
@@ -255,8 +266,13 @@ class VivafarmPettyCashVoucher(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
+                seq_code = 'vivafarm.petty.cash.voucher'
+                if vals.get('voucher_type') == 'receipt':
+                    seq_code = 'vivafarm.petty.cash.voucher.receipt'
+                elif vals.get('voucher_type') == 'general':
+                    seq_code = 'vivafarm.petty.cash.voucher.general'
                 vals['name'] = self.env['ir.sequence'].next_by_code(
-                    'vivafarm.petty.cash.voucher'
+                    seq_code
                 ) or _('New')
         return super().create(vals_list)
 

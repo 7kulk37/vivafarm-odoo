@@ -29,6 +29,7 @@
                     </div>
                     <group>
                         <group>
+                            <field name="voucher_type"/>
                             <field name="fund_id" options="{'no_create': True}"/>
                             <field name="date"/>
                             <field name="payee"/>
@@ -62,6 +63,7 @@
                   decoration-success="state=='reconciled'"
                   decoration-muted="state=='cancelled'">
                 <field name="name"/>
+                <field name="voucher_type"/>
                 <field name="date"/>
                 <field name="fund_id"/>
                 <field name="payee"/>
