@@ -3,3 +3,4 @@ from . import lot_traceability
 from . import stock_card
 from . import wage_slip
 from . import employee_register
+from . import training_record

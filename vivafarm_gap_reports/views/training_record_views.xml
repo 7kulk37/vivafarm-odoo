@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+    <record id="view_training_record_list" model="ir.ui.view">
+        <field name="name">farm.training.record.list</field>
+        <field name="model">farm.training.record</field>
+        <field name="arch" type="xml">
+            <list string="Training Records" decoration-muted="active == False">
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="topic"/>
+                <field name="trainer"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_training_record_form" model="ir.ui.view">
+        <field name="name">farm.training.record.form</field>
+        <field name="model">farm.training.record</field>
+        <field name="arch" type="xml">
+            <form string="Training Record">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id" options="{'no_create': True}"/>
+                            <field name="date"/>
+                            <field name="topic"/>
+                            <field name="trainer"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes" placeholder="เนื้อหาที่อบรม ระยะเวลา ผลการอบรม / Topics covered, duration, outcome"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_training_record" model="ir.actions.act_window">
+        <field name="name">Training Records</field>
+        <field name="res_model">farm.training.record</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_training_record"
+              name="Training Records (บันทึกการฝึกอบรม)"
+              parent="hr.menu_hr_root"
+              action="action_training_record"
+              sequence="60"/>
+
+    </data>
+</odoo>
