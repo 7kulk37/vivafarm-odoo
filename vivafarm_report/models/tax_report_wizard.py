@@ -22,6 +22,11 @@ class TaxReportWizard(models.TransientModel):
         ('sales', 'Sales Register (รายงานภาษีขาย)'),
         ('purchase', 'Purchase Register (รายงานภาษีซื้อ)'),
         ('vat30', 'VAT Report (ภ.พ.30)'),
+        ('pnd53', 'PND53 (ภ.ง.ด.53)'),
+        ('pnd3', 'PND3 (ภ.ง.ด.3)'),
+        ('pnd1', 'PND1 (ภ.ง.ด.1)'),
+        ('pnd50', 'PND50 (ภ.ง.ด.50)'),
+        ('pnd51', 'PND51 (ภ.ง.ด.51)'),
     ], string='Register', required=True, default='sales')
     date_from = fields.Date(string='From', required=True)
     date_to = fields.Date(string='To', required=True)
@@ -51,9 +56,14 @@ class TaxReportWizard(models.TransientModel):
         the QWeb template renders with the wizard's date range as data.
         """
         self.ensure_one()
-        report_name = 'vivafarm_report.report_vat30' \
-            if self.register_type == 'vat30' \
-            else 'vivafarm_report.report_tax_register'
+        report_name = {
+            'vat30': 'vivafarm_report.report_vat30',
+            'pnd53': 'vivafarm_report.report_pnd53',
+            'pnd3': 'vivafarm_report.report_pnd3',
+            'pnd1': 'vivafarm_report.report_pnd1',
+            'pnd50': 'vivafarm_report.report_pnd50',
+            'pnd51': 'vivafarm_report.report_pnd51',
+        }.get(self.register_type, 'vivafarm_report.report_tax_register')
         return self.env['ir.actions.report']._get_report_from_name(
             report_name
         ).report_action(self)

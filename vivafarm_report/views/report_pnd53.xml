@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VivaFarm ภ.ง.ด.53 — monthly WHT return (payments to companies).
+        Standard Viva header, statutory 4-line summary + detail rows.
+    -->
+
+    <template id="report_pnd53"
+              name="Thai PND53 (ภ.ง.ด.53)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">
+                        <t t-if="lang == 'th_TH'">ภ.ง.ด.53</t>
+                        <t t-else="">PND53</t>
+                    </t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>
+                                    <t t-if="lang == 'th_TH'">แบบแสดงรายการภาษีหัก ณ ที่จ่าย (ภ.ง.ด.53)</t>
+                                    <t t-else="">Withholding Tax Return (PND53) — payments to companies</t>
+                                </strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="date_from"/> to <span t-esc="date_to"/>
+                            </div>
+                        </div>
+
+                        <!-- Statutory summary -->
+                        <table class="table table-sm table-bordered" style="margin-top: 4px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;" class="text-center">
+                                        <t t-if="lang == 'th_TH'">ข้อ</t>
+                                        <t t-else="">No.</t>
+                                    </th>
+                                    <th style="width: 62%;">
+                                        <t t-if="lang == 'th_TH'">รายการ</t>
+                                        <t t-else="">Description</t>
+                                    </th>
+                                    <th class="text-end" style="width: 30%;">
+                                        <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
+                                        <t t-else="">Amount</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center">1</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รวมยอดเงินได้ทั้งสิ้น</t>
+                                        <t t-else="">Total Income</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="total_income"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">2</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รวมยอดภาษีที่นำส่งทั้งสิ้น</t>
+                                        <t t-else="">Total Remittance</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="total_remit"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">3</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">เงินเพิ่ม</t>
+                                        <t t-else="">Surcharge</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="surcharge"/></td>
+                                </tr>
+                                <tr class="fw-bold">
+                                    <td class="text-center">4</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รวมยอดภาษีที่นำส่งทั้งสิ้น และเงินเพิ่ม (2. + 3.)</t>
+                                        <t t-else="">Total Remittance and Surcharge (2 + 3)</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="total"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Detail rows -->
+                        <div style="margin-top: 12px; font-size: 13px; font-weight: 700;">
+                            <t t-if="lang == 'th_TH'">รายละเอียดการหัก ณ ที่จ่าย</t>
+                            <t t-else="">Withholding Details</t>
+                        </div>
+                        <table class="table table-sm table-bordered" style="margin-top: 4px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 12%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </th>
+                                    <th style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">เลขที่</t>
+                                        <t t-else="">Number</t>
+                                    </th>
+                                    <th style="width: 28%;">
+                                        <t t-if="lang == 'th_TH'">คู่ค้า</t>
+                                        <t t-else="">Partner</t>
+                                    </th>
+                                    <th class="text-end" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">เงินได้</t>
+                                        <t t-else="">Income</t>
+                                    </th>
+                                    <th class="text-end" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">ภาษีที่นำส่ง</t>
+                                        <t t-else="">Remitted</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="rows" t-as="r">
+                                    <td t-esc="r['date']"/>
+                                    <td t-esc="r['name']"/>
+                                    <td t-esc="r['partner']"/>
+                                    <td class="text-end" t-esc="r['income_fmt']"/>
+                                    <td class="text-end" t-esc="r['remit_fmt']"/>
+                                </tr>
+                                <tr t-if="not rows">
+                                    <td colspan="5" class="text-center text-muted">
+                                        <t t-if="lang == 'th_TH'">ไม่มีการหักภาษี ณ ที่จ่ายในงวดนี้</t>
+                                        <t t-else="">No withholding tax in this period</t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

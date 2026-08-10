@@ -56,6 +56,16 @@
         <field name="print_report_name">'VAT30_%s_%s' % (object.date_from, object.date_to)</field>
     </record>
 
+    <record id="action_report_pnd53" model="ir.actions.report">
+        <field name="name">Thai PND53 (ภ.ง.ด.53)</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_pnd53</field>
+        <field name="report_file">vivafarm_report.report_pnd53</field>
+        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="print_report_name">'PND53_%s_%s' % (object.date_from, object.date_to)</field>
+    </record>
+
     <record id="action_tax_report_wizard" model="ir.actions.act_window">
         <field name="name">Thai Tax Report</field>
         <field name="res_model">tax.report.wizard</field>

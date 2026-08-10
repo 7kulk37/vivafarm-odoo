@@ -30,6 +30,7 @@
         'views/default_report_unify.xml',
         'views/report_tax_register.xml',
         'views/report_vat30.xml',
+        'views/report_pnd53.xml',
         'views/tax_report_wizard_views.xml',
     ],
     'installable': True,
