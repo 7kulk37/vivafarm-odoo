@@ -86,7 +86,7 @@
                             <t t-else="">Income Type</t>
                         </strong>
                         <div style="font-size: 13px;">
-                            <t t-foreach="o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount < 0)" t-as="wht">
+                            <t t-foreach="o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount &lt; 0)" t-as="wht">
                                 <t t-if="wht_loop['first']">
                                     <t t-if="'R' in (wht.tax_line_id.name or '')">
                                         <t t-if="lang == 'th_TH'">ค่าเช่า (มาตรา 40(5))</t>
@@ -133,7 +133,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <t t-foreach="o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount < 0)" t-as="wht">
+                        <t t-foreach="o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount &lt; 0)" t-as="wht">
                             <tr>
                                 <td class="text-center"><t t-esc="wht_loop['index']"/></td>
                                 <td>
@@ -153,10 +153,10 @@
                                 <t t-else="">Total</t>
                             </td>
                             <td class="text-end">
-                                <span t-esc="'%s' % format_amount(env, sum(o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount < 0).mapped('tax_base_amount')), o.currency_id)"/>
+                                <span t-esc="'%s' % format_amount(env, sum(o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount &lt; 0).mapped('tax_base_amount')), o.currency_id)"/>
                             </td>
                             <td class="text-end">
-                                <span t-esc="'%s' % format_amount(env, sum(-l.balance for l in o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount < 0)), o.currency_id)"/>
+                                <span t-esc="'%s' % format_amount(env, sum(-l.balance for l in o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount &lt; 0)), o.currency_id)"/>
                             </td>
                         </tr>
                     </tfoot>
