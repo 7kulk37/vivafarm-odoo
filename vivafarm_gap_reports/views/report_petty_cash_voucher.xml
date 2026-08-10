@@ -87,7 +87,7 @@
                                         <t t-else=""><span t-esc="o.amount_words_en"/></t>
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr t-if="o.voucher_type != 'receipt'">
                                     <td class="text-muted">
                                         <t t-if="lang == 'th_TH'">บัญชีค่าใช้จ่าย</t>
                                         <t t-else="">Expense Account</t>

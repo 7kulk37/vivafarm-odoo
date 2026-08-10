@@ -196,8 +196,8 @@ class VivafarmPettyCashVoucher(models.Model):
     expense_account_id = fields.Many2one(
         'account.account',
         string='Expense Account',
-        required=True,
-        help='GL account to charge when this voucher is replenished',
+        help='GL account to charge when this voucher is replenished. '
+             'Required for payment/general vouchers; not used for receipts.',
     )
     analytic_account_id = fields.Many2one(
         'account.analytic.account',
@@ -275,6 +275,14 @@ class VivafarmPettyCashVoucher(models.Model):
                     seq_code
                 ) or _('New')
         return super().create(vals_list)
+
+    @api.constrains('voucher_type', 'expense_account_id')
+    def _check_expense_account(self):
+        for v in self:
+            if v.voucher_type != 'receipt' and not v.expense_account_id:
+                raise ValidationError(_(
+                    'Payment and general vouchers require an Expense Account.'
+                ))
 
     @api.constrains('amount')
     def _check_amount(self):
