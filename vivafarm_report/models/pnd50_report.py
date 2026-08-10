@@ -28,9 +28,9 @@ class ReportPnd50(models.AbstractModel):
         expenses = 0.0
         for l in lines:
             if l.account_id.account_type in ('income', 'other_income'):
-                revenue += l.balance  # income accounts are credit-natured
+                revenue += -l.balance  # income accounts are credit-natured
             elif l.account_id.account_type in ('expense', 'other_expense'):
-                expenses += -l.balance
+                expenses += l.balance  # expense accounts are debit-natured
         net_profit = revenue - expenses
         tax_rate = 0.20
         tax = max(net_profit, 0.0) * tax_rate
@@ -70,9 +70,9 @@ class ReportPnd51(models.AbstractModel):
         expenses = 0.0
         for l in lines:
             if l.account_id.account_type in ('income', 'other_income'):
-                revenue += l.balance
+                revenue += -l.balance
             elif l.account_id.account_type in ('expense', 'other_expense'):
-                expenses += -l.balance
+                expenses += l.balance
         net_profit = revenue - expenses
         tax_rate = 0.20
         tax = max(net_profit, 0.0) * tax_rate
