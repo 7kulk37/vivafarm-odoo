@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Training Record (F-10) — บันทึกการฝึกอบรม -->
+    <template id="report_training_record"
+              name="Training Record (บันทึกการฝึกอบรม)">
+        <t t-call="web.html_container">
+            <t t-foreach="rows" t-as="r">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">บันทึกการฝึกอบรม / Training Record</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>
+                                    <t t-if="lang == 'th_TH'">บันทึกการฝึกอบรม</t>
+                                    <t t-else="">Training Record</t>
+                                </strong>
+                                <div class="text-muted small">
+                                    <t t-if="lang == 'th_TH'">(แบบฟอร์ม F-10 ตาม มกษ. 9001-2564 ข้อ 3.7)</t>
+                                    <t t-else="">(Form F-10 per TAS 9001-2021 clause 3.7)</t>
+                                </div>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="r['date_th']"/>
+                            </div>
+                        </div>
+
+                        <!-- Header: employee / ID / topic -->
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t>
+                                        <t t-else="">Name</t>
+                                    </td>
+                                    <td t-esc="r['employee']"/>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">เลขบัตรประชาชน</t>
+                                        <t t-else="">ID Card No.</t>
+                                    </td>
+                                    <td t-esc="r['identification']"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">หัวข้อการฝึกอบรม</t>
+                                        <t t-else="">Training Topic</t>
+                                    </td>
+                                    <td colspan="3" t-esc="r['topic_label']"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">วันที่อบรม</t>
+                                        <t t-else="">Training Date</t>
+                                    </td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'"><span t-esc="r['date_th']"/></t>
+                                        <t t-else=""><span t-esc="r['record'].date"/></t>
+                                    </td>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ผู้ให้การอบรม</t>
+                                        <t t-else="">Trainer</t>
+                                    </td>
+                                    <td t-esc="r['trainer']"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Notes / content covered -->
+                        <h6 class="fw-bold">
+                            <t t-if="lang == 'th_TH'">เนื้อหาการฝึกอบรม</t>
+                            <t t-else="">Training Content</t>
+                        </h6>
+                        <div t-esc="r['notes']" class="border p-2 mb-3"/>
+
+                        <h6 class="fw-bold">
+                            <t t-if="lang == 'th_TH'">ที่อยู่</t>
+                            <t t-else="">Address</t>
+                        </h6>
+                        <div t-esc="r['address']" class="border p-2 mb-4"/>
+
+                        <!-- Signature blocks: worker (3.8.1) + trainer -->
+                        <table class="table table-sm table-borderless mt-5">
+                            <tbody>
+                                <tr>
+                                    <td class="text-center" style="width: 50%;">
+                                        <div class="mb-5">
+                                            <t t-if="lang == 'th_TH'">ลงชื่อผู้ปฏิบัติงาน</t>
+                                            <t t-else="">Worker Signature</t>
+                                        </div>
+                                        <div>
+                                            <t t-if="lang == 'th_TH'">(ผู้เข้ารับการฝึกอบรม)</t>
+                                            <t t-else="">(trainee)</t>
+                                        </div>
+                                        <div class="text-muted mt-4">
+                                            <span t-esc="r['employee']"/>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" style="width: 50%;">
+                                        <div class="mb-5">
+                                            <t t-if="lang == 'th_TH'">ลงชื่อผู้ให้การอบรม</t>
+                                            <t t-else="">Trainer Signature</t>
+                                        </div>
+                                        <div>
+                                            <t t-if="lang == 'th_TH'">(ผู้ฝึกอบรม)</t>
+                                            <t t-else="">(trainer)</t>
+                                        </div>
+                                        <div class="text-muted mt-4">
+                                            <span t-esc="r['trainer']"/>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_training_record" model="ir.actions.report">
+        <field name="name">Training Record (บันทึกการฝึกอบรม)</field>
+        <field name="model">farm.training.record</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_training_record</field>
+        <field name="report_file">vivafarm_gap_reports.report_training_record</field>
+        <!-- Standard compact header (52mm) — this is a standard report,
+             NOT the tax invoice's 107mm paperformat (pitfall 28). -->
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_standard"/>
+        <field name="binding_model_id" ref="vivafarm_gap_reports.model_farm_training_record"/>
+    </record>
+</odoo>
