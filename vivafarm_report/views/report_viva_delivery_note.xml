@@ -115,7 +115,10 @@
 
                 <!-- Line items table: qty only, NO prices (delivery note is
                      not a tax document). Ordered vs Delivered like the
-                     standard delivery slip. -->
+                     standard delivery slip. Quantities show the unit
+                     ("5 kg") — format_number drops trailing .0 like the
+                     standard slip. -->
+                <t t-set="format_number" t-value="lambda x: int(x) if x == int(x) else x"/>
                 <table class="table table-borderless" style="margin-bottom: 6px;">
                     <thead>
                         <tr>
@@ -142,8 +145,8 @@
                                         </div>
                                     </t>
                                 </td>
-                                <td class="text-end"><span t-field="line.product_uom_qty"/></td>
-                                <td class="text-end"><span t-field="line.quantity"/></td>
+                                <td class="text-end"><span t-esc="'%s %s' % (format_number(line.product_uom_qty), line.product_uom.name)"/></td>
+                                <td class="text-end"><span t-esc="'%s %s' % (format_number(line.quantity), line.product_uom.name)"/></td>
                             </tr>
                         </t>
                     </tbody>
