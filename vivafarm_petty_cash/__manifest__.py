@@ -1,6 +1,6 @@
 {
     "name": "VivaFarm Petty Cash",
-    "version": "19.0.1.0.3",
+    "version": "19.0.1.0.4",
     "summary": "Petty cash fund and voucher management with TFRS for SMEs compliance",
     "description": "Custodian-based petty cash float with voucher tracking, top-up wizard, and monthly replenishment wizard. Posts sub-ledger to dedicated Petty Cash account (111102) with variance account (639900).",
     "author": "VivaFarm",

@@ -59,17 +59,33 @@
                                             <t t-if="lang == 'th_TH'">รับจาก</t>
                                             <t t-else="">Received From</t>
                                         </t>
+                                        <t t-elif="o.voucher_type == 'general'">
+                                            <t t-if="lang == 'th_TH'">เดบิต (บัญชี)</t>
+                                            <t t-else="">Debit Account</t>
+                                        </t>
                                         <t t-else="">
                                             <t t-if="lang == 'th_TH'">จ่ายให้</t>
                                             <t t-else="">Payee</t>
                                         </t>
                                     </td>
-                                    <td t-esc="o.payee"/>
-                                    <td class="text-muted">
-                                        <t t-if="lang == 'th_TH'">สถานะ</t>
-                                        <t t-else="">Status</t>
+                                    <td>
+                                        <t t-if="o.voucher_type == 'general'"><span t-esc="o.debit_account_id.name or ''"/></t>
+                                        <t t-else=""><span t-esc="o.payee"/></t>
                                     </td>
-                                    <td t-esc="o.state"/>
+                                    <td class="text-muted">
+                                        <t t-if="o.voucher_type == 'general'">
+                                            <t t-if="lang == 'th_TH'">เครดิต (บัญชี)</t>
+                                            <t t-else="">Credit Account</t>
+                                        </t>
+                                        <t t-else="">
+                                            <t t-if="lang == 'th_TH'">สถานะ</t>
+                                            <t t-else="">Status</t>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <t t-if="o.voucher_type == 'general'"><span t-esc="o.credit_account_id.name or ''"/></t>
+                                        <t t-else=""><span t-esc="o.state"/></t>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted">
@@ -91,7 +107,7 @@
                                         <t t-else=""><span t-esc="o.amount_words_en"/></t>
                                     </td>
                                 </tr>
-                                <tr t-if="o.voucher_type != 'receipt'">
+                                <tr t-if="o.voucher_type not in ('receipt', 'general')">
                                     <td class="text-muted">
                                         <t t-if="lang == 'th_TH'">บัญชีค่าใช้จ่าย</t>
                                         <t t-else="">Expense Account</t>

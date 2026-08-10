@@ -38,7 +38,11 @@
                             <field name="amount" widget="monetary"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="expense_account_id" options="{'no_create': True}"
-                                   invisible="voucher_type == 'receipt'"/>
+                                   invisible="voucher_type in ('receipt', 'general')"/>
+                            <field name="debit_account_id" options="{'no_create': True}"
+                                   invisible="voucher_type != 'general'"/>
+                            <field name="credit_account_id" options="{'no_create': True}"
+                                   invisible="voucher_type != 'general'"/>
                             <field name="analytic_account_id" options="{'no_create': True}"/>
                         </group>
                     </group>

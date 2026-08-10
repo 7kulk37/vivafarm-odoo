@@ -204,6 +204,18 @@ class VivafarmPettyCashVoucher(models.Model):
         string='Analytic Account',
         help='Optional project/analytic tracking',
     )
+    debit_account_id = fields.Many2one(
+        'account.account',
+        string='Debit Account',
+        help='GL account to debit for general vouchers (ใบสำคัญทั่วไป). '
+             'Required when voucher_type is general.',
+    )
+    credit_account_id = fields.Many2one(
+        'account.account',
+        string='Credit Account',
+        help='GL account to credit for general vouchers (ใบสำคัญทั่วไป). '
+             'Required when voucher_type is general.',
+    )
     description = fields.Text(
         string='Description',
         required=True,
@@ -276,10 +288,18 @@ class VivafarmPettyCashVoucher(models.Model):
                 ) or _('New')
         return super().create(vals_list)
 
-    @api.constrains('voucher_type', 'expense_account_id')
+    @api.constrains('voucher_type', 'expense_account_id', 'debit_account_id', 'credit_account_id')
     def _check_expense_account(self):
         for v in self:
-            if v.voucher_type != 'receipt' and not v.expense_account_id:
+            if v.voucher_type == 'receipt':
+                # Receipts have no expense/Dr/Cr accounts — they record cash in.
+                continue
+            if v.voucher_type == 'general':
+                if not v.debit_account_id or not v.credit_account_id:
+                    raise ValidationError(_(
+                        'General vouchers require both a Debit and a Credit Account.'
+                    ))
+            elif not v.expense_account_id:
                 raise ValidationError(_(
                     'Payment and general vouchers require an Expense Account.'
                 ))
