@@ -3,6 +3,7 @@ from . import base_document_layout
 from . import account_move
 from . import reissue_wizard
 from . import stock_picking
+from . import wht_certificate
 from . import account_payment
 from . import res_bank
 from . import res_partner
