@@ -218,6 +218,33 @@ class VivafarmPettyCashVoucher(models.Model):
         readonly=True,
         help='The replenishment journal entry that consumed this voucher',
     )
+    amount_words_th = fields.Char(
+        string='Amount in Thai Words',
+        compute='_compute_amount_words',
+    )
+    amount_words_en = fields.Char(
+        string='Amount in English Words',
+        compute='_compute_amount_words',
+    )
+
+    @api.depends('amount', 'currency_id')
+    def _compute_amount_words(self):
+        """Amount spelled out for the printed voucher (ตัวอักษร).
+
+        Thai via currency.amount_to_text with a th_TH context ('หกร้อย บาท');
+        English is the default. Both are computed so the template stays
+        declarative (format_amount is not available in QWeb context).
+        """
+        for v in self:
+            try:
+                v.amount_words_th = v.currency_id.with_context(
+                    lang='th_TH').amount_to_text(v.amount)
+            except Exception:
+                v.amount_words_th = False
+            try:
+                v.amount_words_en = v.currency_id.amount_to_text(v.amount)
+            except Exception:
+                v.amount_words_en = False
 
     _voucher_name_unique = models.Constraint(
         'UNIQUE(name)',
@@ -252,6 +279,21 @@ class VivafarmPettyCashVoucher(models.Model):
                 raise ValidationError(_(
                     'Receipt required for vouchers above %s %s (Thai Revenue Code §3).'
                 ) % (threshold, v.currency_id.name))
+
+    def _get_thai_date_display(self, field_name):
+        """Date in Thai style: '15/ม.ค./2570' (Buddhist Era year = CE + 543).
+
+        Same helper as account.move._get_thai_date_display — Babel has no
+        Buddhist calendar engine, so compute day/month via the Thai locale
+        (dd/MMM -> '15/ม.ค.') and append the Buddhist Era year.
+        """
+        self.ensure_one()
+        value = self[field_name]
+        if not value:
+            return ''
+        from odoo.tools.misc import format_date
+        day_month = format_date(self.env, value, lang_code='th_TH', date_format='dd/MMM')
+        return '%s/%s' % (day_month, value.year + 543)
 
     def action_submit(self):
         for v in self:

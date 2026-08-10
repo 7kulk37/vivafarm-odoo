@@ -11,7 +11,10 @@
                         <div class="oe_structure"/>
                         <div class="row mb-3">
                             <div class="col-6">
-                                <strong>Petty Cash Voucher (ใบสำคัญจ่าย)</strong>
+                                <strong>
+                                    <t t-if="lang == 'th_TH'">ใบสำคัญจ่าย</t>
+                                    <t t-else="">Payment Voucher</t>
+                                </strong>
                             </div>
                             <div class="col-6 text-end text-muted">
                                 <span t-esc="o.name"/>
@@ -26,7 +29,10 @@
                                         <t t-if="lang == 'th_TH'">วันที่</t>
                                         <t t-else="">Date</t>
                                     </td>
-                                    <td t-esc="o.date"/>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('date')"/></t>
+                                        <t t-else=""><span t-esc="o.date"/></t>
+                                    </td>
                                     <td class="text-muted" style="width: 20%;">
                                         <t t-if="lang == 'th_TH'">กองทุน</t>
                                         <t t-else="">Fund</t>
@@ -53,6 +59,16 @@
                                     <td colspan="3" class="fw-bold">
                                         <span t-esc="o.currency_id.symbol or ''"/>
                                         <span t-esc="'{:,.2f}'.format(o.amount)"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">จำนวนเงิน (ตัวอักษร)</t>
+                                        <t t-else="">Amount in Words</t>
+                                    </td>
+                                    <td colspan="3">
+                                        <t t-if="lang == 'th_TH'"><span t-esc="o.amount_words_th"/></t>
+                                        <t t-else=""><span t-esc="o.amount_words_en"/></t>
                                     </td>
                                 </tr>
                                 <tr>
@@ -151,7 +167,11 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">vivafarm_gap_reports.report_petty_cash_voucher</field>
         <field name="report_file">vivafarm_gap_reports.report_petty_cash_voucher</field>
-        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+        <!-- Standard compact header (52mm), NOT the 107mm tax-invoice
+             paperformat: a voucher is a standard report rendered via
+             web.external_layout (pitfall 28 — the tall invoice header
+             wastes ~55mm of empty space). -->
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_standard"/>
         <field name="binding_model_id" ref="vivafarm_petty_cash.model_vivafarm_petty_cash_voucher"/>
     </record>
 </odoo>
