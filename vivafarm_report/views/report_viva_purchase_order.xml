@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VivaFarm Purchase Order (ใบสั่งซื้อ) — custom report.
+        Baseline: tax invoice layout (letterhead, title, table, signature)
+        via the STANDARD compact branch (PO is a standard document, not a
+        tax document — the 107mm tax-invoice paperformat would waste ~55mm).
+        A PO is a คำเสนอ (offer) under ป.พ.พ. มาตรา 354-356; once the
+        supplier accepts it becomes a binding สัญญาซื้อขาย. Not a tax
+        document, but the anchor for 3-way matching (PO + ใบรับสินค้า +
+        ใบแจ้งหนี้). Components per Thai accounting practice: buyer/seller
+        info + Tax IDs, PO number + date, line items, totals + tax
+        condition, payment terms, expected delivery + shipping address,
+        terms & conditions, authorized signature.
+    -->
+
+    <!-- ── Content: Viva Purchase Order Document ── -->
+    <template id="viva_purchase_order_document"
+              name="VivaFarm Purchase Order Document">
+        <t t-call="vivafarm_report.external_layout_viva">
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+
+            <style>
+                #po_signature_block { page-break-inside: avoid; }
+            </style>
+
+            <div class="page">
+                <h3 t-att-style="'margin-top: 0; margin-bottom: 6px; text-align: left; color: %s;' % (o.company_id.primary_color or '#000000')">
+                    <strong style="font-size: 24px;">
+                        <t t-if="lang == 'th_TH'">ใบสั่งซื้อ: </t>
+                        <t t-else="">Purchase Order: </t>
+                        <span t-field="o.name"/>
+                    </strong>
+                </h3>
+
+                <!-- Vendor block (left) + Shipping address (right) -->
+                <div class="row" style="margin: 0 0 8px 0;">
+                    <div class="col-6" style="width: 50%; padding-right: 3px;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">ผู้จำหน่าย</t>
+                            <t t-else="">Vendor</t>
+                        </strong>
+                        <div style="font-size: 14px; line-height: 1.35;">
+                            <div t-field="o.partner_id.name"/>
+                            <div t-if="o.partner_id.street or o.partner_id.street2">
+                                <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                            </div>
+                            <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                                <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
+                            </div>
+                            <div t-if="o.partner_id.vat">
+                                <t t-if="lang == 'th_TH'">เลขประจำตัวผู้เสียภาษี: </t>
+                                <t t-else="">Tax ID: </t>
+                                <span t-field="o.partner_id.vat"/>
+                                <t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6" style="width: 50%; padding-left: 3px;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">ที่อยู่จัดส่ง</t>
+                            <t t-else="">Shipping Address</t>
+                        </strong>
+                        <div style="font-size: 14px; line-height: 1.35;">
+                            <t t-if="o.dest_address_id">
+                                <div t-field="o.dest_address_id.name"/>
+                                <div t-if="o.dest_address_id.street or o.dest_address_id.street2">
+                                    <span t-field="o.dest_address_id.street"/><t t-if="o.dest_address_id.street and o.dest_address_id.street2">, </t><span t-field="o.dest_address_id.street2"/>
+                                </div>
+                                <div t-if="o.dest_address_id.city or o.dest_address_id.state_id or o.dest_address_id.zip or o.dest_address_id.country_id">
+                                    <span t-field="o.dest_address_id.city"/><t t-if="o.dest_address_id.city and (o.dest_address_id.state_id or o.dest_address_id.zip)">, </t><span t-esc="o.dest_address_id._get_state_display(o.dest_address_id.state_id)"/><t t-if="o.dest_address_id.state_id and o.dest_address_id.zip"> </t><span t-field="o.dest_address_id.zip"/><t t-if="(o.dest_address_id.city or o.dest_address_id.state_id or o.dest_address_id.zip) and o.dest_address_id.country_id">, </t><span t-field="o.dest_address_id.country_id"/>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <t t-if="lang == 'th_TH'">—</t>
+                                <t t-else="">—</t>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info row: order date / expected arrival / ref / payment terms -->
+                <div class="row" style="margin: 0 0 8px 0;">
+                    <div class="col-4" style="width: 33%; padding-right: 3px;">
+                        <strong style="font-size: 13px;">
+                            <t t-if="lang == 'th_TH'">วันที่สั่งซื้อ</t>
+                            <t t-else="">Order Date</t>
+                        </strong>
+                        <div style="font-size: 13px;">
+                            <span t-field="o.date_order" t-options="{'date_only': 'true'}"/>
+                        </div>
+                    </div>
+                    <div class="col-4" style="width: 33%; padding-right: 3px;">
+                        <strong style="font-size: 13px;">
+                            <t t-if="lang == 'th_TH'">วันที่คาดว่าจะได้รับ</t>
+                            <t t-else="">Expected Arrival</t>
+                        </strong>
+                        <div style="font-size: 13px;">
+                            <span t-field="o.date_planned" t-options="{'date_only': 'true'}"/>
+                        </div>
+                    </div>
+                    <div class="col-4" style="width: 33%; padding-left: 3px;">
+                        <strong style="font-size: 13px;">
+                            <t t-if="lang == 'th_TH'">เลขที่อ้างอิงของท่าน</t>
+                            <t t-else="">Your Order Reference</t>
+                        </strong>
+                        <div style="font-size: 13px;">
+                            <span t-field="o.partner_ref"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin: 0 0 8px 0;">
+                    <div class="col-4" style="width: 33%; padding-right: 3px;">
+                        <strong style="font-size: 13px;">
+                            <t t-if="lang == 'th_TH'">เงื่อนไขการชำระเงิน</t>
+                            <t t-else="">Payment Terms</t>
+                        </strong>
+                        <div style="font-size: 13px;">
+                            <span t-field="o.payment_term_id"/>
+                        </div>
+                    </div>
+                    <div class="col-4" style="width: 33%; padding-right: 3px;">
+                        <strong style="font-size: 13px;">
+                            <t t-if="lang == 'th_TH'">ผู้สั่งซื้อ</t>
+                            <t t-else="">Ordered By</t>
+                        </strong>
+                        <div style="font-size: 13px;">
+                            <span t-field="o.user_id"/>
+                        </div>
+                    </div>
+                    <div class="col-4" style="width: 33%; padding-left: 3px;">
+                        <strong style="font-size: 13px;">
+                            <t t-if="lang == 'th_TH'">อ้างอิง</t>
+                            <t t-else="">Source</t>
+                        </strong>
+                        <div style="font-size: 13px;">
+                            <span t-field="o.origin"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Line items -->
+                <table class="table table-sm table-bordered mb-2" style="table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th class="fw-bold text-center" style="width: 5%;">
+                                <t t-if="lang == 'th_TH'">ลำดับ</t>
+                                <t t-else="">NO.</t>
+                            </th>
+                            <th class="fw-bold text-start" style="width: 38%;">
+                                <t t-if="lang == 'th_TH'">รายการ</t>
+                                <t t-else="">Description</t>
+                            </th>
+                            <th class="fw-bold text-end" style="width: 10%;">
+                                <t t-if="lang == 'th_TH'">จำนวน</t>
+                                <t t-else="">Qty</t>
+                            </th>
+                            <th class="fw-bold text-end" style="width: 12%;">
+                                <t t-if="lang == 'th_TH'">ราคาต่อหน่วย</t>
+                                <t t-else="">Unit Price</t>
+                            </th>
+                            <th class="fw-bold text-end" style="width: 8%;">
+                                <t t-if="lang == 'th_TH'">ส่วนลด</t>
+                                <t t-else="">Disc.</t>
+                            </th>
+                            <th class="fw-bold text-end" style="width: 12%;">
+                                <t t-if="lang == 'th_TH'">ภาษี</t>
+                                <t t-else="">Taxes</t>
+                            </th>
+                            <th class="fw-bold text-end" style="width: 15%;">
+                                <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
+                                <t t-else="">Amount</t>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-set="line_no" t-value="0"/>
+                        <t t-foreach="o.order_line" t-as="line">
+                            <t t-if="line.display_type == 'line_section' or line.display_type == 'line_note'">
+                                <tr>
+                                    <td t-att-colspan="7" class="fst-italic">
+                                        <span t-field="line.name"/>
+                                    </td>
+                                </tr>
+                            </t>
+                            <t t-else="">
+                                <t t-set="line_no" t-value="line_no + 1"/>
+                                <tr>
+                                    <td class="text-center">
+                                        <span t-out="line_no"/>
+                                    </td>
+                                    <td>
+                                        <span t-field="line.name"/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="line.product_qty"/>
+                                        <span t-field="line.product_uom_id.name" groups="uom.group_uom"/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="line.price_unit"/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="line.discount"/>%
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-esc="', '.join(tax.name for tax in line.tax_ids)"/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="line.price_subtotal" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- Totals -->
+                <div class="row" style="margin: 0 0 8px 0;">
+                    <div class="col-6"></div>
+                    <div class="col-6">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <td>
+                                    <t t-if="lang == 'th_TH'">ยอดรวมก่อนภาษี</t>
+                                    <t t-else="">Untaxed Amount</t>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="o.amount_untaxed" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม</t>
+                                    <t t-else="">VAT</t>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="o.amount_tax" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                </td>
+                            </tr>
+                            <tr class="fw-bold">
+                                <td>
+                                    <t t-if="lang == 'th_TH'">จำนวนรวมทั้งสิ้น</t>
+                                    <t t-else="">Grand Total</t>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="o.amount_total" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Terms & conditions -->
+                <div t-if="o.note" class="mb-3">
+                    <strong style="font-size: 13px;">
+                        <t t-if="lang == 'th_TH'">ข้อกำหนดและเงื่อนไข</t>
+                        <t t-else="">Terms &amp; Conditions</t>
+                    </strong>
+                    <div class="border p-2" style="font-size: 12px; line-height: 1.4;">
+                        <span t-field="o.note"/>
+                    </div>
+                </div>
+
+                <!-- Signature: authorized signatory -->
+                <div id="po_signature_block" class="row" style="margin: 0; width: 100%;">
+                    <div class="col-6" style="width: 50%; padding-right: 3px;">
+                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
+                            <strong>
+                                <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
+                                <t t-else="">Authorized Signatory</t>
+                            </strong><br/>
+                            <div style="min-height: 50px; max-height: 50px;">
+                                <img t-if="o.company_id.l10n_th_signature_image"
+                                     t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
+                                     style="max-height: 50px;"
+                                     alt="Authorized Signature"/>
+                            </div>
+                            <div style="font-size: 14px; margin-top: 0;">
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ── Wrapper: Viva Purchase Order ── -->
+    <template id="viva_purchase_order"
+              name="VivaFarm Purchase Order">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="lang" t-value="o.partner_id.lang or o.company_id.partner_id.lang"/>
+                <t t-call="vivafarm_report.viva_purchase_order_document" t-lang="lang"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- ── Report action ── -->
+    <record id="action_report_viva_purchase_order" model="ir.actions.report">
+        <field name="name">Purchase Order (ใบสั่งซื้อ)</field>
+        <field name="model">purchase.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.viva_purchase_order</field>
+        <field name="report_file">vivafarm_report.viva_purchase_order</field>
+        <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>
