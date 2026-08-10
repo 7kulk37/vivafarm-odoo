@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VivaFarm ภ.ง.ด.50 — annual corporate income tax return.
+        Statutory summary from the trial balance; the full form (with tax
+        adjustments) is accountant-prepared.
+    -->
+
+    <template id="report_pnd50"
+              name="Thai PND50 (ภ.ง.ด.50)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">
+                        <t t-if="lang == 'th_TH'">ภ.ง.ด.50</t>
+                        <t t-else="">PND50</t>
+                    </t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>
+                                    <t t-if="lang == 'th_TH'">แบบแสดงรายการภาษีเงินได้นิติบุคคล (ภ.ง.ด.50)</t>
+                                    <t t-else="">Corporate Income Tax Return (PND50) — annual</t>
+                                </strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="date_from"/> to <span t-esc="date_to"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm table-bordered" style="margin-top: 4px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;" class="text-center">
+                                        <t t-if="lang == 'th_TH'">ข้อ</t>
+                                        <t t-else="">No.</t>
+                                    </th>
+                                    <th style="width: 62%;">
+                                        <t t-if="lang == 'th_TH'">รายการ</t>
+                                        <t t-else="">Description</t>
+                                    </th>
+                                    <th class="text-end" style="width: 30%;">
+                                        <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
+                                        <t t-else="">Amount</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center">1</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รายได้ทั้งสิ้น</t>
+                                        <t t-else="">Total Revenue</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="revenue"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">2</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รายจ่ายทั้งสิ้น</t>
+                                        <t t-else="">Total Expenses</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="expenses"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">3</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">กำไรสุทธิ (1 – 2)</t>
+                                        <t t-else="">Net Profit (1 − 2)</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="net_profit"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">4</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">ภาษีเงินได้นิติบุคคล (อัตรา <t t-esc="'%g' % (tax_rate * 100)"/>%)</t>
+                                        <t t-else="">Corporate Income Tax (rate <t t-esc="'%g' % (tax_rate * 100)"/>%)</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="tax"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; font-size: 12px; color: #666; line-height: 1.5;">
+                            <t t-if="lang == 'th_TH'">
+                                หมายเหตุ: รายงานนี้จัดทำจากข้อมูลในระบบบัญชี (งบทดลอง) ควรตรวจสอบกับงบการเงิน
+                                ที่ผู้สอบบัญชีรับรองก่อนยื่นแบบ — This report is generated from the trial balance;
+                                verify against the audited financial statements before filing.
+                            </t>
+                            <t t-else="">
+                                Note: This report is generated from the trial balance; verify against the
+                                audited financial statements before filing.
+                            </t>
+                        </div>
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!--
+        VivaFarm ภ.ง.ด.51 — half-year corporate income tax return.
+    -->
+    <template id="report_pnd51"
+              name="Thai PND51 (ภ.ง.ด.51)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">
+                        <t t-if="lang == 'th_TH'">ภ.ง.ด.51</t>
+                        <t t-else="">PND51</t>
+                    </t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>
+                                    <t t-if="lang == 'th_TH'">แบบแสดงรายการภาษีเงินได้นิติบุคคลครึ่งปี (ภ.ง.ด.51)</t>
+                                    <t t-else="">Corporate Income Tax Return (PND51) — half-year</t>
+                                </strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="date_from"/> to <span t-esc="date_to"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm table-bordered" style="margin-top: 4px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;" class="text-center">
+                                        <t t-if="lang == 'th_TH'">ข้อ</t>
+                                        <t t-else="">No.</t>
+                                    </th>
+                                    <th style="width: 62%;">
+                                        <t t-if="lang == 'th_TH'">รายการ</t>
+                                        <t t-else="">Description</t>
+                                    </th>
+                                    <th class="text-end" style="width: 30%;">
+                                        <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
+                                        <t t-else="">Amount</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center">1</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รายได้ทั้งสิ้น</t>
+                                        <t t-else="">Total Revenue</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="revenue"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">2</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รายจ่ายทั้งสิ้น</t>
+                                        <t t-else="">Total Expenses</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="expenses"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">3</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">กำไรสุทธิ (1 – 2)</t>
+                                        <t t-else="">Net Profit (1 − 2)</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="net_profit"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">4</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">ภาษีเงินได้นิติบุคคล (อัตรา <t t-esc="'%g' % (tax_rate * 100)"/>%)</t>
+                                        <t t-else="">Corporate Income Tax (rate <t t-esc="'%g' % (tax_rate * 100)"/>%)</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="tax"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; font-size: 12px; color: #666; line-height: 1.5;">
+                            <t t-if="lang == 'th_TH'">
+                                หมายเหตุ: รายงานนี้จัดทำจากข้อมูลในระบบบัญชี (งบทดลอง) ควรตรวจสอบกับงบการเงิน
+                                ที่ผู้สอบบัญชีรับรองก่อนยื่นแบบ — This report is generated from the trial balance;
+                                verify against the audited financial statements before filing.
+                            </t>
+                            <t t-else="">
+                                Note: This report is generated from the trial balance; verify against the
+                                audited financial statements before filing.
+                            </t>
+                        </div>
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

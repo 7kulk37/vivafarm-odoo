@@ -33,6 +33,7 @@
         'views/report_pnd53.xml',
         'views/report_pnd3.xml',
         'views/report_pnd1.xml',
+        'views/report_pnd50.xml',
         'views/tax_report_wizard_views.xml',
     ],
     'installable': True,

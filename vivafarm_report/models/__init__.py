@@ -7,6 +7,7 @@ from . import wht_certificate
 from . import pnd_reports
 from . import pnd3_report
 from . import pnd1_report
+from . import pnd50_report
 from . import account_payment
 from . import res_bank
 from . import res_partner
