@@ -14,8 +14,21 @@
                             <span>VAT Report (ภ.พ.30) — ตามประมวลรัษฎากร / pursuant to the Revenue Code</span>
                         </div>
                         <div class="vat30-period">
-                            <span>ประจำเดือนภาษี / Tax period: <t t-esc="date_from"/> – <t t-esc="date_to"/></span>
+                            <span>ประจำเดือนภาษี <t t-esc="thai_date_from"/> ถึง <t t-esc="thai_date_to"/> / Tax period: <t t-esc="date_from"/> to <t t-esc="date_to"/></span>
                         </div>
+
+                        <style>
+                            /* VAT30 layout: bold header row, top margin on
+                               the table, bottom border under the last row. */
+                            .vat30-table { margin-top: 10px; }
+                            .vat30-table thead th {
+                                font-weight: 700 !important;
+                                border-bottom: 2px solid #000 !important;
+                            }
+                            .vat30-table tbody tr:last-child td {
+                                border-bottom: 2px solid #000 !important;
+                            }
+                        </style>
 
                         <table class="table table-sm table-bordered vat30-table">
                             <thead>

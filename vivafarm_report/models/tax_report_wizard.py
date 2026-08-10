@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.tools import format_amount
+from odoo.tools.misc import format_date
 
 
 class TaxReportWizard(models.TransientModel):
@@ -236,4 +237,11 @@ class ReportVAT30(models.AbstractModel):
             'register_type': 'vat30',
             'amounts': amounts,
             'amount': lambda n: format_amount(self.env, amounts[n], currency),
+            # Thai Buddhist-Era dates for the period line: "01-ส.ค.-2569"
+            'thai_date_from': '%s-%s' % (
+                format_date(self.env, wizard.date_from, lang_code='th_TH', date_format='dd-MMM'),
+                wizard.date_from.year + 543),
+            'thai_date_to': '%s-%s' % (
+                format_date(self.env, wizard.date_to, lang_code='th_TH', date_format='dd-MMM'),
+                wizard.date_to.year + 543),
         }
