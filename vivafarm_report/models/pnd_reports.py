@@ -1,5 +1,6 @@
 from odoo import api, models
 from odoo.tools import format_amount
+from odoo.tools.misc import format_date
 
 
 class ReportPnd53(models.AbstractModel):
@@ -56,6 +57,13 @@ class ReportPnd53(models.AbstractModel):
             'docs': wizard,
             'date_from': wizard.date_from,
             'date_to': wizard.date_to,
+            # Thai Buddhist-Era dates for the period line: "01-ส.ค.-2569"
+            'thai_date_from': '%s-%s' % (
+                format_date(self.env, wizard.date_from, lang_code='th_TH', date_format='dd-MMM'),
+                wizard.date_from.year + 543),
+            'thai_date_to': '%s-%s' % (
+                format_date(self.env, wizard.date_to, lang_code='th_TH', date_format='dd-MMM'),
+                wizard.date_to.year + 543),
             'rows': rows,
             'total_income': format_amount(self.env, total_income, currency),
             'total_remit': format_amount(self.env, total_remit, currency),

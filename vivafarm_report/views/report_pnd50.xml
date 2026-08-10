@@ -17,6 +17,19 @@
                     </t>
                     <div class="page">
                         <div class="oe_structure"/>
+                        <style>
+                            /* PND50/51 layout: bold header row, top margin on
+                               the table, bottom border under the last row —
+                               same as the VAT30 (ภ.พ.30) report. */
+                            .pnd-table { margin-top: 10px; }
+                            .pnd-table thead th {
+                                font-weight: 700 !important;
+                                border-bottom: 2px solid #000 !important;
+                            }
+                            .pnd-table tbody tr:last-child td {
+                                border-bottom: 2px solid #000 !important;
+                            }
+                        </style>
                         <div class="row mb-3">
                             <div class="col-6">
                                 <strong>
@@ -25,11 +38,11 @@
                                 </strong>
                             </div>
                             <div class="col-6 text-end text-muted">
-                                <span t-esc="date_from"/> to <span t-esc="date_to"/>
+                                <span>ประจำเดือนภาษี <t t-esc="thai_date_from"/> ถึง <t t-esc="thai_date_to"/> / Tax period: <t t-esc="date_from"/> to <t t-esc="date_to"/></span>
                             </div>
                         </div>
 
-                        <table class="table table-sm table-bordered" style="margin-top: 4px;">
+                        <table class="table table-sm table-bordered pnd-table">
                             <thead>
                                 <tr>
                                     <th style="width: 8%;" class="text-center">
@@ -114,6 +127,19 @@
                     </t>
                     <div class="page">
                         <div class="oe_structure"/>
+                        <style>
+                            /* PND50/51 layout: bold header row, top margin on
+                               the table, bottom border under the last row —
+                               same as the VAT30 (ภ.พ.30) report. */
+                            .pnd-table { margin-top: 10px; }
+                            .pnd-table thead th {
+                                font-weight: 700 !important;
+                                border-bottom: 2px solid #000 !important;
+                            }
+                            .pnd-table tbody tr:last-child td {
+                                border-bottom: 2px solid #000 !important;
+                            }
+                        </style>
                         <div class="row mb-3">
                             <div class="col-6">
                                 <strong>
@@ -122,11 +148,11 @@
                                 </strong>
                             </div>
                             <div class="col-6 text-end text-muted">
-                                <span t-esc="date_from"/> to <span t-esc="date_to"/>
+                                <span>ประจำเดือนภาษี <t t-esc="thai_date_from"/> ถึง <t t-esc="thai_date_to"/> / Tax period: <t t-esc="date_from"/> to <t t-esc="date_to"/></span>
                             </div>
                         </div>
 
-                        <table class="table table-sm table-bordered" style="margin-top: 4px;">
+                        <table class="table table-sm table-bordered pnd-table">
                             <thead>
                                 <tr>
                                     <th style="width: 8%;" class="text-center">

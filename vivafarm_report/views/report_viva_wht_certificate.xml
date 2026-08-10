@@ -78,6 +78,10 @@
                         <div style="font-size: 13px;">
                             <t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('invoice_date')"/></t>
                             <t t-else=""><span t-field="o.invoice_date"/></t>
+                            <t t-if="payment_date and payment_date != o.invoice_date">
+                                <t t-if="lang == 'th_TH'"> (ชำระเมื่อ <span t-esc="payment_date_th"/>)</t>
+                                <t t-else=""> (paid <span t-esc="payment_date"/>)</t>
+                            </t>
                         </div>
                     </div>
                     <div class="col-4" style="width: 33%; padding-left: 3px;">
@@ -86,25 +90,22 @@
                             <t t-else="">Income Type</t>
                         </strong>
                         <div style="font-size: 13px;">
-                            <t t-foreach="o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount &lt; 0)" t-as="wht">
-                                <t t-if="wht_first">
-                                    <t t-if="'R' in (wht.tax_line_id.name or '')">
-                                        <t t-if="lang == 'th_TH'">ค่าเช่า (มาตรา 40(5))</t>
-                                        <t t-else="">Rent (Section 40(5))</t>
-                                    </t>
-                                    <t t-elif="'A' in (wht.tax_line_id.name or '')">
-                                        <t t-if="lang == 'th_TH'">ค่าบริการโฆษณา (มาตรา 40(8))</t>
-                                        <t t-else="">Advertising (Section 40(8))</t>
-                                    </t>
-                                    <t t-elif="'T' in (wht.tax_line_id.name or '')">
-                                        <t t-if="lang == 'th_TH'">ค่าขนส่ง (มาตรา 40(8))</t>
-                                        <t t-else="">Transport (Section 40(8))</t>
-                                    </t>
-                                    <t t-else="">
-                                        <t t-if="lang == 'th_TH'">ค่าบริการ (มาตรา 40(8))</t>
-                                        <t t-else="">Service (Section 40(8))</t>
-                                    </t>
-                                </t>
+                            <t t-set="income_type" t-value="rows[0]['income_type'] if rows else 'service'"/>
+                            <t t-if="income_type == 'rent'">
+                                <t t-if="lang == 'th_TH'">ค่าเช่า (มาตรา 40(5))</t>
+                                <t t-else="">Rent (Section 40(5))</t>
+                            </t>
+                            <t t-elif="income_type == 'advertising'">
+                                <t t-if="lang == 'th_TH'">ค่าบริการโฆษณา (มาตรา 40(8))</t>
+                                <t t-else="">Advertising (Section 40(8))</t>
+                            </t>
+                            <t t-elif="income_type == 'transport'">
+                                <t t-if="lang == 'th_TH'">ค่าขนส่ง (มาตรา 40(8))</t>
+                                <t t-else="">Transport (Section 40(8))</t>
+                            </t>
+                            <t t-else="">
+                                <t t-if="lang == 'th_TH'">ค่าบริการ (มาตรา 40(8))</t>
+                                <t t-else="">Service (Section 40(8))</t>
                             </t>
                         </div>
                     </div>
