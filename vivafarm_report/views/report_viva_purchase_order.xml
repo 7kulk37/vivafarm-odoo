@@ -239,10 +239,12 @@
                 </div>
 
                 <!-- Signature (right) + Terms & conditions (left) —
-                     side by side, T&C left-aligned with the sign block -->
-                <div class="row" style="margin: 0; width: 100%;">
+                     side by side, T&C left-aligned with the sign block.
+                     Whole row kept together so the pair never splits
+                     across pages. -->
+                <div class="row" style="margin: 0; width: 100%; page-break-inside: avoid;">
                     <div class="col-6" style="width: 55%; padding-right: 6px; vertical-align: top;">
-                        <div t-if="o.note" style="page-break-inside: avoid;">
+                        <div t-if="o.note">
                             <strong style="font-size: 12px;">
                                 <t t-if="lang == 'th_TH'">ข้อกำหนดและเงื่อนไข</t>
                                 <t t-else="">Terms &amp; Conditions</t>
