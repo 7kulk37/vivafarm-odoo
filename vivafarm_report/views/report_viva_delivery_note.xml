@@ -104,11 +104,11 @@
                     </div>
                     <div class="col-4" style="width: 33%; padding-left: 3px;">
                         <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">เลขที่เอกสาร</t>
-                            <t t-else="">Document No.</t>
+                            <t t-if="lang == 'th_TH'">อ้างอิงลูกค้า</t>
+                            <t t-else="">Customer Reference</t>
                         </strong>
                         <div style="font-size: 14px; line-height: 1.35;">
-                            <span t-field="o.name"/>
+                            <span t-esc="o.move_ids.sale_line_id.order_id[:1].client_order_ref or o.origin"/>
                         </div>
                     </div>
                 </div>
