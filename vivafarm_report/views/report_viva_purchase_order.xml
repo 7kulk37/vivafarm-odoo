@@ -250,7 +250,7 @@
                                 <t t-else="">Terms &amp; Conditions</t>
                             </strong>
                             <div class="border p-1" style="font-size: 10px; line-height: 1.25; min-height: 100px;">
-                                <span t-field="o.note"/>
+                                <span t-out="o._get_tc_text(lang)">1. Thai-only or English-only T&amp;C</span>
                             </div>
                         </div>
                         <div t-if="not o.note" style="font-size: 10px; color: #666;">
