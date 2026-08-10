@@ -58,13 +58,13 @@
                             <t t-else="">Shipping Address</t>
                         </strong>
                         <div style="font-size: 14px; line-height: 1.35;">
-                            <t t-if="o.partner_shipping_id and o.partner_shipping_id != o.partner_id">
-                                <div t-field="o.partner_shipping_id.name"/>
-                                <div t-if="o.partner_shipping_id.street or o.partner_shipping_id.street2">
-                                    <span t-field="o.partner_shipping_id.street"/><t t-if="o.partner_shipping_id.street and o.partner_shipping_id.street2">, </t><span t-field="o.partner_shipping_id.street2"/>
+                            <t t-if="o.partner_id">
+                                <div t-field="o.partner_id.name"/>
+                                <div t-if="o.partner_id.street or o.partner_id.street2">
+                                    <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
                                 </div>
-                                <div t-if="o.partner_shipping_id.city or o.partner_shipping_id.state_id or o.partner_shipping_id.zip or o.partner_shipping_id.country_id">
-                                    <span t-field="o.partner_shipping_id.city"/><t t-if="o.partner_shipping_id.city and (o.partner_shipping_id.state_id or o.partner_shipping_id.zip)">, </t><span t-esc="o.partner_shipping_id._get_state_display(o.partner_shipping_id.state_id)"/><t t-if="o.partner_shipping_id.state_id and o.partner_shipping_id.zip"> </t><span t-field="o.partner_shipping_id.zip"/><t t-if="(o.partner_shipping_id.city or o.partner_shipping_id.state_id or o.partner_shipping_id.zip) and o.partner_shipping_id.country_id">, </t><span t-field="o.partner_shipping_id.country_id"/>
+                                <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                                    <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
                                 </div>
                             </t>
                             <t t-else="">
