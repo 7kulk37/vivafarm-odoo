@@ -155,7 +155,7 @@
                 <!-- Acceptance note: goods-receipt language ONLY (checked +
                      accepted as shown). No payment/VAT/amount wording — the
                      tax invoice owns those. -->
-                <div style="margin: 0 0 8px 0; font-size: 13px; line-height: 1.5; color: #333;">
+                <div style="margin: 12px 0 8px 0; font-size: 13px; line-height: 1.5; color: #333; text-align: center;">
                     <t t-if="lang == 'th_TH'">
                         ข้าพเจ้าได้ตรวจสอบสินค้าตามรายการในเอกสารฉบับนี้แล้ว และรับสินค้าไว้ถูกต้องครบถ้วนตามที่แสดงไว้
                     </t>
