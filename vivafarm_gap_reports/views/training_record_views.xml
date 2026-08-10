@@ -6,7 +6,7 @@
         <field name="name">farm.training.record.list</field>
         <field name="model">farm.training.record</field>
         <field name="arch" type="xml">
-            <list string="Training Records" decoration-muted="active == False">
+            <list string="Training Records">
                 <field name="date"/>
                 <field name="employee_id"/>
                 <field name="topic"/>
