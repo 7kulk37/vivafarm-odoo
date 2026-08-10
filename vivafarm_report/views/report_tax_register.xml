@@ -19,7 +19,7 @@
                                 </strong>
                             </div>
                             <div class="col-6 text-end text-muted">
-                                <span t-esc="date_from"/> – <span t-esc="date_to"/>
+                                <span t-esc="date_from"/> to <span t-esc="date_to"/>
                             </div>
                         </div>
                         <table class="table table-sm o_main_table">
