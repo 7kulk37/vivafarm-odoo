@@ -114,7 +114,7 @@
     </record>
 
     <menuitem id="menu_tax_register_sales"
-              name="Thai Tax Reports (รายงานภาษีขาย/ซื้อ, ภ.พ.30)"
+              name="Thai Tax Reports (รายงานภาษีขาย/ซื้อ, ภ.พ.30, ภ.ง.ด.1/3/50/51/53)"
               parent="account.account_reports_taxes_and_fiscal_menu"
               sequence="10"
               action="action_tax_report_wizard"
