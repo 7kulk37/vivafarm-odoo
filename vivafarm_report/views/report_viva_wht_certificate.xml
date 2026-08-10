@@ -87,7 +87,7 @@
                         </strong>
                         <div style="font-size: 13px;">
                             <t t-foreach="o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount &lt; 0)" t-as="wht">
-                                <t t-if="wht_loop['first']">
+                                <t t-if="wht_first">
                                     <t t-if="'R' in (wht.tax_line_id.name or '')">
                                         <t t-if="lang == 'th_TH'">ค่าเช่า (มาตรา 40(5))</t>
                                         <t t-else="">Rent (Section 40(5))</t>
@@ -135,7 +135,7 @@
                     <tbody>
                         <t t-foreach="o.line_ids.filtered(lambda l: l.tax_line_id and l.tax_line_id.amount &lt; 0)" t-as="wht">
                             <tr>
-                                <td class="text-center"><t t-esc="wht_loop['index']"/></td>
+                                <td class="text-center"><t t-esc="wht_index + 1"/></td>
                                 <td>
                                     <span t-esc="wht.tax_line_id.name"/>
                                     <t t-if="lang == 'th_TH'"> (อัตรา <t t-esc="'%g' % (-wht.tax_line_id.amount)"/>%)</t>
