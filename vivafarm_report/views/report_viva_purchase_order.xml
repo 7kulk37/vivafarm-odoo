@@ -87,7 +87,8 @@
                             <t t-else="">Order Date</t>
                         </strong>
                         <div style="font-size: 13px;">
-                            <span t-field="o.date_order" t-options="{'date_only': 'true'}"/>
+                            <t t-if="lang == 'th_TH'"><span t-out="o._get_thai_date_display('date_order')">08/ส.ค./2569</span></t>
+                            <t t-else=""><span t-field="o.date_order" t-options="{'date_only': 'true'}"/></t>
                         </div>
                     </div>
                     <div class="col-4" style="width: 33%; padding-right: 3px;">
@@ -96,7 +97,8 @@
                             <t t-else="">Expected Arrival</t>
                         </strong>
                         <div style="font-size: 13px;">
-                            <span t-field="o.date_planned" t-options="{'date_only': 'true'}"/>
+                            <t t-if="lang == 'th_TH'"><span t-out="o._get_thai_date_display('date_planned')">08/ส.ค./2569</span></t>
+                            <t t-else=""><span t-field="o.date_planned" t-options="{'date_only': 'true'}"/></t>
                         </div>
                     </div>
                     <div class="col-4" style="width: 33%; padding-left: 3px;">
@@ -140,14 +142,14 @@
                 </div>
 
                 <!-- Line items -->
-                <table class="table table-sm table-bordered mb-2" style="table-layout: fixed;">
+                <table class="table table-sm table-bordered mt-3 mb-2" style="table-layout: fixed;">
                     <thead>
                         <tr>
                             <th class="fw-bold text-center" style="width: 5%;">
                                 <t t-if="lang == 'th_TH'">ลำดับ</t>
                                 <t t-else="">NO.</t>
                             </th>
-                            <th class="fw-bold text-start" style="width: 38%;">
+                            <th class="fw-bold text-start" style="width: 50%;">
                                 <t t-if="lang == 'th_TH'">รายการ</t>
                                 <t t-else="">Description</t>
                             </th>
@@ -155,19 +157,11 @@
                                 <t t-if="lang == 'th_TH'">จำนวน</t>
                                 <t t-else="">Qty</t>
                             </th>
-                            <th class="fw-bold text-end" style="width: 12%;">
+                            <th class="fw-bold text-end" style="width: 15%;">
                                 <t t-if="lang == 'th_TH'">ราคาต่อหน่วย</t>
                                 <t t-else="">Unit Price</t>
                             </th>
-                            <th class="fw-bold text-end" style="width: 8%;">
-                                <t t-if="lang == 'th_TH'">ส่วนลด</t>
-                                <t t-else="">Disc.</t>
-                            </th>
-                            <th class="fw-bold text-end" style="width: 12%;">
-                                <t t-if="lang == 'th_TH'">ภาษี</t>
-                                <t t-else="">Taxes</t>
-                            </th>
-                            <th class="fw-bold text-end" style="width: 15%;">
+                            <th class="fw-bold text-end" style="width: 20%;">
                                 <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
                                 <t t-else="">Amount</t>
                             </th>
@@ -178,7 +172,7 @@
                         <t t-foreach="o.order_line" t-as="line">
                             <t t-if="line.display_type == 'line_section' or line.display_type == 'line_note'">
                                 <tr>
-                                    <td t-att-colspan="7" class="fst-italic">
+                                    <td t-att-colspan="5" class="fst-italic">
                                         <span t-field="line.name"/>
                                     </td>
                                 </tr>
@@ -198,12 +192,6 @@
                                     </td>
                                     <td class="text-end">
                                         <span t-field="line.price_unit"/>
-                                    </td>
-                                    <td class="text-end">
-                                        <span t-field="line.discount"/>%
-                                    </td>
-                                    <td class="text-end">
-                                        <span t-esc="', '.join(tax.name for tax in line.tax_ids)"/>
                                     </td>
                                     <td class="text-end">
                                         <span t-field="line.price_subtotal" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
@@ -250,10 +238,25 @@
                     </div>
                 </div>
 
-                <!-- Signature: authorized signatory (before T&C so it stays
-                     on page 1 with the totals — the binding element) -->
-                <div id="po_signature_block" class="row" style="margin: 0; width: 100%;">
-                    <div class="col-6" style="width: 50%; padding-right: 3px;">
+                <!-- Signature (right) + Terms & conditions (left) —
+                     side by side, T&C left-aligned with the sign block -->
+                <div class="row" style="margin: 0; width: 100%;">
+                    <div class="col-6" style="width: 55%; padding-right: 6px; vertical-align: top;">
+                        <div t-if="o.note" style="page-break-inside: avoid;">
+                            <strong style="font-size: 12px;">
+                                <t t-if="lang == 'th_TH'">ข้อกำหนดและเงื่อนไข</t>
+                                <t t-else="">Terms &amp; Conditions</t>
+                            </strong>
+                            <div class="border p-1" style="font-size: 10px; line-height: 1.25; min-height: 100px;">
+                                <span t-field="o.note"/>
+                            </div>
+                        </div>
+                        <div t-if="not o.note" style="font-size: 10px; color: #666;">
+                            <t t-if="lang == 'th_TH'">—</t>
+                            <t t-else="">—</t>
+                        </div>
+                    </div>
+                    <div class="col-6" style="width: 45%; padding-left: 6px; vertical-align: top;">
                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
                             <strong>
                                 <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
@@ -271,18 +274,6 @@
                                 <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Terms & conditions (kept together — page-break-inside
-                     avoid so the header never splits from its items) -->
-                <div t-if="o.note" class="mb-2" style="page-break-inside: avoid;">
-                    <strong style="font-size: 12px;">
-                        <t t-if="lang == 'th_TH'">ข้อกำหนดและเงื่อนไข</t>
-                        <t t-else="">Terms &amp; Conditions</t>
-                    </strong>
-                    <div class="border p-1" style="font-size: 11px; line-height: 1.25;">
-                        <span t-field="o.note"/>
                     </div>
                 </div>
             </div>
