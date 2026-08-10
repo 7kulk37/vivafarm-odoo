@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VivaFarm ภ.ง.ด.1 — monthly PIT withholding (employees).
+        Statutory shape: total wages, PIT withheld, total remittance.
+    -->
+
+    <template id="report_pnd1"
+              name="Thai PND1 (ภ.ง.ด.1)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">
+                        <t t-if="lang == 'th_TH'">ภ.ง.ด.1</t>
+                        <t t-else="">PND1</t>
+                    </t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>
+                                    <t t-if="lang == 'th_TH'">แบบแสดงรายการภาษีหัก ณ ที่จ่าย (ภ.ง.ด.1)</t>
+                                    <t t-else="">Withholding Tax Return (PND1) — employees</t>
+                                </strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="date_from"/> to <span t-esc="date_to"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm table-bordered" style="margin-top: 4px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 8%;" class="text-center">
+                                        <t t-if="lang == 'th_TH'">ข้อ</t>
+                                        <t t-else="">No.</t>
+                                    </th>
+                                    <th style="width: 62%;">
+                                        <t t-if="lang == 'th_TH'">รายการ</t>
+                                        <t t-else="">Description</t>
+                                    </th>
+                                    <th class="text-end" style="width: 30%;">
+                                        <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
+                                        <t t-else="">Amount</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center">1</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รวมยอดเงินได้ทั้งสิ้น (ค่าจ้าง)</t>
+                                        <t t-else="">Total Income (wages)</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="total_wages"/></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">2</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รวมยอดภาษีที่หักและนำส่งทั้งสิ้น</t>
+                                        <t t-else="">Total PIT Withheld and Remitted</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="total_pit"/></td>
+                                </tr>
+                                <tr class="fw-bold">
+                                    <td class="text-center">3</td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'">รวมยอดภาษีที่นำส่งทั้งสิ้น (2.)</t>
+                                        <t t-else="">Total Remittance (2)</t>
+                                    </td>
+                                    <td class="text-end"><span t-esc="total"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 12px; font-size: 13px; font-weight: 700;">
+                            <t t-if="lang == 'th_TH'">รายละเอียดค่าจ้าง</t>
+                            <t t-else="">Wage Details</t>
+                        </div>
+                        <table class="table table-sm table-bordered" style="margin-top: 4px;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 12%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </th>
+                                    <th style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">เลขที่</t>
+                                        <t t-else="">Number</t>
+                                    </th>
+                                    <th style="width: 28%;">
+                                        <t t-if="lang == 'th_TH'">พนักงาน</t>
+                                        <t t-else="">Employee</t>
+                                    </th>
+                                    <th class="text-end" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">ค่าจ้าง</t>
+                                        <t t-else="">Wages</t>
+                                    </th>
+                                    <th class="text-end" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">ภาษีหัก ณ ที่จ่าย</t>
+                                        <t t-else="">PIT Withheld</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="rows" t-as="r">
+                                    <td t-esc="r['date']"/>
+                                    <td t-esc="r['name']"/>
+                                    <td t-esc="r['employee']"/>
+                                    <td class="text-end" t-esc="r['wages_fmt']"/>
+                                    <td class="text-end" t-esc="r['pit_fmt']"/>
+                                </tr>
+                                <tr t-if="not rows">
+                                    <td colspan="5" class="text-center text-muted">
+                                        <t t-if="lang == 'th_TH'">ไม่มีการจ่ายค่าจ้างในงวดนี้</t>
+                                        <t t-else="">No wages paid in this period</t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
