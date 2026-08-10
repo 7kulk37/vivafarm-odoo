@@ -274,8 +274,9 @@
                     </div>
                 </div>
 
-                <!-- Terms & conditions -->
-                <div t-if="o.note" class="mb-2">
+                <!-- Terms & conditions (kept together — page-break-inside
+                     avoid so the header never splits from its items) -->
+                <div t-if="o.note" class="mb-2" style="page-break-inside: avoid;">
                     <strong style="font-size: 12px;">
                         <t t-if="lang == 'th_TH'">ข้อกำหนดและเงื่อนไข</t>
                         <t t-else="">Terms &amp; Conditions</t>
