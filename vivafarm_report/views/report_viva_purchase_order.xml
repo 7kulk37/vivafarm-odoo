@@ -251,12 +251,12 @@
                 </div>
 
                 <!-- Terms & conditions -->
-                <div t-if="o.note" class="mb-3">
-                    <strong style="font-size: 13px;">
+                <div t-if="o.note" class="mb-2">
+                    <strong style="font-size: 12px;">
                         <t t-if="lang == 'th_TH'">ข้อกำหนดและเงื่อนไข</t>
                         <t t-else="">Terms &amp; Conditions</t>
                     </strong>
-                    <div class="border p-2" style="font-size: 12px; line-height: 1.4;">
+                    <div class="border p-1" style="font-size: 11px; line-height: 1.25;">
                         <span t-field="o.note"/>
                     </div>
                 </div>
