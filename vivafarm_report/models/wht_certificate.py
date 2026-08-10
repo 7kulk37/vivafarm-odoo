@@ -72,7 +72,7 @@ class ReportVivaWhtCertificate(models.AbstractModel):
         for m in moves:
             rows.extend(self._get_wht_lines(m))
         currency = moves[0].currency_id or self.env.company.currency_id
-        payment_date = moves[0]._get_payment_date() if moves else False
+        payment_date = self._get_payment_date(moves[0]) if moves else False
         payment_date_th = False
         if payment_date:
             from odoo.tools.misc import format_date
