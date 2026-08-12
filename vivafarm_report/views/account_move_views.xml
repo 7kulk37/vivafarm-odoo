@@ -21,6 +21,13 @@
                        placeholder="Replaces Invoice (ข้อ 25)"
                        options="{'no_create': True}"
                        invisible="move_type not in ('out_invoice',)"/>
+                <!-- Debit Note Of (มาตรา 86/9): link the original tax
+                     invoice this debit note adjusts upward. Only meaningful
+                     on posted customer invoices. -->
+                <field name="debit_note_of_id"
+                       placeholder="Debit Note Of (86/9)"
+                       options="{'no_create': True}"
+                       invisible="move_type != 'out_invoice' or state != 'posted'"/>
             </field>
             <!-- Re-issue (ป.86/2542 ข้อ 25): the compliant alternative to
                  Reset to Draft on a posted-then-cancelled customer invoice.

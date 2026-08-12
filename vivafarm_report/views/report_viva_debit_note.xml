@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VivaFarm Debit Note (ใบเพิ่มหนี้) — custom report.
+        Mirror of the Credit Note (ใบลดหนี้), per Revenue Code มาตรา 86/9:
+        when the tax base on the original tax invoice was LOWER than the
+        correct amount (price increase, additional charges, post-sale
+        upward adjustment), the seller must issue a debit note in the tax
+        month the event occurs. มาตรา 86/4 applies — the DN is DEEMED a
+        tax invoice, so it prints the same triplicate (ต้นฉบับ/สำเนา/
+        สำเนาบัญชี) and carries the statutory particulars of 86/9(5):
+        original invoice serial + value, correct value, difference, tax on
+        the difference. The DN is a NEW out_invoice with ONLY the
+        difference lines; `debit_note_of_id` links back to the original.
+    -->
+
+    <!-- ── Content: Viva Debit Note Document ── -->
+    <template id="viva_debit_note_document"
+              name="VivaFarm Debit Note Document">
+        <t t-call="vivafarm_report.external_layout_viva">
+            <t t-set="is_debit_note" t-value="True"/>
+            <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <t t-set="dnv" t-value="o._get_debit_note_values()"/>
+
+            <style>
+                /* Compact so the debit note fits one page per copy. */
+                #debit_note_signature_block { page-break-inside: avoid; }
+            </style>
+
+            <div class="page">
+                <h3 t-att-style="'margin-top: 0; margin-bottom: 6px; text-align: left; color: %s;' % (o.company_id.primary_color or '#000000')">
+                    <strong style="font-size: 24px;">
+                        <t t-if="lang == 'th_TH'">ใบเพิ่มหนี้: </t>
+                        <t t-else="">Debit Note: </t>
+                        <span t-field="o.name"/>
+                    </strong>
+                </h3>
+
+                <!-- Customer block -->
+                <div class="row" style="margin: 0 0 8px 0;">
+                    <div class="col-6" style="width: 50%; padding-right: 3px;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">ลูกค้า</t>
+                            <t t-else="">Customer</t>
+                        </strong>
+                        <div style="font-size: 14px; line-height: 1.35;">
+                            <div t-field="o.partner_id.name"/>
+                            <div t-if="o.partner_id.street or o.partner_id.street2">
+                                <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                            </div>
+                            <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                                <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
+                            </div>
+                            <div t-if="o.partner_id.vat">
+                                <t t-if="lang == 'th_TH'">เลขประจำตัวผู้เสียภาษี: </t>
+                                <t t-else="">Tax ID: </t>
+                                <span t-field="o.partner_id.vat"/>
+                                <t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6" style="width: 50%; padding-left: 3px;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">เลขที่ใบกำกับภาษีเดิม</t>
+                            <t t-else="">Original Invoice No.</t>
+                        </strong>
+                        <div style="font-size: 14px; line-height: 1.35;">
+                            <t t-if="o.debit_note_of_id">
+                                <span t-esc="dnv['original_name']"/>
+                                <t t-if="dnv['original_date']">
+                                    <t t-if="lang == 'th_TH'"> · <span t-esc="o.debit_note_of_id._get_thai_date_display('invoice_date')"/></t>
+                                    <t t-else=""> · <span t-esc="dnv['original_date']"/></t>
+                                </t>
+                            </t>
+                            <div t-else="">
+                                <t t-if="lang == 'th_TH'">—</t>
+                                <t t-else="">—</t>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info row: dates + source -->
+                <div class="row" style="margin: 0 0 8px 0;">
+                    <div class="col-4" style="width: 33%; padding-right: 3px;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">วันที่ออกใบเพิ่มหนี้</t>
+                            <t t-else="">Debit Note Date</t>
+                        </strong>
+                        <div style="font-size: 14px; line-height: 1.35;">
+                            <t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('invoice_date')"/></t>
+                            <t t-else=""><span t-field="o.invoice_date"/></t>
+                        </div>
+                    </div>
+                    <div class="col-4" style="width: 33%; padding-left: 3px; padding-right: 3px;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">วันที่จัดส่ง</t>
+                            <t t-else="">Delivery Date</t>
+                        </strong>
+                        <div style="font-size: 14px; line-height: 1.35;">
+                            <t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('delivery_date')"/></t>
+                            <t t-else=""><span t-field="o.delivery_date"/></t>
+                        </div>
+                    </div>
+                    <div class="col-4" style="width: 33%; padding-left: 3px;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">อ้างอิง</t>
+                            <t t-else="">Source</t>
+                        </strong>
+                        <div style="font-size: 14px; line-height: 1.35;">
+                            <span t-field="o.invoice_origin"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 86/9(5) computation block: original value / correct
+                     value / difference / tax on the difference -->
+                <div t-if="o.debit_note_of_id" class="row" style="margin: 0 0 8px 0;">
+                    <div class="col-12" style="width: 100%;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">รายการปรับเพิ่ม (มาตรา 86/9)</t>
+                            <t t-else="">Adjustment (Section 86/9)</t>
+                        </strong>
+                        <table class="table table-sm table-bordered" style="margin: 4px 0 0 0; font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <t t-if="lang == 'th_TH'">มูลค่าตามใบกำกับภาษีเดิม</t>
+                                        <t t-else="">Value per Original Invoice</t>
+                                    </th>
+                                    <th class="text-end">
+                                        <t t-if="lang == 'th_TH'">มูลค่าที่ถูกต้อง</t>
+                                        <t t-else="">Correct Value</t>
+                                    </th>
+                                    <th class="text-end">
+                                        <t t-if="lang == 'th_TH'">ผลต่าง</t>
+                                        <t t-else="">Difference</t>
+                                    </th>
+                                    <th class="text-end">
+                                        <t t-if="lang == 'th_TH'">ภาษีของผลต่าง</t>
+                                        <t t-else="">Tax on Difference</t>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-end"><span t-esc="'{:,.2f}'.format(dnv['original_value'])"/></td>
+                                    <td class="text-end"><span t-esc="'{:,.2f}'.format(dnv['correct_value'])"/></td>
+                                    <td class="text-end"><span t-esc="'{:,.2f}'.format(dnv['difference'])"/></td>
+                                    <td class="text-end"><span t-esc="'{:,.2f}'.format(dnv['diff_tax'])"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Reason block: full-width, wraps freely in the body (86/9(6)) -->
+                <div t-if="o.ref" class="row" style="margin: 0 0 8px 0;">
+                    <div class="col-12" style="width: 100%;">
+                        <strong style="font-size: 15px;">
+                            <t t-if="lang == 'th_TH'">เหตุผล</t>
+                            <t t-else="">Reason</t>
+                        </strong>
+                        <div style="font-size: 14px; line-height: 1.35; border: 1px solid #ccc; border-radius: 8px; padding: 6px 10px;">
+                            <span t-field="o.ref"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Line items table -->
+                <table class="table table-borderless" style="margin-bottom: 6px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;"><span><t t-if="lang == 'th_TH'">ลำดับ</t><t t-else="">NO.</t></span></th>
+                            <th style="width: 45%;"><span><t t-if="lang == 'th_TH'">คำอธิบาย</t><t t-else="">Description</t></span></th>
+                            <th class="text-end" style="width: 12%;"><span><t t-if="lang == 'th_TH'">จำนวน(หน่วย)</t><t t-else="">Quantity</t></span></th>
+                            <th class="text-end" style="width: 12%;"><span><t t-if="lang == 'th_TH'">ราคาต่อหน่วย</t><t t-else="">Unit Price</t></span></th>
+                            <th class="text-end" style="width: 10%;"><span><t t-if="lang == 'th_TH'">ภาษี</t><t t-else="">Taxes</t></span></th>
+                            <th class="text-end" style="width: 16%;"><span><t t-if="lang == 'th_TH'">จำนวนเงิน</t><t t-else="">Amount</t></span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-set="line_no" t-value="0"/>
+                        <t t-foreach="o.invoice_line_ids" t-as="line">
+                            <t t-if="line.display_type == 'product'">
+                                <t t-set="line_no" t-value="line_no + 1"/>
+                                <tr>
+                                    <td><span t-esc="line_no"/></td>
+                                    <td><span t-field="line.name"/></td>
+                                    <td class="text-end"><span t-field="line.quantity"/></td>
+                                    <td class="text-end"><span t-field="line.price_unit"/></td>
+                                    <td class="text-end"><span t-esc="', '.join(line.tax_ids.mapped('name'))"/></td>
+                                    <td class="text-end"><span t-field="line.price_subtotal"/></td>
+                                </tr>
+                            </t>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- Totals — same structure as the Tax Invoice / Credit Note:
+                     right-elements block, border-top, o_total_table
+                     (Total Amount / VAT / Grand Total), amount-in-words
+                     with border-bottom. Reuses _get_tax_invoice_totals()
+                     (debit-note amounts are positive in Odoo, same rows). -->
+                <div class="overflow-hidden">
+                    <div id="right-elements" t-attf-class="#{'col-5' if report_type == 'pdf' else 'col-12 col-md-5'} ms-5 d-inline-block float-end" t-att-style="'border-top: 2px solid %s; margin-top: 12pt;' % (o.company_id.primary_color or '#000000')">
+                        <div id="total" class="clearfix row">
+                            <div class="ms-auto">
+                                <table class="o_total_table table table-borderless avoid-page-break-inside">
+                                    <t t-set="tt_rows" t-value="o._get_tax_invoice_totals()"/>
+                                    <t t-set="currency" t-value="o.currency_id"/>
+                                    <tr>
+                                        <td>
+                                            <t t-if="lang == 'th_TH'">รวมเงิน</t>
+                                            <t t-else="">Total Amount</t>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-out="tt_rows['gross_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                        </td>
+                                    </tr>
+                                    <t t-foreach="tt_rows['vat_rows']" t-as="vrow">
+                                        <tr>
+                                            <td>
+                                                <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม <t t-out="vrow['rate_label']"/></t>
+                                                <t t-else="">VAT <t t-out="vrow['rate_label']"/></t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="vrow['amount']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="tt_rows['exempt_rows']" t-as="erow">
+                                        <tr style="white-space: nowrap;">
+                                            <td>
+                                                <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม: ( <t t-out="erow['label']"/> )</t>
+                                                <t t-else="">VAT: ( <t t-out="erow['label']"/> )</t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-options='{"widget": "monetary", "display_currency": currency}' t-out="0.0"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <tr class="o_total">
+                                        <td><strong>
+                                            <t t-if="lang == 'th_TH'">จำนวนรวมทั้งสิ้น</t>
+                                            <t t-else="">Grand Total</t>
+                                        </strong></td>
+                                        <td class="text-end">
+                                            <strong t-out="tt_rows['grand_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="mb-2" t-att-style="'border-bottom: 2px solid %s;' % (o.company_id.primary_color or '#000000')">
+                            <p class="text-end lh-sm" t-if="o.company_id.display_invoice_amount_total_words">
+                                <t t-if="lang == 'th_TH'">ตัวอักษรยอดเพิ่มหนี้: <br/></t>
+                                <t t-else="">Debit amount in words: <br/></t>
+                                <span class="text-muted lh-sm" style="font-size: 0.875em;">(<span t-field="o.amount_total_words">Eight Hundred Baht</span>)</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signature blocks -->
+                <div id="debit_note_signature_block" class="row" style="margin: 0; width: 100%;">
+                    <div class="col-6" style="width: 50%; padding-right: 3px;">
+                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
+                            <strong>
+                                <t t-if="lang == 'th_TH'">ลูกค้า</t>
+                                <t t-else="">Received by customer</t>
+                            </strong><br/>
+                            <div style="min-height: 50px; max-height: 50px;"></div>
+                            <div style="font-size: 14px; margin-top: 0;">
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6" style="width: 50%; padding-left: 3px;">
+                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
+                            <strong>
+                                <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
+                                <t t-else="">Authorized Signatory</t>
+                            </strong><br/>
+                            <div style="min-height: 50px; max-height: 50px;">
+                                <img t-if="o.company_id.l10n_th_signature_image"
+                                     t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
+                                     style="max-height: 50px;"
+                                     alt="Authorized Signature"/>
+                            </div>
+                            <div style="font-size: 14px; margin-top: 0;">
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- ── Wrapper: Viva Debit Note ── -->
+    <template id="viva_debit_note"
+              name="VivaFarm Debit Note">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="lang" t-value="o.partner_id.lang or o.company_id.partner_id.lang"/>
+                <t t-set="copies" t-value="o._get_debit_note_copies()"/>
+                <t t-foreach="copies" t-as="copy">
+                    <t t-set="copy_kind" t-value="copy['key']"/>
+                    <t t-call="vivafarm_report.viva_debit_note_document" t-lang="lang"/>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ── Report action ── -->
+    <record id="action_report_viva_debit_note" model="ir.actions.report">
+        <field name="name">Debit Note (ใบเพิ่มหนี้)</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.viva_debit_note</field>
+        <field name="report_file">vivafarm_report.viva_debit_note</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

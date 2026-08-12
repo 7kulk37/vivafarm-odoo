@@ -26,6 +26,20 @@ class AccountMove(models.Model):
         'account.move', string='Replaces Invoice', ondelete='set null',
         help="Original tax invoice this document was re-issued to replace (ป.86/2542 ข้อ 25).")
 
+    #: Original tax invoice this debit note (ใบเพิ่มหนี้) adjusts UPWARD
+    #: (Revenue Code มาตรา 86/9): when the tax base on the original invoice
+    #: was LOWER than the correct amount (price increase, additional
+    #: freight/handling, post-sale upward adjustment), the seller must issue
+    #: a debit note in the tax month the event occurs (next month only in
+    #: necessity). มาตรา 86/4 applies — the debit note is DEEMED a tax
+    #: invoice, so the triplicate + statutory contents apply. The DN is a
+    #: NEW out_invoice carrying ONLY the difference lines; this field links
+    #: back to the original so the report can show 86/9(5): original value,
+    #: correct value, difference, tax on the difference.
+    debit_note_of_id = fields.Many2one(
+        'account.move', string='Debit Note Of', ondelete='set null',
+        help="Original tax invoice this debit note adjusts upward (มาตรา 86/9).")
+
     #: Root of the re-issue chain (ป.86/2542 ข้อ 25). Every member of a chain
     #: (the voided original and each re-issued replacement) carries the id of
     #: the chain ROOT. Stored so the re-issue history is searchable — the
@@ -148,6 +162,61 @@ class AccountMove(models.Model):
                 {'key': 'account',  'th_marker': 'สำเนา',   'en_marker': 'Copy',     'th_recipient': 'สำหรับบัญชี', 'en_recipient': 'For Accounting'},
             ]
         return [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}]
+
+    def _get_debit_note_copies(self):
+        """Copies to print for a debit note (ใบเพิ่มหนี้): 3 copies.
+
+        A debit note is DEEMED a tax invoice (Revenue Code มาตรา 86/4
+        applied via 86/9), so it carries the same triplicate as the tax
+        invoice / credit note: ต้นฉบับ/สำหรับลูกค้า + สำเนา/สำหรับบริษัท +
+        สำเนา/สำหรับบัญชี. Only posted customer invoices linked as debit
+        notes (out_invoice with debit_note_of_id) print 3 copies.
+        """
+        self.ensure_one()
+        if self.move_type == 'out_invoice' and self.state == 'posted' and self.debit_note_of_id:
+            return [
+                {'key': 'original', 'th_marker': 'ต้นฉบับ', 'en_marker': 'Original', 'th_recipient': 'สำหรับลูกค้า', 'en_recipient': 'For Customer'},
+                {'key': 'company',  'th_marker': 'สำเนา',   'en_marker': 'Copy',     'th_recipient': 'สำหรับบริษัท', 'en_recipient': 'For Company'},
+                {'key': 'account',  'th_marker': 'สำเนา',   'en_marker': 'Copy',     'th_recipient': 'สำหรับบัญชี', 'en_recipient': 'For Accounting'},
+            ]
+        return [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}]
+
+    def _get_debit_note_values(self):
+        """86/9(5) computation block for a debit note (ใบเพิ่มหนี้).
+
+        Returns the original invoice's value, the correct (adjusted) value,
+        the difference, and the tax on the difference — the statutory
+        particulars a debit note must show. The DN itself carries ONLY the
+        difference lines, so:
+
+          original_value = original.amount_untaxed
+          difference     = self.amount_untaxed
+          correct_value  = original_value + difference
+          diff_tax       = self.amount_tax
+
+        Falls back to zeros/self when no debit_note_of_id is set so the
+        template renders cleanly in any state.
+        """
+        self.ensure_one()
+        orig = self.debit_note_of_id
+        if not orig:
+            return {
+                'original_value': 0.0,
+                'original_name': '',
+                'original_date': False,
+                'difference': self.amount_untaxed,
+                'correct_value': self.amount_untaxed,
+                'diff_tax': self.amount_tax,
+            }
+        difference = self.amount_untaxed
+        return {
+            'original_value': orig.amount_untaxed,
+            'original_name': orig.name,
+            'original_date': orig.invoice_date,
+            'difference': difference,
+            'correct_value': orig.amount_untaxed + difference,
+            'diff_tax': self.amount_tax,
+        }
 
     def _get_tax_invoice_totals(self):
         """Rows for the Thai tax-invoice totals table (bilingual).
