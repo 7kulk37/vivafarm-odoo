@@ -95,7 +95,7 @@
                     <group>
                         <field name="date_from"/>
                         <field name="date_to"/>
-                        <field name="worker_name" invisible="report_type != 'worker_log'"/>
+                        <field name="worker_name" invisible="report_type not in ('worker_log', 'wage_sheet')"/>
                         <field name="bench_id" invisible="report_type != 'input_log'"/>
                     </group>
                 </group>

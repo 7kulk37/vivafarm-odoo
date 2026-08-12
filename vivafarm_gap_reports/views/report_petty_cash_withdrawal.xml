@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Petty Cash Withdrawal (ใบเบิกเงินสดย่อย) — PNK A.4 -->
+    <template id="report_petty_cash_withdrawal"
+              name="Petty Cash Withdrawal (ใบเบิกเงินสดย่อย)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title">ใบเบิกเงินสดย่อย / Petty Cash Withdrawal</t>
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>
+                                    <t t-if="lang == 'th_TH'">ใบเบิกเงินสดย่อย</t>
+                                    <t t-else="">Petty Cash Withdrawal</t>
+                                </strong>
+                            </div>
+                            <div class="col-6 text-end text-muted">
+                                <span t-esc="o.name"/>
+                            </div>
+                        </div>
+
+                        <!-- Header: date / fund / requested by / amount -->
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 25%;">
+                                        <t t-if="lang == 'th_TH'">วันที่</t>
+                                        <t t-else="">Date</t>
+                                    </td>
+                                    <td>
+                                        <t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('date')"/></t>
+                                        <t t-else=""><span t-esc="o.date"/></t>
+                                    </td>
+                                    <td class="text-muted" style="width: 20%;">
+                                        <t t-if="lang == 'th_TH'">กองทุน</t>
+                                        <t t-else="">Fund</t>
+                                    </td>
+                                    <td t-esc="o.fund_id.name or ''"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ผู้เบิก</t>
+                                        <t t-else="">Requested By</t>
+                                    </td>
+                                    <td t-esc="o.requested_by.name or ''"/>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">สถานะ</t>
+                                        <t t-else="">Status</t>
+                                    </td>
+                                    <td t-esc="o.state"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
+                                        <t t-else="">Amount</t>
+                                    </td>
+                                    <td colspan="3" class="fw-bold">
+                                        <span t-esc="o.currency_id.symbol or ''"/>
+                                        <span t-esc="'{:,.2f}'.format(o.amount)"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">จำนวนเงิน (ตัวอักษร)</t>
+                                        <t t-else="">Amount in Words</t>
+                                    </td>
+                                    <td colspan="3">
+                                        <t t-if="lang == 'th_TH'"><span t-esc="o.amount_words_th"/></t>
+                                        <t t-else=""><span t-esc="o.amount_words_en"/></t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Purpose -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold">
+                                <t t-if="lang == 'th_TH'">วัตถุประสงค์</t>
+                                <t t-else="">Purpose</t>
+                            </h6>
+                            <div t-esc="o.purpose" class="border p-2"/>
+                        </div>
+
+                        <!-- Signature blocks: ผู้เบิก / ผู้จ่าย / ผู้รับรอง -->
+                        <table class="table table-sm table-borderless mt-5">
+                            <tbody>
+                                <tr>
+                                    <td class="text-center" style="width: 33%;">
+                                        <div class="mb-5">
+                                            <t t-if="lang == 'th_TH'">ผู้เบิก</t>
+                                            <t t-else="">Requested by</t>
+                                        </div>
+                                        <div>
+                                            <t t-if="lang == 'th_TH'">ลงชื่อ</t>
+                                            <t t-else="">Signature</t>
+                                        </div>
+                                        <div class="text-muted mt-4">
+                                            <span t-esc="o.requested_by.name or ''"/>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" style="width: 33%;">
+                                        <div class="mb-5">
+                                            <t t-if="lang == 'th_TH'">ผู้จ่าย</t>
+                                            <t t-else="">Paid by</t>
+                                        </div>
+                                        <div>
+                                            <t t-if="lang == 'th_TH'">ลงชื่อ</t>
+                                            <t t-else="">Signature</t>
+                                        </div>
+                                        <div class="text-muted mt-4">
+                                            <t t-if="lang == 'th_TH'">ตำแหน่ง</t>
+                                            <t t-else="">Position</t>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" style="width: 33%;">
+                                        <div class="mb-5">
+                                            <t t-if="lang == 'th_TH'">ผู้รับรอง</t>
+                                            <t t-else="">Approved by</t>
+                                        </div>
+                                        <div>
+                                            <t t-if="lang == 'th_TH'">ลงชื่อ</t>
+                                            <t t-else="">Signature</t>
+                                        </div>
+                                        <div class="text-muted mt-4">
+                                            <t t-if="lang == 'th_TH'">ตำแหน่ง</t>
+                                            <t t-else="">Position</t>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report action -->
+    <record id="action_report_petty_cash_withdrawal" model="ir.actions.report">
+        <field name="name">Petty Cash Withdrawal</field>
+        <field name="model">vivafarm.petty.cash.withdrawal</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_gap_reports.report_petty_cash_withdrawal</field>
+        <field name="report_file">vivafarm_gap_reports.report_petty_cash_withdrawal</field>
+        <!-- Standard compact header (52mm), NOT the 107mm tax-invoice
+             paperformat: a withdrawal is a standard report rendered via
+             web.external_layout (pitfall 28). -->
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_standard"/>
+        <field name="binding_model_id" ref="vivafarm_petty_cash.model_vivafarm_petty_cash_withdrawal"/>
+    </record>
+</odoo>

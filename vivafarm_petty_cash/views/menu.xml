@@ -20,5 +20,11 @@
               action="action_vivafarm_petty_cash_voucher"
               sequence="20"/>
 
+    <menuitem id="menu_vivafarm_petty_cash_withdrawal"
+              name="Withdrawals"
+              parent="menu_vivafarm_petty_cash_root"
+              action="action_vivafarm_petty_cash_withdrawal"
+              sequence="30"/>
+
     </data>
 </odoo>
