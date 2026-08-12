@@ -9,19 +9,14 @@
                     <t t-set="layout_document_title">บัญชีจ่ายค่าจ้างรายวัน / Daily Wage Sheet</t>
                     <div class="page">
                         <div class="oe_structure"/>
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <strong>
-                                    <t t-if="lang == 'th_TH'">บัญชีจ่ายค่าจ้างรายวัน</t>
-                                    <t t-else="">Daily Wage Sheet</t>
-                                </strong>
-                            </div>
-                            <div class="col-6 text-end text-muted">
-                                <span t-esc="date_from"/> – <span t-esc="date_to"/>
-                                <t t-if="worker_filter">
-                                    · <span t-esc="worker_filter"/>
-                                </t>
-                            </div>
+                        <!-- Period line only — the letterhead already carries
+                             the title (layout_document_title); the old body
+                             title row duplicated it and wasted ~20pt. -->
+                        <div class="text-end text-muted mb-1" style="font-size: 11px;">
+                            <span t-esc="date_from"/> – <span t-esc="date_to"/>
+                            <t t-if="worker_filter">
+                                · <span t-esc="worker_filter"/>
+                            </t>
                         </div>
 
                         <table class="table table-sm o_main_table" style="table-layout: fixed;">

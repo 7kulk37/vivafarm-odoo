@@ -9,13 +9,11 @@
                     <t t-set="layout_document_title">บันทึกการทำงาน / Worker Daily Log</t>
                     <div class="page">
                         <div class="oe_structure"/>
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <strong>Worker Daily Log (บันทึกการทำงาน)</strong>
-                            </div>
-                            <div class="col-6 text-end text-muted">
-                                <span t-esc="date_from"/> – <span t-esc="date_to"/>
-                            </div>
+                        <!-- Period line only — the letterhead already carries
+                             the title (layout_document_title); the old body
+                             title row duplicated it and wasted ~20pt. -->
+                        <div class="text-end text-muted mb-1" style="font-size: 11px;">
+                            <span t-esc="date_from"/> – <span t-esc="date_to"/>
                         </div>
 
                         <table class="table table-sm o_main_table" style="table-layout: fixed;">
