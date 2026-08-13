@@ -6,3 +6,4 @@ from . import farm_input_log
 from . import farm_worker_log
 from . import stock_lot
 from . import farm_location
+from . import stock_move
