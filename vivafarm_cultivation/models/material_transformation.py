@@ -511,7 +511,7 @@ class MaterialTransformation(models.Model):
         move = self.env['account.move'].create({
             'ref': ref,
             'journal_id': stock_journal.id,
-            'date': fields.Date.today(),
+            'date': self.date or fields.Date.today(),
             'line_ids': line_ids,
         })
         move.action_post()
