@@ -39,7 +39,7 @@
                             <tbody>
                                 <tr>
                                     <td>ผลผลิตรวม / Total production (kg)</td>
-                                    <td class="text-right"><t t-esc="fmt(summary['kg'])"/></td>
+                                    <td class="text-right"><t t-esc="fmt_num(summary['kg'])"/></td>
                                 </tr>
                                 <tr>
                                     <td>วัตถุดิบทางตรง / Direct material (511100)</td>
@@ -68,8 +68,8 @@
                         <table class="table table-sm table-bordered coc-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 16%;">รุ่น / Batch</th>
-                                    <th style="width: 20%;">พืช / Crop</th>
+                                    <th style="width: 16%;">Packed lot.</th>
+                                    <th style="width: 20%;">Harvested Date</th>
                                     <th class="text-right" style="width: 8%;">กก. / kg</th>
                                     <th class="text-right" style="width: 12%;">วัตถุดิบ / Material</th>
                                     <th class="text-right" style="width: 12%;">ค่าแรง / Labor</th>
@@ -80,9 +80,9 @@
                             </thead>
                             <tbody>
                                 <tr t-foreach="rows" t-as="r">
-                                    <td t-esc="r['name']"/>
-                                    <td t-esc="r['crop']"/>
-                                    <td class="text-right" t-esc="fmt(r['kg'])"/>
+                                    <td t-esc="r['packed_lot']"/>
+                                    <td t-esc="r['harvest_date']"/>
+                                    <td class="text-right" t-esc="fmt_num(r['kg'])"/>
                                     <td class="text-right" t-esc="fmt(r['material'])"/>
                                     <td class="text-right" t-esc="fmt(r['labor'])"/>
                                     <td class="text-right" t-esc="fmt(r['overhead'])"/>

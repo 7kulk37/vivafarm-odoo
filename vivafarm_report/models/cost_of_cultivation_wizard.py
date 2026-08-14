@@ -140,8 +140,8 @@ class ReportCostOfCultivation(models.AbstractModel):
             depr = kg * depr_rate
             full = mat + lab + ovh + depr
             rows.append({
-                'name': cul.name,
-                'crop': cul.packed_product_id.name if cul.packed_product_id else '?',
+                'packed_lot': cul.packed_lot_id.name or cul.name,
+                'harvest_date': cul.harvest_date,
                 'kg': kg,
                 'material': mat,
                 'labor': lab,
@@ -177,4 +177,5 @@ class ReportCostOfCultivation(models.AbstractModel):
             'rows': rows,
             'summary': summary,
             'fmt': lambda v: format_amount(self.env, v, currency),
+            'fmt_num': lambda v: '{:,.2f}'.format(v),
         }
