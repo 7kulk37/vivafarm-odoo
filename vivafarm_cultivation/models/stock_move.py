@@ -2,6 +2,10 @@
 # more than the ordered quantity. Odoo allows over-receiving by default;
 # VivaFarm policy is to pay for exactly what was ordered.
 #
+# Over-delivery guard: outgoing moves (customer deliveries) may not deliver
+# more than the ordered quantity. Odoo allows over-delivery by default;
+# VivaFarm policy is to ship exactly what was ordered.
+#
 # Negative-stock guard: consumption moves may not consume more than the
 # on-hand quantity at the source location. Odoo allows negative stock by
 # default; VivaFarm policy is that stock never goes negative (you cannot
@@ -27,6 +31,19 @@ class StockMove(models.Model):
                 raise UserError(_(
                     "Cannot receive %s %s of %s: ordered quantity is %s %s. "
                     "Over-receiving is not allowed.",
+                    move.quantity, move.product_uom.name,
+                    move.product_id.display_name,
+                    move.product_uom_qty, move.product_uom.name,
+                ))
+
+        # Over-delivery guard: outgoing moves (customer deliveries) may not
+        # deliver more than the ordered quantity.
+        for move in self:
+            if (move.picking_id.picking_type_id.code == 'outgoing'
+                    and move.product_uom.compare(move.quantity, move.product_uom_qty) > 0):
+                raise UserError(_(
+                    "Cannot deliver %s %s of %s: ordered quantity is %s %s. "
+                    "Over-delivery is not allowed.",
                     move.quantity, move.product_uom.name,
                     move.product_id.display_name,
                     move.product_uom_qty, move.product_uom.name,
