@@ -791,8 +791,9 @@ class Cultivation(models.Model):
         if self.state == 'done':
             raise UserError('Cannot cancel a completed cultivation.')
 
-        # If seeds were consumed, return them
-        if self.state in ('germinated', 'transplanted') and self.plant_picking_id:
+        # If seeds were consumed, return them (harvested is data-only — no
+        # stock moves yet — so the seeds are still returnable)
+        if self.state in ('germinated', 'transplanted', 'harvested') and self.plant_picking_id:
             prod_loc = self._get_production_loc()
             stock_loc = self._get_stock_loc()
 
