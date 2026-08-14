@@ -110,17 +110,18 @@ class ReportTaxRegister(models.AbstractModel):
         currency = self.env.company.currency_id
         rows = []
         for m in moves:
-            # out_refund.amount_untaxed is POSITIVE in Odoo 19 (sign lives in
-            # move lines) — flip so refunds reduce the register base.
-            base_raw = m.amount_untaxed if m.move_type == 'out_invoice' else -m.amount_untaxed
+            # out_refund/in_refund amounts are POSITIVE in Odoo 19 (sign lives
+            # in move lines) — flip so refunds reduce the register base.
+            base_raw = m.amount_untaxed if m.move_type in ('out_invoice', 'in_invoice') else -m.amount_untaxed
+            tax_raw = m.amount_tax if m.move_type in ('out_invoice', 'in_invoice') else -m.amount_tax
             rows.append({
                 'date': m.invoice_date,
                 'name': m.name,
                 'partner': m.partner_id.name,
                 'base': format_amount(self.env, base_raw, currency),
-                'tax': format_amount(self.env, m.amount_tax, currency),
+                'tax': format_amount(self.env, tax_raw, currency),
                 'base_raw': base_raw,
-                'tax_raw': m.amount_tax,
+                'tax_raw': tax_raw,
             })
         totals = {
             'base': format_amount(self.env, sum(r['base_raw'] for r in rows), currency),
@@ -195,7 +196,8 @@ class ReportVAT30(models.AbstractModel):
         for m in moves:
             # out_refund.amount_untaxed is POSITIVE in Odoo 19 (sign lives in
             # move lines) — flip so refunds reduce the sales amount.
-            res[1] += m.amount_untaxed if m.move_type == 'out_invoice' else -m.amount_untaxed
+            sign = 1.0 if m.move_type == 'out_invoice' else -1.0
+            res[1] += sign * m.amount_untaxed
             for line in m.invoice_line_ids:
                 for tax in line.tax_ids:
                     names = set()
@@ -203,9 +205,9 @@ class ReportVAT30(models.AbstractModel):
                         for tag in rl.tag_ids:
                             names.add(tag.name)
                     if '2. Less sales subject to 0% tax rate' in names:
-                        res[2] += line.price_subtotal
+                        res[2] += sign * line.price_subtotal
                     if '3. Less exempted sales' in names:
-                        res[3] += line.price_subtotal
+                        res[3] += sign * line.price_subtotal
 
         # --- Tax amounts from posted tax lines ---
         lines = self.env['account.move.line'].search(
