@@ -253,13 +253,19 @@ class MaterialTransformation(models.Model):
         if self.secondary_intermediate_product_id and self.secondary_conversion_factor:
             secondary_qty = self.quantity * self.secondary_conversion_factor
 
+        # Determine destination for intermediate moves BEFORE building them:
+        # the move's location_dest_id wins over the picking's, so hardcoding
+        # buffer_loc here ignored destination_is_stock and always landed
+        # intermediates in Cultivation Buffer (masking negative WH/Stock).
+        dest_loc = stock_loc if self.destination_is_stock else buffer_loc
+
         # Build intermediate moves (Production -> destination)
         inter_moves = [(0, 0, {
             'product_id': self.intermediate_product_id.id,
             'product_uom_qty': self.intermediate_qty,
             'product_uom': self.intermediate_product_id.uom_id.id,
             'location_id': prod_loc.id,
-            'location_dest_id': buffer_loc.id,
+            'location_dest_id': dest_loc.id,
             'company_id': self.env.company.id,
             'date': self.date or fields.Date.today(),
             'procure_method': 'make_to_stock',
@@ -270,7 +276,7 @@ class MaterialTransformation(models.Model):
                 'product_uom_qty': secondary_qty,
                 'product_uom': self.secondary_intermediate_product_id.uom_id.id,
                 'location_id': prod_loc.id,
-                'location_dest_id': buffer_loc.id,
+                'location_dest_id': dest_loc.id,
                 'company_id': self.env.company.id,
                 'date': self.date or fields.Date.today(),
                 'procure_method': 'make_to_stock',
@@ -391,12 +397,15 @@ class MaterialTransformation(models.Model):
         if self.secondary_intermediate_product_id and self.secondary_conversion_factor:
             secondary_qty = self.quantity * self.secondary_conversion_factor
 
-        # 1. Reverse intermediate moves: Buffer -> Production
+        # 1. Reverse intermediate moves: destination -> Production
+        # (source must mirror where the forward move actually landed —
+        # destination_is_stock decides Stock vs Cultivation Buffer)
+        inter_src_loc = stock_loc if self.destination_is_stock else buffer_loc
         inter_moves = [(0, 0, {
             'product_id': self.intermediate_product_id.id,
             'product_uom_qty': self.intermediate_qty,
             'product_uom': self.intermediate_product_id.uom_id.id,
-            'location_id': buffer_loc.id,
+            'location_id': inter_src_loc.id,
             'location_dest_id': prod_loc.id,
             'company_id': self.env.company.id,
             'date': fields.Datetime.now(),
@@ -407,7 +416,7 @@ class MaterialTransformation(models.Model):
                 'product_id': self.secondary_intermediate_product_id.id,
                 'product_uom_qty': secondary_qty,
                 'product_uom': self.secondary_intermediate_product_id.uom_id.id,
-                'location_id': buffer_loc.id,
+                'location_id': inter_src_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
                 'date': fields.Datetime.now(),

@@ -898,10 +898,16 @@ class Cultivation(models.Model):
             stock_loc = self._get_stock_loc()
 
             # Reverse: move seeds back from Production → WH/Stock
+            # Use the same internal picking type as the forward move (the
+            # default internal type may be inactive — search would miss it).
+            int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
+            if not int_type:
+                int_type = self.env['stock.picking.type'].search([
+                    ('code', '=', 'internal'),
+                    ('active', 'in', [True, False]),
+                ], limit=1)
             return_picking = self.env['stock.picking'].create({
-                'picking_type_id': self.env['stock.picking.type'].search([
-                    ('code', '=', 'internal')
-                ], limit=1).id,
+                'picking_type_id': int_type.id if int_type else False,
                 'location_id': prod_loc.id,
                 'location_dest_id': stock_loc.id,
                 'move_ids': [(0, 0, {
