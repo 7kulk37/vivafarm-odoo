@@ -335,17 +335,15 @@ class MaterialTransformation(models.Model):
         for move in picking.move_ids:
             move._set_quantity_done(move.product_uom_qty)
 
-        # Assign total input cost to output products.
-        # We set both the product template standard_price and move.price_unit.
-        # Odoo 19 values the output move from standard_price at validation time;
-        # the move.value is then frozen even if standard_price later recomputes.
+        # Assign total input cost to output products via standard_price.
+        # Under AVCO the output move is valued from the moving average layer
+        # (which the standard_price update feeds); no per-move price forcing.
         output_moves = picking.move_ids
         total_output_qty = sum(m.product_uom_qty for m in output_moves) or 1.0
         for move in output_moves:
             if total_input_cost:
                 unit_cost = total_input_cost * (move.product_uom_qty / total_output_qty) / move.product_uom_qty
                 move.product_id.product_tmpl_id.standard_price = unit_cost
-                move.price_unit = unit_cost
 
         picking.button_validate()
 

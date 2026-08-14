@@ -417,20 +417,13 @@ class Cultivation(models.Model):
 
         picking.button_validate()
 
-        # Compute the exact seed cost transferred to the live lot and force it
-        # into the live move value. Without this, Odoo values the incoming live
-        # move at product.standard_price (which is zero before first production),
-        # leaving WIP under-credited and 113400 with a residual.
+        # Carry the exact seed cost into the live product's standard_price so
+        # subsequent moves (transplant/harvest) value live plants at the real
+        # seed cost. Under AVCO the live move itself is valued by the average
+        # layer, so no per-move value forcing is needed.
         seed_move = next((m for m in picking.move_ids if m.product_id == seed_lot.product_id), None)
         live_move = next((m for m in picking.move_ids if m.product_id == self.crop_id), None)
         if seed_move and live_move and seed_move.value:
-            self.env['product.value'].create({
-                'move_id': live_move.id,
-                'product_id': self.crop_id.id,
-                'value': seed_move.value,
-                'description': f'Seed cost transfer for live lot {live_lot.name}',
-            })
-            # Recompute standard_price so subsequent live moves can use it
             unit_cost = seed_move.value / live_move.product_uom_qty if live_move.product_uom_qty else 0.0
             if unit_cost:
                 self.crop_id.product_tmpl_id.standard_price = unit_cost
@@ -729,8 +722,9 @@ class Cultivation(models.Model):
                     total_input_cost += l.debit - l.credit
 
         # Include direct labor in product cost (labor_share computed above)
-        if labor_share > 0:
-            total_input_cost += labor_share
+        # NOTE: labor is deliberately NOT added to total_input_cost. The labor
+        # JE above (Dr 511200 / Cr 222100) expenses it to P&L, so FG cost is
+        # material cost only and WIP nets to ~0 per batch.
 
         if produce_moves:
             produce_dest = packed_loc
@@ -743,16 +737,12 @@ class Cultivation(models.Model):
             for move in picking2.move_ids:
                 move._set_quantity_done(move.product_uom_qty)
 
-            # With FIFO + lot reservation, set the exact batch cost on the
-            # production output move BEFORE validation. Odoo FIFO uses this
-            # price_unit as the incoming layer cost for future deliveries.
-            if total_input_cost and picking2.move_ids:
-                output_move = picking2.move_ids.filtered(
-                    lambda m: m.product_id == self.packed_product_id
-                )[:1]
-                if output_move:
-                    unit_cost = total_input_cost / self.packed_kg if self.packed_kg else 0.0
-                    output_move.price_unit = unit_cost
+            # Under AVCO the production-output move is valued from the packed
+            # product's standard_price at validation, so set it to the exact
+            # material input cost per kg BEFORE validating. This makes the
+            # output layer carry the real batch cost and WIP→FG exact.
+            if total_input_cost and self.packed_kg:
+                self.packed_product_id.product_tmpl_id.standard_price = total_input_cost / self.packed_kg
 
             # Create packed lot BEFORE validating so move lines can reference it.
             packed_lot = self.env['stock.lot'].create({
@@ -765,21 +755,6 @@ class Cultivation(models.Model):
                 if move.product_id == self.packed_product_id:
                     for ml in move.move_line_ids:
                         ml.lot_id = packed_lot.id
-
-            # Force exact batch cost into the production output move BEFORE validation.
-            # We create a product.value record; on creation it calls _set_value() for
-            # the move and forces move.value = total_input_cost. That becomes the FIFO
-            # layer cost and the production AM value.
-            output_move = picking2.move_ids.filtered(
-                lambda m: m.product_id == self.packed_product_id
-            )[:1]
-            if output_move and total_input_cost:
-                self.env['product.value'].create({
-                    'move_id': output_move.id,
-                    'product_id': self.packed_product_id.id,
-                    'value': total_input_cost,
-                    'description': f'Exact batch WIP cost for {packed_lot_name}',
-                })
 
             picking2.button_validate()
             if not picking:
@@ -801,9 +776,9 @@ class Cultivation(models.Model):
             'packed_picking_id': picking2.id if produce_moves else False,
         })
 
-        # Thai accounting: with FIFO + lot reservation, the production output
-        # move itself transfers WIP value to FG (Dr 113100 / Cr 113400) at the
-        # exact batch cost. The exact price_unit is set before validation.
+        # Thai accounting: the production-output move transfers WIP value to FG
+        # (Dr 113100 / Cr 113400) at the AVCO layer cost — the packed product's
+        # standard_price was set to the exact material batch cost before validation.
         return self._reopen()
 
     def action_cancel(self):
