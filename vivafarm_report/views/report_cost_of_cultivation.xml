@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_cost_of_cultivation"
+              name="Cost of Cultivation (ต้นทุนการเพาะปลูก)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="layout_document_title" t-value="'Cost of Cultivation (ต้นทุนการเพาะปลูก)'"/>
+                    <div class="page">
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <strong>Cost of Cultivation (ต้นทุนการเพาะปลูก)</strong>
+                            </div>
+                            <div class="col-6 text-end text-muted" style="font-size: 11px;">
+                                <span t-esc="date_from"/> – <span t-esc="date_to"/>
+                            </div>
+                        </div>
+
+                        <style>
+                            .coc-table { margin-top: 6px; }
+                            .coc-table thead th {
+                                font-weight: 700 !important;
+                                border-bottom: 2px solid #000 !important;
+                            }
+                            .coc-table tbody tr:last-child td {
+                                border-bottom: 2px solid #000 !important;
+                            }
+                            .coc-summary { margin-top: 14px; }
+                            .coc-note { margin-top: 10px; font-size: 10px; color: #555; }
+                        </style>
+
+                        <!-- Summary block: full cost per kg -->
+                        <table class="table table-sm table-bordered coc-summary">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" colspan="2">สรุปต้นทุน / Cost Summary</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>ผลผลิตรวม / Total production (kg)</td>
+                                    <td class="text-right"><t t-esc="fmt(summary['kg'])"/></td>
+                                </tr>
+                                <tr>
+                                    <td>วัตถุดิบทางตรง / Direct material (511100)</td>
+                                    <td class="text-right"><t t-esc="fmt(summary['material'])"/> (<t t-esc="fmt(summary['material_per_kg'])"/>/kg)</td>
+                                </tr>
+                                <tr>
+                                    <td>ค่าแรงทางตรง / Direct labor (511200)</td>
+                                    <td class="text-right"><t t-esc="fmt(summary['labor'])"/> (<t t-esc="fmt(summary['labor_per_kg'])"/>/kg)</td>
+                                </tr>
+                                <tr>
+                                    <td>ค่าใช้จ่ายการผลิต / Overhead (618xxx)</td>
+                                    <td class="text-right"><t t-esc="fmt(summary['overhead'])"/> (<t t-esc="fmt(summary['overhead_per_kg'])"/>/kg)</td>
+                                </tr>
+                                <tr>
+                                    <td>ค่าเสื่อมราคา / Depreciation (612400)</td>
+                                    <td class="text-right"><t t-esc="fmt(summary['depr'])"/> (<t t-esc="fmt(summary['depr_per_kg'])"/>/kg)</td>
+                                </tr>
+                                <tr class="fw-bold">
+                                    <td>ต้นทุนรวม / Full cost</td>
+                                    <td class="text-right"><t t-esc="fmt(summary['full'])"/> (<t t-esc="fmt(summary['full_per_kg'])"/>/kg)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Per-batch table -->
+                        <table class="table table-sm table-bordered coc-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 16%;">รุ่น / Batch</th>
+                                    <th style="width: 20%;">พืช / Crop</th>
+                                    <th class="text-right" style="width: 8%;">กก. / kg</th>
+                                    <th class="text-right" style="width: 12%;">วัตถุดิบ / Material</th>
+                                    <th class="text-right" style="width: 12%;">ค่าแรง / Labor</th>
+                                    <th class="text-right" style="width: 12%;">ค่าใช้จ่าย / Overhead</th>
+                                    <th class="text-right" style="width: 8%;">เสื่อม / Depr</th>
+                                    <th class="text-right" style="width: 12%;">รวม / Full</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="rows" t-as="r">
+                                    <td t-esc="r['name']"/>
+                                    <td t-esc="r['crop']"/>
+                                    <td class="text-right" t-esc="fmt(r['kg'])"/>
+                                    <td class="text-right" t-esc="fmt(r['material'])"/>
+                                    <td class="text-right" t-esc="fmt(r['labor'])"/>
+                                    <td class="text-right" t-esc="fmt(r['overhead'])"/>
+                                    <td class="text-right" t-esc="fmt(r['depr'])"/>
+                                    <td class="text-right" t-esc="fmt(r['full'])"/>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="coc-note">
+                            <span>หมายเหตุ / Note: ต้นทุนค่าใช้จ่ายการผลิตและค่าเสื่อมราคาจัดสรรตามสัดส่วนน้ำหนักผลผลิต (กก.) — Overhead and depreciation are allocated by production weight (kg). รายงานนี้เป็นรายงานเพื่อการบริหาร ไม่ใช่รายงานทางบัญชี — This is a management report, not an accounting report.</span>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

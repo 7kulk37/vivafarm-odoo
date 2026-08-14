@@ -13,3 +13,4 @@ from . import account_payment
 from . import res_bank
 from . import res_partner
 from . import tax_report_wizard
+from . import cost_of_cultivation_wizard

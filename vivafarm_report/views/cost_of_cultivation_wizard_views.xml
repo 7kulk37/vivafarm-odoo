@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cost_of_cultivation_wizard_form" model="ir.ui.view">
+        <field name="name">cost.of.cultivation.wizard.form</field>
+        <field name="model">cost.of.cultivation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cost of Cultivation">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Cost of Cultivation (ต้นทุนการเพาะปลูก)</h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_report_cost_of_cultivation"
+                            type="object"
+                            string="Print"
+                            class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_report_cost_of_cultivation" model="ir.actions.report">
+        <field name="name">Cost of Cultivation (ต้นทุนการเพาะปลูก)</field>
+        <field name="model">cost.of.cultivation.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_cost_of_cultivation</field>
+        <field name="report_file">vivafarm_report.report_cost_of_cultivation</field>
+        <!-- Standard compact header, not the 107mm tax-invoice header:
+             this is a standard management report rendered via web.external_layout. -->
+        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="print_report_name">'CostOfCultivation_%s_%s' % (object.date_from, object.date_to)</field>
+    </record>
+
+    <record id="action_cost_of_cultivation_wizard" model="ir.actions.act_window">
+        <field name="name">Cost of Cultivation (ต้นทุนการเพาะปลูก)</field>
+        <field name="res_model">cost.of.cultivation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_cost_of_cultivation"
+              name="Cost of Cultivation (ต้นทุนการเพาะปลูก)"
+              parent="account.menu_finance_reports"
+              sequence="60"
+              action="action_cost_of_cultivation_wizard"
+              groups="account.group_account_user"/>
+</odoo>

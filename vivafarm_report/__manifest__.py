@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Report Enhancements',
-    'version': '19.0.1.0.101',
+    'version': '19.0.1.0.102',
     'category': 'Accounting/Localizations',
     'summary': 'Thai invoice compliance: signature image, branch info, tax breakdown on invoice report',
     'description': """
@@ -37,6 +37,8 @@
         'views/report_pnd1.xml',
         'views/report_pnd50.xml',
         'views/tax_report_wizard_views.xml',
+        'views/cost_of_cultivation_wizard_views.xml',
+        'views/report_cost_of_cultivation.xml',
     ],
     'installable': True,
     'application': False,
