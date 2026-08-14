@@ -550,6 +550,10 @@ class Cultivation(models.Model):
         total_units = int(live_lot.product_qty) if live_lot.product_qty else int(self.transplant_amount or 0)
         if total_units <= 0:
             raise UserError(f'No stock to harvest. Lot {live_lot.name} has no quantity and transplant_amount is not set.')
+        if (self.spoilage_units or 0) > total_units:
+            raise UserError(
+                f'Spoilage units ({self.spoilage_units}) cannot exceed the batch size '
+                f'({total_units} live plants). Check the spoilage count before harvesting.')
 
         prod_loc = self._get_production_loc()
         spoilage_loc = self._get_spoilage_loc()
