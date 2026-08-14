@@ -568,10 +568,12 @@ class Cultivation(models.Model):
         packed_lot_name = self._get_packed_lot_name()
         self.packed_lot_weight_g = int(round((self.packed_kg or 0.0) * 1000))
 
-        # 1. Consume live plants: WH/Stock → Production
+        # 1. Consume live plants: WH/Stock → Production (spoilage_units stay
+        #    in Stock and move to Spoilage separately)
+        live_consume_qty = total_units - (self.spoilage_units or 0)
         live_move_vals = {
             'product_id': live_lot.product_id.id,
-            'product_uom_qty': total_units,
+            'product_uom_qty': live_consume_qty,
             'product_uom': live_lot.product_id.uom_id.id,
             'location_id': stock_loc.id,
             'location_dest_id': prod_loc.id,
@@ -581,7 +583,7 @@ class Cultivation(models.Model):
             'move_line_ids': [(0, 0, {
                 'product_id': live_lot.product_id.id,
                 'lot_id': live_lot.id,
-                'quantity': total_units,
+                'quantity': live_consume_qty,
                 'product_uom_id': live_lot.product_id.uom_id.id,
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
@@ -693,9 +695,9 @@ class Cultivation(models.Model):
             ], limit=1)
 
         # Split into two pickings to avoid destination mismatch:
-        # Picking 1: consume live + nutrient + acid (WH/Stock → Production)
-        # Picking 2: create packed + spoilage (Production → destination)
-        consume_moves = [m for m in moves if m['location_dest_id'] == prod_loc.id]
+        # Picking 1: consume live + nutrient + acid + spoilage (leaves Stock)
+        # Picking 2: create packed (leaves Production)
+        consume_moves = [m for m in moves if m['location_id'] == stock_loc.id]
         produce_moves = [m for m in moves if m['location_id'] == prod_loc.id]
 
         picking = False
@@ -710,8 +712,13 @@ class Cultivation(models.Model):
             for move in picking.move_ids:
                 move._set_quantity_done(move.product_uom_qty)
             picking.button_validate()
-            # Capture actual input cost from consumed move values AFTER validation
-            total_input_cost = sum(move.value for move in picking.move_ids)
+            # Capture actual input cost from consumed move values AFTER validation.
+            # Exclude the spoilage move (Stock → Spoilage): spoilage is expensed
+            # to P&L, not capitalized into FG cost.
+            total_input_cost = sum(
+                move.value for move in picking.move_ids
+                if move.location_dest_id != spoilage_loc
+            )
             # Include material transformation balancing JEs linked to this batch
             mt_wip_adj = self.env['account.move'].search([
                 ('ref', '=', f'MT-WIP-ADJ-{self.id}'),
@@ -727,8 +734,6 @@ class Cultivation(models.Model):
 
         if produce_moves:
             produce_dest = packed_loc
-            if self.spoilage_units > 0:
-                produce_dest = prod_loc
             picking2 = self.env['stock.picking'].create({
                 'picking_type_id': int_type.id,
                 'location_id': prod_loc.id,
