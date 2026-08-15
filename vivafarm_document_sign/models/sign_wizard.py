@@ -95,7 +95,8 @@ class VivaSignWizard(models.TransientModel):
         return pdf_bytes
 
     def action_sign(self):
-        """Sign & lock. Returns the signed document form."""
+        """Sign & lock. Closes the wizard and reloads the invoice form so the
+        user stays on the invoice (now showing the signed state)."""
         self.ensure_one()
         service, cert_info = self._prepare_evidence()
 
@@ -157,9 +158,6 @@ class VivaSignWizard(models.TransientModel):
         signed._log_event('SIGNED', detail='sha256=%s' % pdf_hash[:16])
 
         return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'viva.signed.document',
-            'res_id': signed.id,
-            'view_mode': 'form',
-            'target': 'current',
+            'type': 'ir.actions.client',
+            'tag': 'reload',
         }
