@@ -57,6 +57,11 @@ class VivaDeliveryAckController(http.Controller):
                 'ack': ack,
             })
 
+        if ack.state == 'confirmed':
+            return request.render('vivafarm_delivery_ack.ack_confirmed', {
+                'ack': ack,
+            })
+
         return request.render('vivafarm_delivery_ack.ack_page', {
             'ack': ack,
             'error': False,
