@@ -25,14 +25,30 @@ class StockPicking(models.Model):
             picking.delivery_ack_id = by_picking.get(picking.id, False)
 
     def _action_done(self):
-        """After validation, create the ack record + send confirmation email."""
-        res = super()._action_done()
-        for picking in self.filtered(lambda p: p.picking_type_code == 'outgoing' and p.partner_id):
-            self.env['viva.delivery.ack'].sudo().create({
-                'picking_id': picking.id,
+        """Pure default Odoo validation — no auto ack/email.
+
+        The delivery becomes 'done' by TWO separate paths (mirroring how a
+        quotation becomes a sale order):
+          A) seller clicks Validate (default Odoo), or
+          B) customer confirms receipt via the /ack/ link (see
+             viva.delivery.ack.action_confirm).
+        """
+        return super()._action_done()
+
+    def action_send_delivery_confirmation(self):
+        """Button: create ack (if missing) + send the delivery-confirmation email."""
+        self.ensure_one()
+        ack = self.env['viva.delivery.ack'].sudo().search(
+            [('picking_id', '=', self.id)], limit=1)
+        if not ack:
+            ack = self.env['viva.delivery.ack'].sudo().create({
+                'picking_id': self.id,
             })
-            self._send_delivery_confirmation(picking)
-        return res
+        self._send_delivery_confirmation(self)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
 
     def _send_delivery_confirmation(self, picking):
         """Send the separate delivery-confirmation email with the /ack/ link."""
@@ -49,3 +65,11 @@ class StockPicking(models.Model):
         # Render with the ack record in context so the template can build the link
         template.with_context(ack_id=ack.id).send_mail(
             ack.id, force_send=True, raise_exception=False)
+        # Chatter log note: visible record of the confirmation request
+        picking.message_post(
+            body=(
+                'Delivery confirmation requested. '
+                'Customer link: %s' % ack._get_ack_url()
+            ),
+            subtype_xmlid='mail.mt_note',
+        )

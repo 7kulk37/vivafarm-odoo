@@ -76,6 +76,15 @@ class VivaDeliveryAck(models.Model):
                 'user_agent': user_agent or False,
             })
             rec._log_event('DELIVERY_CONFIRMED', detail='%s (%s)' % (customer_name.strip(), ip or 'no-ip'))
+            # Path B: customer confirmation completes the delivery (mirrors
+            # quotation -> sale order). If the seller already validated, this
+            # is a no-op.
+            picking = rec.picking_id
+            if picking and picking.state != 'done':
+                picking.move_ids.quantity = picking.move_ids.product_uom_qty
+                picking.move_ids.move_line_ids.write({'picked': True})
+                picking.move_ids._action_done()
+                picking._action_done()
 
     def _log_event(self, event, detail=''):
         """Append to the immutable audit trail."""
@@ -93,6 +102,15 @@ class VivaDeliveryAck(models.Model):
             self.env['ir.config_parameter'].get_param('web.base.url', ''),
         )
         return '%s/ack/%s' % (base.rstrip('/'), self.ack_token)
+
+    def _get_delivery_note_url(self):
+        """Public delivery-note PDF URL (no login, token-scoped)."""
+        self.ensure_one()
+        base = self.env['ir.config_parameter'].get_param(
+            'vivafarm_document_sign.verify_base_url',
+            self.env['ir.config_parameter'].get_param('web.base.url', ''),
+        )
+        return '%s/ack/%s/pdf' % (base.rstrip('/'), self.ack_token)
 
 
 class VivaDeliveryAudit(models.Model):

@@ -10,17 +10,17 @@
         <field name="subject">Viva la Finca Delivery Confirmation (Ref {{ object.document_number }})</field>
         <field name="body_html" type="html">
             <div style="font-family: Arial, sans-serif; font-size: 14px;">
-                <p>Dear {{ object.partner_id.name or 'customer' }},</p>
-                <p>Your delivery <b>{{ object.document_number }}</b> has been shipped.</p>
+                <p>Dear <t t-out="object.partner_id.name or 'customer'"/>,</p>
+                <p>Your delivery <b><t t-out="object.document_number"/></b> has been shipped.</p>
                 <p>Please confirm receipt by clicking the button below:</p>
                 <p style="text-align: center;">
-                    <a href="{{ object._get_ack_url() }}"
+                    <a t-att-href="object._get_ack_url()"
                        style="background-color: #875A7B; color: #FFFFFF; padding: 10px 20px; text-decoration: none; border-radius: 3px; font-weight: bold;">
                         Confirm Delivery Receipt
                     </a>
                 </p>
                 <p>If the button does not work, copy and paste this link into your browser:</p>
-                <p><a href="{{ object._get_ack_url() }}">{{ object._get_ack_url() }}</a></p>
+                <p><a t-att-href="object._get_ack_url()"><t t-out="object._get_ack_url()"/></a></p>
                 <p>Thank you,<br/>Viva la Finca</p>
             </div>
         </field>

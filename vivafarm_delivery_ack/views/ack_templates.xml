@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Public acknowledgment page — mirrors the sale portal "Accept & Sign" UX -->
+    <!-- Public acknowledgment page — mirrors the sale portal quotation page:
+         shows the delivery note document (PDF preview + download) and the
+         delivery lines table, with the signature form below. -->
     <template id="ack_page" name="Delivery Acknowledgment">
         <t t-call="portal.portal_layout">
             <t t-set="title">Delivery Confirmation</t>
             <div class="container mt-4 mb-4">
                 <div class="row justify-content-center">
-                    <div class="col-md-8 col-lg-6">
+                    <div class="col-md-10 col-lg-8">
                         <div class="card">
                             <div class="card-body">
                                 <h4 class="card-title">
@@ -25,6 +27,65 @@
                                     </div>
                                 </t>
 
+                                <!-- Delivery note document (mirror quotation document block) -->
+                                <div class="mb-3">
+                                    <h5 class="mb-1">
+                                        <t t-if="ack.partner_id.lang == 'th_TH'">เอกสารใบส่งสินค้า</t>
+                                        <t t-else="">Delivery Note Document</t>
+                                    </h5>
+                                    <hr class="mt-1 mb-2"/>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a t-att-href="ack._get_delivery_note_url()" target="_blank"
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fa fa-file-pdf-o"/>
+                                            <t t-if="ack.partner_id.lang == 'th_TH'">ดูใบส่งสินค้า (PDF)</t>
+                                            <t t-else="">View Delivery Note (PDF)</t>
+                                        </a>
+                                        <a t-att-href="ack._get_delivery_note_url()" download="download"
+                                           class="btn btn-light btn-sm">
+                                            <i class="fa fa-download"/>
+                                            <t t-if="ack.partner_id.lang == 'th_TH'">ดาวน์โหลด</t>
+                                            <t t-else="">Download</t>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Delivery lines table (mirror quotation lines table) -->
+                                <div class="mb-3">
+                                    <h5 class="mb-1">
+                                        <t t-if="ack.partner_id.lang == 'th_TH'">รายการสินค้า</t>
+                                        <t t-else="">Products</t>
+                                    </h5>
+                                    <hr class="mt-1 mb-2"/>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">
+                                                        <t t-if="ack.partner_id.lang == 'th_TH'">สินค้า</t>
+                                                        <t t-else="">Product</t>
+                                                    </th>
+                                                    <th class="text-end">
+                                                        <t t-if="ack.partner_id.lang == 'th_TH'">จำนวน</t>
+                                                        <t t-else="">Quantity</t>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="ack.picking_id.move_ids" t-as="move">
+                                                    <tr>
+                                                        <td class="text-start" t-out="move.product_id.display_name"/>
+                                                        <td class="text-end">
+                                                            <t t-out="move.product_uom_qty"/>
+                                                            <span t-out="move.product_uom.name"/>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
                                 <t t-if="ack.state == 'pending'">
                                     <form method="POST" t-att-action="'/ack/%s' % ack.ack_token"
                                           class="js_accept_json">
@@ -40,12 +101,8 @@
                                         <t t-call="portal.signature_form">
                                             <t t-set="call_url" t-value="'/ack/%s' % ack.ack_token"/>
                                             <t t-set="default_name" t-value="ack.partner_id.name or ''"/>
+                                            <t t-set="send_label" t-value="'I confirm receipt &amp; sign delivery note' if ack.partner_id.lang != 'th_TH' else 'ยืนยันการรับสินค้า'"/>
                                         </t>
-                                        <button type="submit" class="btn btn-primary btn-lg w-100">
-                                            <i class="fa fa-check"/>
-                                            <t t-if="ack.partner_id.lang == 'th_TH'">ยืนยันการรับสินค้า</t>
-                                            <t t-else="">I confirm receipt &amp; sign delivery note</t>
-                                        </button>
                                     </form>
                                 </t>
                                 <t t-else="">

@@ -61,3 +61,22 @@ class VivaDeliveryAckController(http.Controller):
             'ack': ack,
             'error': False,
         })
+
+    @http.route('/ack/<token>/pdf', type='http', auth='public', website=True,
+                csrf=False, methods=['GET'])
+    def ack_pdf(self, token, **kwargs):
+        """Serve the delivery-note PDF (no login, token-scoped)."""
+        ack = request.env['viva.delivery.ack'].sudo().search(
+            [('ack_token', '=', token)], limit=1)
+        if not ack:
+            return request.not_found()
+        pdf = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
+            'vivafarm_report.viva_delivery_note', [ack.picking_id.id])[0]
+        return request.make_response(
+            pdf,
+            headers=[
+                ('Content-Type', 'application/pdf'),
+                ('Content-Disposition',
+                 'inline; filename="%s.pdf"' % ack.document_number),
+            ],
+        )

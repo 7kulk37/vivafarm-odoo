@@ -27,6 +27,7 @@ record; the ack is additional proof of receipt (GAP / audit evidence).
         'views/delivery_ack_views.xml',
         'views/ack_templates.xml',
         'views/report_viva_delivery_note_ack.xml',
+        'views/stock_picking_button.xml',
     ],
     'installable': True,
     'application': False,

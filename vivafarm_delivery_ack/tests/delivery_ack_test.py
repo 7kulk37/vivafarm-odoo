@@ -53,18 +53,23 @@ def make_delivery():
             'location_dest_id': picking_type.default_location_dest_id.id,
         })],
     })
+    picking.action_confirm()
+    picking.move_ids._action_assign()
     return picking
 
 
-# ── 1. Ack record created on delivery validation ──
-print('=== 1. Ack creation on validation ===')
+# ── 1. Ack created by the button (NOT on validation) ──
+print('=== 1. Ack creation via button ===')
 picking = make_delivery()
 check('picking created', picking.id, picking.name)
 picking.move_ids.quantity = 1.0
 picking.move_ids._action_done()
 picking._action_done()
 ack = env['viva.delivery.ack'].search([('picking_id', '=', picking.id)], limit=1)
-check('ack created after validation', bool(ack))
+check('no ack on validation alone', not ack, 'ack must be created by the button')
+picking.action_send_delivery_confirmation()
+ack = env['viva.delivery.ack'].search([('picking_id', '=', picking.id)], limit=1)
+check('ack created by button', bool(ack))
 check('ack token generated', bool(ack and ack.ack_token))
 check('ack state pending', ack and ack.state == 'pending')
 check('ack document number', ack and ack.document_number == picking.name)
@@ -111,5 +116,16 @@ html = env['ir.actions.report']._render_qweb_html(
     'vivafarm_report.viva_delivery_note', [picking.id])[0].decode()
 check('ack line in delivery note', 'Confirmed by:' in html and 'Test Sign Customer' in html)
 check('ack date in delivery note', 'Date:' in html)
+
+# ── 7. Path B: customer confirm completes the delivery ──
+print('=== 7. Path B: customer confirm -> delivery done ===')
+picking_b = make_delivery()
+picking_b.action_send_delivery_confirmation()
+ack_b = env['viva.delivery.ack'].search([('picking_id', '=', picking_b.id)], limit=1)
+check('ack pending before confirm', ack_b and ack_b.state == 'pending')
+check('picking not done before confirm', picking_b.state != 'done')
+ack_b.action_confirm(customer_name='Test Sign Customer', ip='203.0.113.7')
+check('ack confirmed', ack_b.state == 'confirmed')
+check('picking done after confirm', picking_b.state == 'done')
 
 print('RESULT: %d passed, %d failed' % (PASS, FAIL))
