@@ -19,6 +19,7 @@
                 <button name="%(vivafarm_document_sign.action_viva_sign_wizard)d"
                         type="action" string="Sign &amp; Lock"
                         class="btn-primary"
+                        context="{'default_move_id': id}"
                         confirm="Sign and lock this tax invoice? The PDF will be hashed and signed with the configured certificate, and the invoice will become immutable."
                         invisible="state != 'posted'"/>
             </xpath>
