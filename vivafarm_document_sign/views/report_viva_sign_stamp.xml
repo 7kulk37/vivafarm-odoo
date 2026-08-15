@@ -26,7 +26,11 @@
                                     <t t-else="">Digitally Signed Document</t>
                                 </div>
                                 <div><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document</t>:
-                                    <t t-esc="o.signed_document_id[0].document_number"/> Rev.<t t-esc="o.signed_document_id[0].revision"/>
+                                    <t t-esc="o.signed_document_id[0].document_number"/>
+                                    <t t-if="o.signed_document_id[0].revision > 1"> Rev.<t t-esc="o.signed_document_id[0].revision"/></t>
+                                </div>
+                                <div><t t-if="lang == 'th_TH'">รหัสตรวจสอบ</t><t t-else="">Verification Code</t>:
+                                    <t t-esc="o.signed_document_id[0].verification_code"/>
                                 </div>
                                 <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
                                     <t t-esc="o.signed_document_id[0]._get_verification_url()"/>

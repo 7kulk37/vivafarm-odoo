@@ -35,6 +35,7 @@ class VivaVerificationController(http.Controller):
             'document_number': signed.document_number,
             'document_type': signed.document_type,
             'revision': signed.revision,
+            'verification_code': signed.verification_code,
             'state': signed.state,
             'signed_at': signed.signed_at,
             'signer': signed.signer_user_id.name if signed.signer_user_id else '',

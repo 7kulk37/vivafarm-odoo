@@ -68,6 +68,12 @@ class VivaSignedDocument(models.Model):
 
     # ── Verification ──
     verification_token = fields.Char(string='Verification Token', readonly=True, index=True, copy=False)
+    verification_code = fields.Char(
+        string='Verification Code', readonly=True, copy=False,
+        compute='_compute_verification_code', store=True,
+        help='Short human-comparable code (12 hex chars) derived from document '
+             'number + revision + token. Printed on the stamp and shown on the '
+             'verify page. NOT the PDF hash (avoids hash-circularity).')
 
     # ── Signed PDF (the exact bytes that were hashed — immutable) ──
     signed_attachment_id = fields.Many2one('ir.attachment', string='Signed PDF',
@@ -86,6 +92,13 @@ class VivaSignedDocument(models.Model):
             if not vals.get('signed_at'):
                 vals['signed_at'] = fields.Datetime.now()
         return super().create(vals_list)
+
+    @api.depends('document_number', 'revision', 'verification_token')
+    def _compute_verification_code(self):
+        import hashlib
+        for rec in self:
+            raw = '%s|%s|%s' % (rec.document_number or '', rec.revision, rec.verification_token or '')
+            rec.verification_code = hashlib.sha256(raw.encode()).hexdigest()[:12].upper()
 
     def action_revoke(self, reason=''):
         """Revoke a signed document (evidence preserved, state changed).

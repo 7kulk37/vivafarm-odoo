@@ -36,6 +36,7 @@
 
                     <div class="row"><dt>Document</dt><dd t-esc="document_number"/></div>
                     <div class="row"><dt>Revision</dt><dd t-esc="revision"/></div>
+                    <div class="row"><dt>Verification Code</dt><dd class="hash-line" t-esc="verification_code"/></div>
                     <div class="row"><dt>Status</dt><dd>
                         <t t-if="state == 'signed'"><span class="badge badge-ok">SIGNED / VALID</span></t>
                         <t t-elif="state == 'revoked'"><span class="badge badge-fail">REVOKED</span></t>
