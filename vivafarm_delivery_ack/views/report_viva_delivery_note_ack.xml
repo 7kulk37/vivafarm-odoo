@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit the Viva Delivery Note: fill the "Received by" block with
+         the customer's acknowledgment evidence when confirmed. -->
+    <template id="report_viva_delivery_note_ack"
+              inherit_id="vivafarm_report.viva_delivery_note_document"
+              name="VivaFarm Delivery Note — Ack Evidence">
+        <xpath expr="//div[@id='delivery_note_signature_block']/div[1]/div[1]/div[1]" position="after">
+            <t t-if="o.delivery_ack_id and o.delivery_ack_id.state == 'confirmed'">
+                <div style="font-size: 12px; color: #333; margin-top: 2px; text-align: left; padding: 0 4px;">
+                    <div>
+                        <t t-if="lang == 'th_TH'">ยืนยันโดย: </t>
+                        <t t-else="">Confirmed by: </t>
+                        <b t-esc="o.delivery_ack_id.customer_name"/>
+                    </div>
+                    <div>
+                        <t t-if="lang == 'th_TH'">วันที่: </t>
+                        <t t-else="">Date: </t>
+                        <span t-esc="o.delivery_ack_id.confirmed_at"/>
+                    </div>
+                    <div t-if="o.delivery_ack_id.ip_address">
+                        <t t-if="lang == 'th_TH'">IP: </t>
+                        <t t-else="">IP: </t>
+                        <span t-esc="o.delivery_ack_id.ip_address"/>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+</odoo>

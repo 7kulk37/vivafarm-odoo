@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Separate "Delivery Confirmation" email — sent when the seller validates -->
+    <record id="email_template_delivery_ack" model="mail.template">
+        <field name="name">Delivery: Confirmation Request</field>
+        <field name="model_id" ref="model_viva_delivery_ack"/>
+        <field name="email_from">"Viva la Finca" &lt;teerat691792@gmail.com&gt;</field>
+        <field name="reply_to">teerat691792@gmail.com</field>
+        <field name="partner_to">${object.partner_id.id}</field>
+        <field name="subject">Viva la Finca Delivery Confirmation (Ref {{ object.document_number }})</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; font-size: 14px;">
+                <p>Dear {{ object.partner_id.name or 'customer' }},</p>
+                <p>Your delivery <b>{{ object.document_number }}</b> has been shipped.</p>
+                <p>Please confirm receipt by clicking the button below:</p>
+                <p style="text-align: center;">
+                    <a href="{{ object._get_ack_url() }}"
+                       style="background-color: #875A7B; color: #FFFFFF; padding: 10px 20px; text-decoration: none; border-radius: 3px; font-weight: bold;">
+                        Confirm Delivery Receipt
+                    </a>
+                </p>
+                <p>If the button does not work, copy and paste this link into your browser:</p>
+                <p><a href="{{ object._get_ack_url() }}">{{ object._get_ack_url() }}</a></p>
+                <p>Thank you,<br/>Viva la Finca</p>
+            </div>
+        </field>
+    </record>
+</odoo>
