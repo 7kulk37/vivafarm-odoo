@@ -7,7 +7,10 @@
     <template id="viva_invoice_document_sign_stamp"
               name="Viva Invoice Signed Stamp"
               inherit_id="vivafarm_report.viva_invoice_document">
-        <xpath expr="//div[@class='col-6'][.//strong[contains(., 'Authorized Signatory') or contains(., 'ผู้มีอำนาจลงนาม')]]" position="after">
+        <!-- Insert BEFORE the signature section. wkhtmltopdf clips content
+             placed AFTER the Authorized Signatory box at the very bottom of
+             the page — the stamp must live above it (verified: variant test). -->
+        <xpath expr="//div[div[contains(., 'Signatures below constitute') or contains(., 'การลงลายมือชื่อในช่องต่อไปนี้')]]" position="before">
             <div t-if="o.signed_document_id" class="row mt-2" style="page-break-inside: avoid;">
                 <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px; padding: 6px 10px; background: #f1f8f1;">
                     <table style="width: 100%;">
@@ -24,9 +27,6 @@
                                 </div>
                                 <div><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document</t>:
                                     <t t-esc="o.signed_document_id[0].document_number"/> Rev.<t t-esc="o.signed_document_id[0].revision"/>
-                                </div>
-                                <div><t t-if="lang == 'th_TH'">แฮช SHA-256</t><t t-else="">SHA-256</t>:
-                                    <t t-esc="o.signed_document_id[0].pdf_sha256"/>
                                 </div>
                                 <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
                                     <t t-esc="o.signed_document_id[0]._get_verification_url()"/>

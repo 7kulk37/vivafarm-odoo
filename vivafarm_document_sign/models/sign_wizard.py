@@ -96,36 +96,28 @@ class VivaSignWizard(models.TransientModel):
 
     def action_sign(self):
         """Sign & lock. Closes the wizard and reloads the invoice form so the
-        user stays on the invoice (now showing the signed state)."""
+        user stays on the invoice (now showing the signed state).
+
+        Order matters (the stamp/hash-integrity invariant):
+          1. PRE-CREATE the signed record (token + number + revision known)
+             so the next PDF render already carries the stamp + QR.
+          2. Render the STAMPED PDF once — these exact bytes are the document.
+          3. SHA-256 + RSA sign those bytes.
+          4. Store the stamped PDF as the immutable attachment and write the
+             crypto evidence onto the record.
+        After this, printing serves the STORED bytes (ir_actions_report
+        override) — so print == signed == verified, byte-for-byte.
+        """
         self.ensure_one()
         service, cert_info = self._prepare_evidence()
 
-        # 1. Render + hash
-        pdf_bytes = self._render_invoice_pdf()
-        pdf_hash = sha256_hex(pdf_bytes)
-
-        # 2. Sign
-        sig_b64, cert_info, signed_at = service.sign_pdf(pdf_bytes)
-
-        # 3. Store the signed PDF as an immutable attachment (report-level,
-        #    so normal re-renders don't overwrite it)
-        attachment = self.env['ir.attachment'].create({
-            'name': '%s_signed.pdf' % self.move_id.name.replace('/', '_'),
-            'datas': base64.b64encode(pdf_bytes),
-            'res_model': 'account.move',
-            'res_id': self.move_id.id,
-            'type': 'binary',
-        })
-
-        # 4. Revision chain — follow the re-issue chain (ป.86/2542 ข้อ 25):
-        #    reissued invoices share reissue_root_id; the new document is
-        #    Rev N+1 hashing back to the previous signed revision.
-        #    If this invoice is NOT part of a reissue chain, it's Rev 1.
+        # Revision chain — follow the re-issue chain (ป.86/2542 ข้อ 25):
+        # reissued invoices share reissue_root_id; the new document is
+        # Rev N+1 hashing back to the previous signed revision.
         chain_root = self.move_id.reissue_root_id or self.move_id
         previous_signed = self.env['viva.signed.document'].search([
             ('move_id.reissue_root_id', '=', chain_root.id),
         ], order='revision desc', limit=1)
-        # Also cover the chain root itself (it has no reissue_root_id)
         if not previous_signed:
             previous_signed = self.env['viva.signed.document'].search([
                 ('move_id', '=', chain_root.id),
@@ -133,6 +125,7 @@ class VivaSignWizard(models.TransientModel):
         revision = (previous_signed.revision + 1) if previous_signed else 1
         previous_hash = previous_signed.pdf_sha256 if previous_signed else False
 
+        # 1. Pre-create the record (token + identity known before rendering)
         signed = self.env['viva.signed.document'].create({
             'document_number': self.move_id.name,
             'document_type': 'tax_invoice',
@@ -141,9 +134,6 @@ class VivaSignWizard(models.TransientModel):
             'move_id': self.move_id.id,
             'revision': revision,
             'previous_document_hash': previous_hash,
-            'pdf_sha256': pdf_hash,
-            'signature_b64': sig_b64,
-            'public_key_pem': service.backend.public_key_pem(),
             'certificate_type': 'TEST' if self._is_test_cert(cert_info) else 'PRODUCTION',
             'certificate_subject': cert_info['subject'],
             'certificate_issuer': cert_info['issuer'],
@@ -152,7 +142,28 @@ class VivaSignWizard(models.TransientModel):
             'certificate_valid_from': self._to_odoo_datetime(cert_info['not_before']),
             'certificate_valid_to': self._to_odoo_datetime(cert_info['not_after']),
             'signer_user_id': self.env.user.id,
-            'signed_at': self._to_odoo_datetime(signed_at) or fields.Datetime.now(),
+            'signed_at': fields.Datetime.now(),
+        })
+
+        # 2. Render the STAMPED PDF (record exists → stamp + QR render)
+        pdf_bytes = self._render_invoice_pdf()
+        pdf_hash = sha256_hex(pdf_bytes)
+
+        # 3. Sign the exact stamped bytes
+        sig_b64, _cert_info, _signed_at = service.sign_pdf(pdf_bytes)
+
+        # 4. Store the stamped PDF (immutable — this is what printing returns)
+        attachment = self.env['ir.attachment'].create({
+            'name': '%s_signed.pdf' % self.move_id.name.replace('/', '_'),
+            'datas': base64.b64encode(pdf_bytes),
+            'res_model': 'account.move',
+            'res_id': self.move_id.id,
+            'type': 'binary',
+        })
+        signed.write({
+            'pdf_sha256': pdf_hash,
+            'signature_b64': sig_b64,
+            'public_key_pem': service.backend.public_key_pem(),
             'signed_attachment_id': attachment.id,
         })
         signed._log_event('SIGNED', detail='sha256=%s' % pdf_hash[:16])
