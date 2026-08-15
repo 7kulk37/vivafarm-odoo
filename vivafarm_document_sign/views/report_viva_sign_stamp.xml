@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Signed stamp + verification QR on the Viva tax invoice.
+         Shown ONLY when the invoice has a signed document.
+         Uses o's own method for the QR data-URI + verification URL so no
+         template Python is needed. -->
+    <template id="viva_invoice_document_sign_stamp"
+              name="Viva Invoice Signed Stamp"
+              inherit_id="vivafarm_report.viva_invoice_document">
+        <xpath expr="//div[@class='col-6'][.//strong[contains(., 'Authorized Signatory') or contains(., 'ผู้มีอำนาจลงนาม')]]" position="after">
+            <div t-if="o.signed_document_id" class="row mt-2" style="page-break-inside: avoid;">
+                <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px; padding: 6px 10px; background: #f1f8f1;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="width: 42px; vertical-align: top;">
+                                <img t-att-src="o.signed_document_id[0]._qr_data_uri()"
+                                     style="width: 42px; height: 42px;"
+                                     alt="Verify QR"/>
+                            </td>
+                            <td style="vertical-align: top; font-size: 9px; line-height: 1.35; padding-left: 8px;">
+                                <div style="font-weight: bold; color: #2e7d32;">
+                                    <t t-if="lang == 'th_TH'">เอกสารลงลายมือชื่อดิจิทัล (SIGNED)</t>
+                                    <t t-else="">Digitally Signed Document</t>
+                                </div>
+                                <div><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document</t>:
+                                    <t t-esc="o.signed_document_id[0].document_number"/> Rev.<t t-esc="o.signed_document_id[0].revision"/>
+                                </div>
+                                <div><t t-if="lang == 'th_TH'">แฮช SHA-256</t><t t-else="">SHA-256</t>:
+                                    <t t-esc="o.signed_document_id[0].pdf_sha256"/>
+                                </div>
+                                <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
+                                    <t t-esc="o.signed_document_id[0]._get_verification_url()"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

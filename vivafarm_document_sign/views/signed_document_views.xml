@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Signed Document list view -->
+    <record id="viva_signed_document_tree" model="ir.ui.view">
+        <field name="name">viva.signed.document.tree</field>
+        <field name="model">viva.signed.document</field>
+        <field name="arch" type="xml">
+            <list string="Signed Documents">
+                <field name="document_number"/>
+                <field name="revision"/>
+                <field name="state"/>
+                <field name="signer_user_id"/>
+                <field name="signed_at"/>
+                <field name="pdf_sha256"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Signed Document form view -->
+    <record id="viva_signed_document_form" model="ir.ui.view">
+        <field name="name">viva.signed.document.form</field>
+        <field name="model">viva.signed.document</field>
+        <field name="arch" type="xml">
+            <form string="Signed Document">
+                <header>
+                    <button name="action_revoke" type="object" string="Revoke"
+                            confirm="Revoke this signed document? The evidence is preserved, the state becomes Revoked."
+                            invisible="state != 'signed'"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Document">
+                            <field name="document_number"/>
+                            <field name="document_type"/>
+                            <field name="revision"/>
+                            <field name="state"/>
+                            <field name="move_id"/>
+                            <field name="verification_token"/>
+                            <field name="signed_attachment_id" widget="binary"/>
+                        </group>
+                        <group string="Cryptographic Evidence">
+                            <field name="pdf_sha256"/>
+                            <field name="signature_algorithm"/>
+                            <field name="signature_b64" widget="text"/>
+                            <field name="public_key_pem" widget="text"/>
+                        </group>
+                    </group>
+                    <group string="Certificate">
+                        <group>
+                            <field name="certificate_type"/>
+                            <field name="certificate_subject"/>
+                            <field name="certificate_issuer"/>
+                        </group>
+                        <group>
+                            <field name="certificate_serial"/>
+                            <field name="certificate_fingerprint"/>
+                            <field name="certificate_valid_from"/>
+                            <field name="certificate_valid_to"/>
+                        </group>
+                    </group>
+                    <group string="Signer / Audit">
+                        <group>
+                            <field name="signer_user_id"/>
+                            <field name="signed_at"/>
+                        </group>
+                        <group>
+                            <field name="revoked_at"/>
+                            <field name="revocation_reason"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Signed Document action + menu -->
+    <record id="action_viva_signed_document" model="ir.actions.act_window">
+        <field name="name">Signed Documents</field>
+        <field name="res_model">viva.signed.document</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_viva_signed_document"
+              name="Signed Documents"
+              parent="account.menu_finance"
+              action="action_viva_signed_document"
+              sequence="90"/>
+</odoo>

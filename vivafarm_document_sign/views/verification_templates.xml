@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Public verification page — no Odoo login required -->
+    <template id="verification_page" name="Document Verification">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title>Document Verification — VivaFarm</title>
+                <style>
+                    body { font-family: sans-serif; background: #f5f7fa; margin: 0; padding: 24px; }
+                    .card { max-width: 640px; margin: 0 auto; background: #fff; border-radius: 10px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 24px; }
+                    h1 { font-size: 20px; margin-top: 0; color: #1a2b3c; }
+                    .row { display: flex; justify-content: space-between; padding: 6px 0;
+                           border-bottom: 1px solid #eef1f4; font-size: 14px; }
+                    .row dt { color: #5b6b7a; }
+                    .row dd { margin: 0; font-weight: 500; text-align: right; word-break: break-all; }
+                    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px;
+                             font-size: 12px; font-weight: 700; }
+                    .badge-ok { background: #e6f4ea; color: #1e7e34; }
+                    .badge-fail { background: #fdecea; color: #b3261e; }
+                    .badge-warn { background: #fff4e5; color: #b45309; }
+                    .upload { margin-top: 20px; padding: 16px; border: 1px dashed #c3cdd8;
+                              border-radius: 8px; text-align: center; }
+                    .upload input { font-size: 13px; }
+                    .upload button { margin-top: 10px; padding: 8px 18px; border: 0; border-radius: 6px;
+                                     background: #2e7d32; color: #fff; font-weight: 600; cursor: pointer; }
+                    .hash-line { font-family: monospace; font-size: 11px; }
+                    .footer { margin-top: 24px; font-size: 11px; color: #8a97a5; text-align: center; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h1>Document Verification</h1>
+
+                    <div class="row"><dt>Document</dt><dd t-esc="document_number"/></div>
+                    <div class="row"><dt>Revision</dt><dd t-esc="revision"/></div>
+                    <div class="row"><dt>Status</dt><dd>
+                        <t t-if="state == 'signed'"><span class="badge badge-ok">SIGNED / VALID</span></t>
+                        <t t-elif="state == 'revoked'"><span class="badge badge-fail">REVOKED</span></t>
+                        <t t-else=""><span class="badge badge-warn" t-esc="state"/></t>
+                    </dd></div>
+                    <div class="row"><dt>Signature</dt><dd>
+                        <t t-if="signature_valid"><span class="badge badge-ok">VALID</span></t>
+                        <t t-else=""><span class="badge badge-fail">INVALID</span></t>
+                    </dd></div>
+                    <div class="row"><dt>Signed By</dt><dd t-esc="signer"/></div>
+                    <div class="row"><dt>Signed At</dt><dd t-esc="signed_at"/></div>
+                    <div class="row"><dt>Certificate</dt><dd t-esc="certificate_subject"/></div>
+                    <div class="row"><dt>Certificate Type</dt><dd>
+                        <t t-if="certificate_type == 'TEST'"><span class="badge badge-warn">TEST / NON-PRODUCTION</span></t>
+                        <t t-else=""><span class="badge badge-ok" t-esc="certificate_type"/></t>
+                    </dd></div>
+                    <div class="row"><dt>PDF SHA-256</dt><dd class="hash-line" t-esc="pdf_sha256"/></div>
+                    <div class="row"><dt>Odoo Record</dt><dd>
+                        <t t-if="odoo_record_locked"><span class="badge badge-ok">LOCKED</span></t>
+                        <t t-else=""><span class="badge badge-fail">UNLOCKED</span></t>
+                    </dd></div>
+
+                    <t t-if="uploaded">
+                        <div class="row"><dt>Uploaded SHA-256</dt><dd class="hash-line" t-esc="uploaded_sha256"/></div>
+                        <div class="row"><dt>Hash Comparison</dt><dd>
+                            <t t-if="hash_match"><span class="badge badge-ok">HASH MATCH ✓</span></t>
+                            <t t-else=""><span class="badge badge-fail">DOCUMENT MODIFIED ✗</span></t>
+                        </dd></div>
+                    </t>
+
+                    <div class="upload">
+                        <p>Upload your copy of the PDF to confirm it is the original signed document:</p>
+                        <form method="post" enctype="multipart/form-data">
+                            <input type="file" name="uploaded_file" accept="application/pdf"/>
+                            <br/>
+                            <button type="submit">Verify Copy</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="footer">VivaFarm Odoo · digital signature verification · hash recorded at signing time</div>
+            </body>
+        </html>
+    </template>
+</odoo>

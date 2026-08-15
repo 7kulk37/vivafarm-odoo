@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_viva_signed_document,access_viva_signed_document,model_viva_signed_document,account.group_account_user,1,1,1,0
+access_viva_document_audit,access_viva_document_audit,model_viva_document_audit,account.group_account_user,1,1,1,0
+access_viva_sign_wizard,access_viva_sign_wizard,model_viva_sign_wizard,account.group_account_user,1,1,1,1
