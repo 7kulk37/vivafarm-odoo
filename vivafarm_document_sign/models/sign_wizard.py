@@ -166,6 +166,14 @@ class VivaSignWizard(models.TransientModel):
             'public_key_pem': service.backend.public_key_pem(),
             'signed_attachment_id': attachment.id,
         })
+
+        # 5. ALSO make the invoice itself carry the signed PDF. Odoo 19's send
+        # flow (account.move._get_invoice_legal_documents) emails
+        # move.invoice_pdf_report_file — not a fresh render — so without this,
+        # emails/portal would serve an UNSIGNED render and the byte-identity
+        # guarantee (print == email == verified) breaks.
+        self.move_id.write({'invoice_pdf_report_file': base64.b64encode(pdf_bytes)})
+
         signed._log_event('SIGNED', detail='sha256=%s' % pdf_hash[:16])
 
         return {
