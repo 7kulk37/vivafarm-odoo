@@ -62,6 +62,41 @@ class VivaDeliveryAckController(http.Controller):
             'error': False,
         })
 
+    @http.route('/ack/<token>/confirm', type='json', auth='public', website=True,
+                csrf=False, methods=['POST'])
+    def ack_confirm(self, token, **kwargs):
+        """JSON-RPC endpoint for the signature_form component.
+
+        The portal.signature_form component does its own rpc() call to
+        call_url with {name, signature} and expects a JSON response with
+        force_refresh / error. This mirrors the sale portal's
+        /my/orders/<id>/accept route.
+        """
+        ack = request.env['viva.delivery.ack'].sudo().search(
+            [('ack_token', '=', token)], limit=1)
+        if not ack:
+            return {'error': _('Invalid link.')}
+        if ack.state != 'pending':
+            return {'force_refresh': True}
+
+        name = kwargs.get('name', '')
+        signature = kwargs.get('signature', '')
+        if not name.strip():
+            return {'error': _('Please enter your name.')}
+        try:
+            if signature:
+                base64.b64decode(signature, validate=True)
+        except (TypeError, binascii.Error):
+            return {'error': _('Invalid signature data.')}
+
+        ack.action_confirm(
+            customer_name=name,
+            signature_b64=signature or False,
+            ip=request.httprequest.remote_addr or '',
+            user_agent=request.httprequest.user_agent or '',
+        )
+        return {'force_refresh': True}
+
     @http.route('/ack/<token>/pdf', type='http', auth='public', website=True,
                 csrf=False, methods=['GET'])
     def ack_pdf(self, token, **kwargs):

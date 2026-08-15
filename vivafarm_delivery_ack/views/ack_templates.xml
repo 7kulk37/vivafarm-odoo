@@ -87,23 +87,11 @@
                                 </div>
 
                                 <t t-if="ack.state == 'pending'">
-                                    <form method="POST" t-att-action="'/ack/%s' % ack.ack_token"
-                                          class="js_accept_json">
-                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <div class="mb-3">
-                                            <label class="form-label">
-                                                <t t-if="ack.partner_id.lang == 'th_TH'">ชื่อผู้รับสินค้า</t>
-                                                <t t-else="">Your name</t>
-                                            </label>
-                                            <input type="text" class="form-control" name="name"
-                                                   t-att-value="ack.partner_id.name or ''" required="required"/>
-                                        </div>
-                                        <t t-call="portal.signature_form">
-                                            <t t-set="call_url" t-value="'/ack/%s' % ack.ack_token"/>
-                                            <t t-set="default_name" t-value="ack.partner_id.name or ''"/>
-                                            <t t-set="send_label" t-value="'I confirm receipt &amp; sign delivery note' if ack.partner_id.lang != 'th_TH' else 'ยืนยันการรับสินค้า'"/>
-                                        </t>
-                                    </form>
+                                    <t t-call="portal.signature_form">
+                                        <t t-set="call_url" t-value="'/ack/%s/confirm' % ack.ack_token"/>
+                                        <t t-set="default_name" t-value="ack.partner_id.name or ''"/>
+                                        <t t-set="send_label" t-value="'I confirm recieved and sign delivery note' if ack.partner_id.lang != 'th_TH' else 'ยืนยันการรับสินค้าและลงนามใบส่งสินค้า'"/>
+                                    </t>
                                 </t>
                                 <t t-else="">
                                     <div class="alert alert-success" role="alert">
