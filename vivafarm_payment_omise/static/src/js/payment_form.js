@@ -44,7 +44,7 @@ patch(PaymentForm.prototype, {
      * Process the direct payment flow for Omise.
      *
      * Card: create a token via Omise.js, then POST it to the token route.
-     * PromptPay: create the source + charge via the promptpay route.
+     * PromptPay: create the source + charge, then show the QR inline.
      *
      * @override method from payment.payment_form
      * @private
@@ -62,24 +62,35 @@ patch(PaymentForm.prototype, {
 
         try {
             if (paymentMethodCode === 'promptpay') {
-                // PromptPay: create the source + charge, then show the QR on the status page.
-                await this.waitFor(rpc('/payment/omise/promptpay', {
+                // PromptPay: create the source + charge, then show the QR inline.
+                const result = await this.waitFor(rpc('/payment/omise/promptpay', {
                     'reference': processingValues.reference,
                 }));
+                if (result && result.error) {
+                    this._displayErrorDialog(_t("Payment processing failed"), result.error);
+                    this._enableButton();
+                    return;
+                }
+                this._omiseShowQr(result.qr_url);
             } else {
                 // Card: create a token via Omise.js, then charge it.
                 const token = await this._omiseCreateToken(processingValues);
                 if (!token) {
-                    this._displayErrorDialog(_t("Payment processing failed"), _t("Could not create a card token."));
+                    this._displayErrorDialog(_t("Payment processing failed"), _t("Could not create a card token. Please check your card details."));
                     this._enableButton();
                     return;
                 }
-                await this.waitFor(rpc('/payment/omise/token', {
+                const result = await this.waitFor(rpc('/payment/omise/token', {
                     'reference': processingValues.reference,
                     'omise_token': token,
                 }));
+                if (result && result.error) {
+                    this._displayErrorDialog(_t("Payment processing failed"), result.error);
+                    this._enableButton();
+                    return;
+                }
+                window.location = '/payment/status';
             }
-            window.location = '/payment/status';
         } catch (error) {
             if (error instanceof RPCError) {
                 this._displayErrorDialog(_t("Payment processing failed"), error.data.message);
@@ -88,6 +99,35 @@ patch(PaymentForm.prototype, {
                 return Promise.reject(error);
             }
         }
+    },
+
+    /**
+     * Display the PromptPay QR code in the inline form area.
+     *
+     * @private
+     * @param {string} qrUrl - The URL of the QR code image.
+     * @return {void}
+     */
+    _omiseShowQr(qrUrl) {
+        const inlineForm = this.el.querySelector('[name="o_payment_inline_form"]');
+        if (!inlineForm || !qrUrl) {
+            return;
+        }
+        inlineForm.innerHTML = `
+            <div class="o_qr_code_card card bg-info flex-shrink-0 mt-3">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center pb-3">
+                    <img class="mb-2 border border-dark rounded"
+                         src="${qrUrl}"
+                         alt="PromptPay QR code"
+                         style="max-width: 240px;"
+                    />
+                    <small class="text-center text-wrap lh-sm">
+                        Scan this QR code with your banking app to complete the payment
+                    </small>
+                </div>
+            </div>
+        `;
+        inlineForm.classList.remove('d-none');
     },
 
     /**
@@ -115,13 +155,30 @@ patch(PaymentForm.prototype, {
         const Omise = window.Omise;
         Omise.setPublicKey(publishableKey);
 
+        // Build the token parameters object from the card form fields.
+        // Omise.js v2 expects an object, not a form element (v1 API).
         const cardForm = document.querySelector('[name="o_omise_card_form"]');
         if (!cardForm) {
             return null;
         }
+        const getVal = (name) => {
+            const input = cardForm.querySelector(`[name="${name}"]`);
+            return input ? input.value.trim() : '';
+        };
+        const tokenParameters = {
+            'name': getVal('card[name]'),
+            'number': getVal('card[number]').replace(/\s+/g, ''),
+            'expiration_month': getVal('card[expiration_month]'),
+            'expiration_year': getVal('card[expiration_year]'),
+            'security_code': getVal('card[security_code]'),
+        };
+        if (!tokenParameters.number || !tokenParameters.expiration_month
+            || !tokenParameters.expiration_year || !tokenParameters.security_code) {
+            return null;
+        }
 
         return new Promise((resolve) => {
-            Omise.createToken('card', cardForm, (statusCode, response) => {
+            Omise.createToken('card', tokenParameters, (statusCode, response) => {
                 if (statusCode === 200 && response.id) {
                     resolve(response.id);
                 } else {

@@ -143,7 +143,11 @@ class OmiseController(http.Controller):
             return {'error': 'Charge creation failed'}
 
         tx_sudo._process('omise', {'reference': reference, 'omise_charge': charge})
-        return {'charge_id': charge.get('id'), 'status': charge.get('status')}
+        return {
+            'charge_id': charge.get('id'),
+            'status': charge.get('status'),
+            'qr_url': tx_sudo.omise_qr_url,
+        }
 
     # === PROMPTPAY === #
 
@@ -178,4 +182,8 @@ class OmiseController(http.Controller):
             return {'error': 'Charge creation failed'}
 
         tx_sudo._process('omise', {'reference': reference, 'omise_charge': charge})
-        return {'charge_id': charge.get('id'), 'status': charge.get('status')}
+        return {
+            'charge_id': charge.get('id'),
+            'status': charge.get('status'),
+            'qr_url': tx_sudo.omise_qr_url,
+        }
