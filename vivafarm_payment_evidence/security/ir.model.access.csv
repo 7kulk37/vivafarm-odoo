@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_viva_payment_evidence,payment.evidence.user,model_viva_payment_evidence,base.group_user,1,1,1,0
+access_viva_payment_evidence_check,payment.evidence.check,model_viva_payment_evidence_check,base.group_user,1,0,0,0

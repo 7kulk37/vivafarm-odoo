@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Add an upload-evidence box next to the QR code on the Wire Transfer
+         payment status page. Only shows for custom (wire transfer) providers
+         in the pending state, exactly like the QR block. -->
+    <template id="evidence_upload_box" inherit_id="payment.state_header">
+        <xpath expr="//div[@name='o_payment_status_alert']" position="inside">
+            <t t-if="tx.provider_id.sudo().code == 'custom' and tx.state == 'pending'">
+                <div class="o_evidence_upload card order-4 flex-shrink-0 mt-3 mt-md-0" style="max-width: 320px;">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <h6 class="mb-2 text-muted">Upload payment evidence</h6>
+                        <p class="text-center text-wrap lh-sm small mb-2">
+                            After transferring, upload your bank slip (PDF, PNG or JPG, max 10 MB).
+                        </p>
+                        <form t-att-action="'/payment/evidence/upload'" method="post" enctype="multipart/form-data"
+                              class="w-100 d-flex flex-column gap-2">
+                            <input type="hidden" name="reference" t-att-value="tx.reference"/>
+                            <input type="file" name="evidence_file" accept=".pdf,.png,.jpg,.jpeg"
+                                   class="form-control form-control-sm" required="required"/>
+                            <button type="submit" class="btn btn-primary btn-sm">Upload evidence</button>
+                        </form>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>
