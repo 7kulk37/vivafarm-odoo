@@ -44,6 +44,18 @@
         </t>
     </template>
 
+    <template id="payment_form" inherit_id="payment.form">
+        <xpath expr="." position="inside">
+            <t t-call="vivafarm_payment_omise.sdk_assets"/>
+        </xpath>
+    </template>
+
+    <template id="sdk_assets">
+        <!-- Omise.js must be loaded via a static script tag (not on-demand) so
+             the token creation works reliably in the Odoo page context. -->
+        <script type="text/javascript" src="https://cdn.omise.co/omise.js"></script>
+    </template>
+
     <template id="omise_state_header" inherit_id="payment.state_header">
 
         <xpath expr="//div[@name='o_payment_status_alert']" position="inside">

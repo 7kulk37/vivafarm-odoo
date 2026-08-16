@@ -109,7 +109,10 @@ patch(PaymentForm.prototype, {
      * @return {void}
      */
     _omiseShowQr(qrUrl) {
-        const inlineForm = this.el.querySelector('[name="o_payment_inline_form"]');
+        // Target the inline form of the SELECTED option (not the first in the DOM).
+        const checkedRadio = this.el.querySelector('input[type="radio"]:checked');
+        const option = checkedRadio?.closest('[name="o_payment_option"]');
+        const inlineForm = option?.querySelector('[name="o_payment_inline_form"]');
         if (!inlineForm || !qrUrl) {
             return;
         }
