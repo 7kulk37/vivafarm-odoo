@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="omise_state_header" inherit_id="payment.state_header">
+
+        <xpath expr="//div[@name='o_payment_status_alert']" position="inside">
+            <t t-if="tx.provider_id.sudo().code == 'omise' and tx.state == 'pending' and tx.omise_qr_url">
+                <div class="o_qr_code_card card bg-info flex-shrink-0 mt-3">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center pb-3">
+                        <img class="mb-2 border border-dark rounded"
+                             t-att-src="tx.omise_qr_url"
+                             alt="PromptPay QR code"
+                             style="max-width: 240px;"
+                        />
+                        <small class="text-center text-wrap lh-sm">
+                            Scan this QR code with your banking app to complete the payment
+                        </small>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+
+    </template>
+
+</odoo>

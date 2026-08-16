@@ -18,6 +18,7 @@ Test mode supported with Omise test keys.
     'depends': ['payment'],
     'data': [
         'data/payment_provider_data.xml',
+        'views/omise_templates.xml',
     ],
     'assets': {
         'web.assets_frontend': [
