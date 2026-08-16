@@ -1,4 +1,9 @@
+import base64
+import hashlib
+import hmac
 import logging
+
+from werkzeug.exceptions import Forbidden
 
 from odoo import http
 from odoo.exceptions import ValidationError
@@ -10,6 +15,86 @@ _logger = logging.getLogger(__name__)
 class OmiseController(http.Controller):
     _return_url = '/payment/omise/return'
     _token_url = '/payment/omise/token'
+    _webhook_url = '/payment/omise/webhook'
+
+    # === WEBHOOK === #
+
+    @http.route(_webhook_url, type='http', methods=['POST'], auth='public', csrf=False)
+    def omise_webhook(self):
+        """ Process the payment data sent by Omise to the webhook.
+
+        :return: An empty string to acknowledge the notification.
+        :rtype: str
+        """
+        raw_body = request.httprequest.get_data()
+        event = request.get_json_data()
+        _logger.info("Notification received from Omise: %s", event.get('key'))
+
+        # Verify the signature (HMAC-SHA256, base64-encoded secret).
+        signature = request.httprequest.headers.get('Omise-Signature', '')
+        timestamp = request.httprequest.headers.get('Omise-Signature-Timestamp', '')
+        if not self._verify_webhook_signature(signature, timestamp, raw_body):
+            _logger.warning("Omise webhook signature verification failed")
+            raise Forbidden()
+
+        self._process_webhook_event(event)
+        return request.make_response('')
+
+    def _verify_webhook_signature(self, signature, timestamp, raw_body):
+        """ Verify the HMAC-SHA256 signature of the webhook payload.
+
+        Per Omise docs: signed payload = "{timestamp}.{raw_body}", the webhook
+        secret is Base64-encoded and must be decoded before computing the HMAC.
+
+        :param str signature: The value of the Omise-Signature header
+        :param str timestamp: The value of the Omise-Signature-Timestamp header
+        :param bytes raw_body: The raw webhook request body
+        :return: True if the signature matches, False otherwise
+        :rtype: bool
+        """
+        secret = request.env['payment.provider'].sudo().search(
+            [('code', '=', 'omise')], limit=1
+        ).omise_webhook_secret
+        if not secret:
+            _logger.warning("Omise webhook secret is not configured")
+            return False
+
+        return self._verify_webhook_signature_with_secret(secret, signature, timestamp, raw_body)
+
+    @staticmethod
+    def _verify_webhook_signature_with_secret(secret, signature, timestamp, raw_body):
+        """ Pure signature check (testable without an HTTP request).
+
+        :param str secret: The base64-encoded webhook secret
+        :param str signature: The value of the Omise-Signature header
+        :param str timestamp: The value of the Omise-Signature-Timestamp header
+        :param bytes raw_body: The raw webhook request body
+        :return: True if the signature matches, False otherwise
+        :rtype: bool
+        """
+        try:
+            decoded_secret = base64.b64decode(secret)
+        except Exception:
+            return False
+
+        signed_payload = f"{timestamp}.".encode() + raw_body
+        expected = hmac.new(decoded_secret, signed_payload, hashlib.sha256).hexdigest()
+
+        # The header may contain multiple comma-separated signatures during rotation.
+        for sig in signature.split(','):
+            if hmac.compare_digest(sig.strip(), expected):
+                return True
+        return False
+
+    def _process_webhook_event(self, event):
+        """ Process a webhook event received from Omise.
+
+        Delegates to the model-level method (testable in shell).
+
+        :param dict event: The Omise event object
+        :return: None
+        """
+        request.env['payment.transaction'].sudo()._omise_process_webhook_event(event)
 
     @http.route(_return_url, type='http', methods=['GET'], auth='public')
     def omise_return(self, **data):
@@ -28,6 +113,8 @@ class OmiseController(http.Controller):
                 tx_sudo._process('omise', {'reference': tx_sudo.reference, 'omise_charge': charge})
 
         return request.redirect('/payment/status')
+
+    # === TOKEN === #
 
     @http.route(_token_url, type='jsonrpc', auth='public')
     def omise_token(self, **data):

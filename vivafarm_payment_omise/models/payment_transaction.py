@@ -167,6 +167,44 @@ class PaymentTransaction(models.Model):
 
     # === PROCESSING METHODS === #
 
+    def _omise_process_webhook_event(self, event):
+        """ Process a webhook event received from Omise (model-level, testable).
+
+        For charge.complete, fetch the charge independently (event verification)
+        and process it — this sets the transaction to done, and the post-processing
+        cron creates the payment and reconciles the invoice.
+
+        :param dict event: The Omise event object
+        :return: None
+        """
+        event_key = event.get('key')
+        if event_key != 'charge.complete':
+            _logger.info("Ignoring Omise webhook event: %s", event_key)
+            return
+
+        charge_id = (event.get('data') or {}).get('id')
+        if not charge_id:
+            _logger.warning("Omise webhook event missing charge id")
+            return
+
+        # Find the transaction by provider reference (the charge id).
+        tx = self.search([
+            ('provider_code', '=', 'omise'),
+            ('provider_reference', '=', charge_id),
+        ], limit=1)
+        if not tx:
+            _logger.warning("No Omise transaction found for charge %s", charge_id)
+            return
+
+        # Fetch the charge independently to verify its status (event verification).
+        try:
+            charge = tx._omise_request('GET', f"charges/{charge_id}")
+        except ValidationError as error:
+            _logger.error("Failed to fetch Omise charge %s: %s", charge_id, error)
+            return
+
+        tx._process('omise', {'reference': tx.reference, 'omise_charge': charge})
+
     def _apply_updates(self, payment_data):
         """ Override of `payment` to update the transaction based on the Omise charge. """
         super()._apply_updates(payment_data)
