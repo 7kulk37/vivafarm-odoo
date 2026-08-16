@@ -60,6 +60,21 @@ class PaymentEvidenceController(http.Controller):
             'check_result': message,
         })
 
+        # Post a chatter message on the linked invoice(s) so the seller sees
+        # the upload right in the invoice log. Odoo 19 escapes plain str
+        # bodies and body_is_html only works for internal users — use a
+        # Markup object instead (the documented way).
+        from markupsafe import Markup
+        state_label = dict(evidence_model._fields['state'].selection).get(state, state)
+        for invoice in tx.invoice_ids:
+            invoice.message_post(
+                body=Markup(
+                    '<p>Customer uploaded payment evidence: <b>%s</b> '
+                    '(%s — %s)</p>'
+                ) % (filename, state_label, message),
+                author_id=tx.partner_id.id,
+            )
+
         _logger.info('Payment evidence uploaded for %s: %s (%s)', tx.reference, filename, state)
         return request.redirect('/payment/status')
 
