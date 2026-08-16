@@ -22,7 +22,7 @@ Test mode supported with Omise test keys.
     ],
     'assets': {
         'web.assets_frontend': [
-            'vivafarm_payment_omise/static/src/js/omise_payment_form.js',
+            'vivafarm_payment_omise/static/src/js/payment_form.js',
         ],
     },
     'installable': True,

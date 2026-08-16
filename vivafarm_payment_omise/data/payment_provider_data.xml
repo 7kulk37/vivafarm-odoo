@@ -4,6 +4,7 @@
     <record id="payment_provider_omise" model="payment.provider">
         <field name="name">Omise</field>
         <field name="code">omise</field>
+        <field name="inline_form_view_id" ref="inline_form"/>
         <field name="payment_method_ids" eval="[(6, 0, [
             ref('payment.payment_method_card'),
             ref('payment.payment_method_promptpay'),

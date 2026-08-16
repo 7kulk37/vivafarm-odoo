@@ -144,3 +144,38 @@ class OmiseController(http.Controller):
 
         tx_sudo._process('omise', {'reference': reference, 'omise_charge': charge})
         return {'charge_id': charge.get('id'), 'status': charge.get('status')}
+
+    # === PROMPTPAY === #
+
+    @http.route('/payment/omise/promptpay', type='jsonrpc', auth='public')
+    def omise_promptpay(self, **data):
+        """ Create a PromptPay source + charge for the transaction.
+
+        The customer's browser calls this after selecting PromptPay. The charge
+        is created with a PromptPay source, which makes Omise generate a QR code
+        the customer scans with their bank app.
+
+        :param dict data: The payment data, including the reference.
+        """
+        reference = data.get('reference')
+        if not reference:
+            return {'error': 'Missing reference'}
+
+        tx_sudo = request.env['payment.transaction'].sudo().search([
+            ('reference', '=', reference),
+            ('provider_code', '=', 'omise'),
+        ], limit=1)
+        if not tx_sudo:
+            return {'error': 'No transaction found'}
+
+        try:
+            source = tx_sudo._omise_create_promptpay_source()
+            charge = tx_sudo._omise_create_promptpay_charge(source['id'])
+        except ValidationError as error:
+            return {'error': str(error)}
+
+        if not charge:
+            return {'error': 'Charge creation failed'}
+
+        tx_sudo._process('omise', {'reference': reference, 'omise_charge': charge})
+        return {'charge_id': charge.get('id'), 'status': charge.get('status')}

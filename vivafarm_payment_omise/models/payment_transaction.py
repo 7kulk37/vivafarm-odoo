@@ -102,6 +102,22 @@ class PaymentTransaction(models.Model):
         else:
             return response
 
+    def _omise_create_promptpay_source(self):
+        """ Create a PromptPay source on Omise for this transaction.
+
+        :return: The created source object
+        :rtype: dict
+        """
+        return self._omise_request(
+            'POST',
+            'sources',
+            data={
+                'type': 'promptpay',
+                'amount': self._omise_amount_in_satang(),
+                'currency': self.currency_id.name.lower(),
+            },
+        )
+
     def _omise_create_promptpay_charge(self, source_id):
         """ Create a PromptPay charge on Omise for this transaction.
 
