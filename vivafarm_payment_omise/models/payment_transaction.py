@@ -221,6 +221,12 @@ class PaymentTransaction(models.Model):
 
         tx._process('omise', {'reference': tx.reference, 'omise_charge': charge})
 
+        # Post-process synchronously so the payment is created the moment the
+        # webhook lands (no waiting for the cron). The cron remains as the
+        # safety net for missed webhooks.
+        if not tx.is_post_processed:
+            tx._post_process()
+
     def _apply_updates(self, payment_data):
         """ Override of `payment` to update the transaction based on the Omise charge. """
         super()._apply_updates(payment_data)

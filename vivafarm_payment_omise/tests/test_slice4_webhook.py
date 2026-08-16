@@ -78,7 +78,7 @@ def _webhook_complete():
         'provider_id': prov.id,
         'amount': 120.0,
         'currency_id': env.ref('base.THB').id,
-        'partner_id': env.ref('base.partner_root').id,
+        'partner_id': 19,  # Test Sign Customer — has receivable account set
         'payment_method_id': prov.payment_method_ids.filtered(lambda m: m.code == 'card').id,
     })
     charge = tx._omise_create_charge(token)
@@ -87,7 +87,8 @@ def _webhook_complete():
     assert tx.state == 'done', f"tx not done: {tx.state}"
 
     # Simulate the webhook: charge.complete event with the charge ID.
-    # The model method fetches the charge independently and sets the tx done.
+    # The model method fetches the charge independently, sets the tx done,
+    # and post-processes synchronously (payment created immediately).
     env['payment.transaction']._omise_process_webhook_event({
         'object': 'event',
         'id': 'evt_test_webhook',
@@ -96,7 +97,10 @@ def _webhook_complete():
     })
     tx.invalidate_recordset()
     assert tx.state == 'done', f"tx not done after webhook: {tx.state}"
-test("charge.complete webhook → transaction done", _webhook_complete)
+    assert tx.is_post_processed, "tx not post-processed after webhook"
+    assert tx.payment_id, "payment not created synchronously by webhook"
+    assert tx.payment_id.state in ('in_process', 'paid'), f"payment not posted: {tx.payment_id.state}"
+test("charge.complete webhook → transaction done + payment posted synchronously", _webhook_complete)
 
 # ── Summary ──
 if errors:
