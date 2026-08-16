@@ -63,8 +63,8 @@
 
     <menuitem id="menu_payment_evidence"
               name="Payment Evidence"
-              parent="account_payment.payment_transaction_menu"
+              parent="account.menu_finance_receivables"
               action="action_payment_evidence"
-              sequence="50"/>
+              sequence="200"/>
 
 </odoo>

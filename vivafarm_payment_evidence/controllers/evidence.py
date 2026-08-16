@@ -46,7 +46,7 @@ class PaymentEvidenceController(http.Controller):
             'res_model': 'viva.payment.evidence',
         })
 
-        evidence_model.create({
+        evidence = evidence_model.create({
             'name': '%s-%s' % (tx.reference or 'tx', tx.id),
             'transaction_id': tx.id,
             'partner_id': tx.partner_id.id,
@@ -63,15 +63,17 @@ class PaymentEvidenceController(http.Controller):
         # Post a chatter message on the linked invoice(s) so the seller sees
         # the upload right in the invoice log. Odoo 19 escapes plain str
         # bodies and body_is_html only works for internal users — use a
-        # Markup object instead (the documented way).
+        # Markup object instead (the documented way). The message links to
+        # the evidence record and the uploaded file for one-click review.
         from markupsafe import Markup
         state_label = dict(evidence_model._fields['state'].selection).get(state, state)
         for invoice in tx.invoice_ids:
             invoice.message_post(
                 body=Markup(
-                    '<p>Customer uploaded payment evidence: <b>%s</b> '
-                    '(%s — %s)</p>'
-                ) % (filename, state_label, message),
+                    '<p>Payment evidence '
+                    '<a href="#" data-oe-model="viva.payment.evidence" data-oe-id="%s">%s</a>: '
+                    '<a href="/web/content/%s?download=true">%s</a> — <b>%s</b> (%s)</p>'
+                ) % (evidence.id, evidence.name, attachment.id, filename, state_label, message),
                 author_id=tx.partner_id.id,
             )
 
