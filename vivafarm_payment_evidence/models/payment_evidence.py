@@ -116,7 +116,7 @@ class PaymentEvidenceCheck(models.AbstractModel):
         if ref_hit and amount_hit:
             return 'validated', 'Reference and amount matched in PDF text'
         if ref_hit:
-            return 'validated', 'Reference matched in PDF text (amount not found)'
+            return 'pending', 'Reference matched but amount not found — manual review'
         if amount_hit:
             return 'pending', 'Amount matched but reference not found — manual review'
         return 'pending', 'No reference or amount found in text — manual review'
