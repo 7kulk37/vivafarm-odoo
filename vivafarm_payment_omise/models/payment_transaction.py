@@ -21,6 +21,12 @@ OMISE_VAULT_URL = 'https://vault.omise.co/'
 class PaymentTransaction(models.Model):
     _inherit = 'payment.transaction'
 
+    omise_qr_url = fields.Char(
+        string="Omise QR URL",
+        help="The URL of the PromptPay QR code document for this transaction",
+        copy=False,
+    )
+
     # === COMPUTE METHODS === #
 
     def _get_specific_processing_values(self, processing_values):
@@ -96,6 +102,33 @@ class PaymentTransaction(models.Model):
         else:
             return response
 
+    def _omise_create_promptpay_charge(self, source_id):
+        """ Create a PromptPay charge on Omise for this transaction.
+
+        The charge is created with a PromptPay source, which makes Omise
+        generate a QR code document the customer scans with their bank app.
+
+        :param str source_id: The Omise source id (type='promptpay')
+        :return: The created charge object or None if creation failed
+        :rtype: dict|None
+        """
+        try:
+            response = self._omise_request(
+                'POST',
+                'charges',
+                data={
+                    'amount': self._omise_amount_in_satang(),
+                    'currency': self.currency_id.name.lower(),
+                    'source': source_id,
+                    'description': self.reference,
+                },
+            )
+        except ValidationError as error:
+            self._set_error(str(error))
+            return None
+        else:
+            return response
+
     def _omise_amount_in_satang(self):
         """ Convert the transaction amount to satang (1 THB = 100 satang). """
         return int(round(self.amount * 100))
@@ -146,6 +179,14 @@ class PaymentTransaction(models.Model):
 
         # Store the Omise charge reference
         self.provider_reference = charge.get('id')
+
+        # Store the PromptPay QR URL (the customer scans this to pay).
+        # The QR lives on the source's scannable_code.image.download_uri.
+        source = charge.get('source') or {}
+        scannable = source.get('scannable_code') or {}
+        image = scannable.get('image') or {}
+        if image.get('download_uri'):
+            self.omise_qr_url = image['download_uri']
 
         status = charge.get('status')
         if status == 'successful':
