@@ -2,33 +2,46 @@
 <odoo>
 
     <template id="inline_form">
-        <div name="o_omise_card_form" class="o_omise_card_form">
-            <div class="form-group mb-2">
-                <label for="o_omise_card_name">Cardholder name</label>
-                <input type="text" id="o_omise_card_name" name="card[name]"
-                       class="form-control" placeholder="Name on card" autocomplete="cc-name"/>
-            </div>
-            <div class="form-group mb-2">
-                <label for="o_omise_card_number">Card number</label>
-                <input type="text" id="o_omise_card_number" name="card[number]"
-                       class="form-control" placeholder="4242 4242 4242 4242"
-                       autocomplete="cc-number" inputmode="numeric"/>
-            </div>
-            <div class="row">
-                <div class="col-6 form-group mb-2">
-                    <label for="o_omise_card_exp">Expiry</label>
-                    <input type="text" id="o_omise_card_exp" name="card[expiration_month]"
-                           class="form-control" placeholder="MM" autocomplete="cc-exp-month"
-                           inputmode="numeric" maxlength="2"/>
+        <t t-if="pm_sudo.code == 'card'">
+            <div name="o_omise_card_form" class="o_omise_card_form">
+                <div class="form-group mb-2">
+                    <label for="o_omise_card_name">Cardholder name</label>
+                    <input type="text" id="o_omise_card_name" name="card[name]"
+                           class="form-control" placeholder="Name on card" autocomplete="cc-name"/>
                 </div>
-                <div class="col-6 form-group mb-2">
-                    <label for="o_omise_card_cvc">CVC</label>
-                    <input type="text" id="o_omise_card_cvc" name="card[security_code]"
-                           class="form-control" placeholder="123" autocomplete="cc-csc"
-                           inputmode="numeric" maxlength="4"/>
+                <div class="form-group mb-2">
+                    <label for="o_omise_card_number">Card number</label>
+                    <input type="text" id="o_omise_card_number" name="card[number]"
+                           class="form-control" placeholder="4242 4242 4242 4242"
+                           autocomplete="cc-number" inputmode="numeric"/>
+                </div>
+                <div class="row">
+                    <div class="col-4 form-group mb-2">
+                        <label for="o_omise_card_exp">Expiry month</label>
+                        <input type="text" id="o_omise_card_exp" name="card[expiration_month]"
+                               class="form-control" placeholder="MM" autocomplete="cc-exp-month"
+                               inputmode="numeric" maxlength="2"/>
+                    </div>
+                    <div class="col-4 form-group mb-2">
+                        <label for="o_omise_card_year">Expiry year</label>
+                        <input type="text" id="o_omise_card_year" name="card[expiration_year]"
+                               class="form-control" placeholder="YYYY" autocomplete="cc-exp-year"
+                               inputmode="numeric" maxlength="4"/>
+                    </div>
+                    <div class="col-4 form-group mb-2">
+                        <label for="o_omise_card_cvc">CVC</label>
+                        <input type="text" id="o_omise_card_cvc" name="card[security_code]"
+                               class="form-control" placeholder="123" autocomplete="cc-csc"
+                               inputmode="numeric" maxlength="4"/>
+                    </div>
                 </div>
             </div>
-        </div>
+        </t>
+        <t t-elif="pm_sudo.code == 'promptpay'">
+            <div class="alert alert-info mb-0">
+                You will be shown a PromptPay QR code to scan with your banking app.
+            </div>
+        </t>
     </template>
 
     <template id="omise_state_header" inherit_id="payment.state_header">
