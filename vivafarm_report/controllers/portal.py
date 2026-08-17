@@ -59,6 +59,21 @@ class VivaSalePortal(CustomerPortal):
         except (AccessError, MissingError):
             return {'error': 'Invalid order.'}
 
+        # Idempotency (bug 2, user report 2026-08-17): the route can be hit
+        # twice by a double-fire / stale re-click / SERIALIZATION_FAILURE
+        # retry. The loser arrives after the winner committed: the order is
+        # already signed and confirmed. Treat that as a benign success
+        # (force_refresh + sign_ok) instead of the stock guard error — the
+        # customer accepted the quotation; the second click must not look
+        # like a failure. Checked BEFORE _has_to_be_signed(): once the
+        # winner confirms the order, the guard would fire the stock error.
+        if order_sudo.state == 'sale' and order_sudo.signature:
+            return {
+                'force_refresh': True,
+                'redirect_url': order_sudo.get_portal_url(
+                    query_string='&message=sign_ok'),
+            }
+
         if not order_sudo._has_to_be_signed():
             return {'error': 'The order is not in a state requiring customer signature.'}
         if not signature:

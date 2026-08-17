@@ -233,6 +233,66 @@ check('T5 standard /accept route still registered',
                   {'access_token': 'x', 'name': 'x', 'signature': 'x'}) != 404,
       '(not 404 = route present)')
 
+# ── T6: idempotent repeat POST (bug 2 — "The order is not in a state
+#    requiring customer signature." on a double-fire / retry) ──
+print('--- T6 repeat POST on already-accepted order is a benign success ---')
+so = make_so(partner, product, pricelist)
+so._portal_ensure_token()
+env.cr.commit()
+url = 'http://127.0.0.1:8069/my/orders/%d/accept_viva' % so.id
+try:
+    resp1 = http_jsonrpc(url, {
+        'access_token': so.access_token,
+        'name': 'Test Customer',
+        'signature': SIGNATURE_B64,
+    })
+    check('T6 first POST succeeded', resp1.get('result', {}).get('force_refresh') is True,
+          '(resp=%s)' % str(resp1.get('result'))[:120])
+except Exception as e:
+    check('T6 first POST succeeded', False, '(error: %s)' % e)
+
+# The HTTP worker committed; take a fresh snapshot to see the signed order.
+env.cr.commit()
+so = env['sale.order'].browse(so.id)
+so.invalidate_recordset()
+check('T6 order accepted after first POST', so.state == 'sale' and bool(so.signature),
+      '(state=%s sig=%s)' % (so.state, bool(so.signature)))
+signed_count = env['viva.signed.document'].search_count(
+    [('sale_order_id', '=', so.id)])
+check('T6 exactly one signed doc after first POST', signed_count == 1,
+      '(count=%d)' % signed_count)
+
+# SECOND POST — the race loser / double-click / stale re-click. The order is
+# already signed: the route MUST return the success shape (force_refresh +
+# sign_ok redirect), NOT the guard error the user reported.
+try:
+    resp2 = http_jsonrpc(url, {
+        'access_token': so.access_token,
+        'name': 'Test Customer',
+        'signature': SIGNATURE_B64,
+    })
+    res2 = resp2.get('result') or {}
+    check('T6 repeat POST returns success shape (force_refresh)',
+          res2.get('force_refresh') is True,
+          '(resp=%s)' % str(res2)[:160])
+    check('T6 repeat POST redirect is sign_ok', 'sign_ok' in (res2.get('redirect_url') or ''),
+          '(url=%s)' % (res2.get('redirect_url') or ''))
+    check('T6 repeat POST has no guard error',
+          'state requiring customer signature' not in json.dumps(res2))
+except Exception as e:
+    check('T6 repeat POST returns success shape (force_refresh)', False,
+          '(error: %s)' % e)
+
+env.cr.commit()
+so = env['sale.order'].browse(so.id)
+so.invalidate_recordset()
+check('T6 order still sale after repeat POST', so.state == 'sale',
+      '(state=%s)' % so.state)
+signed_count2 = env['viva.signed.document'].search_count(
+    [('sale_order_id', '=', so.id)])
+check('T6 still exactly one signed doc after repeat POST', signed_count2 == 1,
+      '(count=%d)' % signed_count2)
+
 # ── Summary ──
 print('')
 print('RESULT: %d passed, %d failed' % (PASS, FAIL))
