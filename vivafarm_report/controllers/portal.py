@@ -26,6 +26,8 @@ from odoo.http import request
 
 from odoo.addons.sale.controllers.portal import CustomerPortal
 
+import binascii
+
 
 class VivaSalePortal(CustomerPortal):
 
@@ -70,7 +72,7 @@ class VivaSalePortal(CustomerPortal):
             })
             # flush now to make signature data available to PDF render request
             request.env.cr.flush()
-        except (TypeError, Exception):
+        except (TypeError, binascii.Error):
             return {'error': 'Invalid signature data.'}
 
         # (b) Confirm FIRST — the vivafarm_document_sign action_confirm

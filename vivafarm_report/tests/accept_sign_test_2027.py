@@ -140,9 +140,9 @@ if tpl:
 
 # ── T2: /accept_viva route registered ──
 print('--- T2 route registered ---')
-check('T2 /accept_viva route 404 (not registered yet in RED)',
-      http_status('GET', 'http://127.0.0.1:8069/my/orders/999999/accept_viva') == 404,
-      '(404 = route absent; GREEN will return jsonrpc 200/error)')
+check('T2 /accept_viva route registered',
+      http_status('GET', 'http://127.0.0.1:8069/my/orders/999999/accept_viva') != 404,
+      '(not 404 = route present)')
 
 # ── T3: portal page shows the button + modal posts to /accept_viva ──
 print('--- T3 portal page button ---')
@@ -179,6 +179,8 @@ try:
 except Exception as e:
     check('T4 route returned ok', False, '(error: %s)' % e)
 
+# The HTTP worker committed its own transaction — re-read the SO fresh.
+so = env['sale.order'].browse(so.id)
 so.invalidate_recordset()
 check('T4 state sale', so.state == 'sale', '(state=%s)' % so.state)
 signed = env['viva.signed.document'].search([('sale_order_id', '=', so.id)], limit=1)
@@ -192,14 +194,15 @@ if signed:
           b'Digitally Signed Document' in env['ir.actions.report']._render_qweb_html(
               'vivafarm_report.viva_quotation_so', [so.id])[0])
 
-# The Viva confirmation email that the route sent
-mails = env['mail.mail'].search([
+# The Viva confirmation email that the route sent. Odoo 19 routes outbound
+# mail through mail.message + mail.notification (mail.mail stays empty).
+msgs = env['mail.message'].search([
     ('model', '=', 'sale.order'),
     ('res_id', '=', so.id),
-], order='id desc', limit=5)
+], order='id desc', limit=8)
 att_found = None
-for ml in mails:
-    for att in ml.attachment_ids:
+for m in msgs:
+    for att in m.attachment_ids:
         if att.name.startswith('Order - ') and att.name.endswith('.pdf'):
             att_found = att
             break
