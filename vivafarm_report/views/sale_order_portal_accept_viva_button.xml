@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- "Accept & Sign quotation" portal button + modal.
+
+         The standard portal Accept & Sign (sale.sale_order_portal_template +
+         sale.sale_order_portal_sign_modal) posts the signature to
+         /my/orders/<id>/accept, whose confirmation email uses the DEFAULT
+         sale.report_saleorder form (bug 2, user report 2026-08-17). This
+         new button opens a signature modal that posts to
+         /my/orders/<id>/accept_viva instead — the Viva route confirms the
+         order FIRST (creating the stored signed PDF via
+         vivafarm_document_sign) and sends the Viva confirmation email with
+         the signed Viva PDF attached.
+    -->
+    <template id="sale_order_portal_viva_accept_button"
+              name="VivaFarm Sale Order Portal Accept Button"
+              inherit_id="sale.sale_order_portal_template">
+        <xpath expr="//div[@id='sale_order_sidebar_button']" position="after">
+            <div class="d-flex flex-column gap-2" id="sale_order_sidebar_button_viva">
+                <a
+                    t-if="sale_order._has_to_be_signed() and not payment_amount"
+                    role="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalaccept_viva"
+                    href="#"
+                    id="accept_viva_button"
+                >
+                    <i class="fa fa-check"/>
+                    Accept &amp; Sign quotation
+                </a>
+            </div>
+        </xpath>
+        <xpath expr="//div[@id='modalaccept']" position="after">
+            <div role="dialog" class="modal fade" id="modalaccept_viva"
+                 name="sale_order_modal_sign_viva">
+                <div
+                    t-if="sale_order._has_to_be_signed()"
+                    class="modal-dialog"
+                >
+                    <form
+                        id="accept_viva"
+                        method="POST"
+                        t-att-data-order-id="sale_order.id"
+                        t-att-data-token="sale_order.access_token"
+                        class="js_accept_json modal-content js_website_submit_form"
+                    >
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <header class="modal-header">
+                            <h4 class="modal-title">Accept &amp; Sign quotation</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                        </header>
+                        <main class="modal-body" id="sign-dialog-viva">
+                            <span>
+                                By signing, you confirm acceptance on behalf of
+                                <b t-field="sale_order.partner_id.commercial_partner_id"/>
+                                for the <b data-id="total_amount" t-field="sale_order.amount_total"/> quote.
+                            </span>
+                            <b t-if="sale_order.payment_term_id" t-field="sale_order.payment_term_id.note"/>
+                            <t t-call="portal.signature_form">
+                                <t t-set="call_url" t-value="sale_order.get_portal_url(suffix='/accept_viva')"/>
+                                <t
+                                    t-set="default_name"
+                                    t-value="sale_order.partner_id.name or sale_order.partner_id.commercial_partner_id.name"
+                                />
+                            </t>
+                        </main>
+                    </form>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>
