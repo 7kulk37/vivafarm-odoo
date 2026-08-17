@@ -183,7 +183,7 @@
                  Compact padding so the bar fits the fixed 107mm header frame. -->
             <t t-if="o and o._name == 'sale.order'"><div
                 id="informations" class="row mb-2 mx-0"
-                t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px 5px; margin-top: 0; page-break-inside: avoid; line-height: 1.2;' % (o.company_id._get_light_tint(o.company_id.secondary_color))">
+                t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px 6px; margin-top: 0; page-break-inside: avoid; line-height: 1.2;' % (o.company_id._get_light_tint(o.company_id.secondary_color))">
                 <!-- 2x3 table: ROW 1 = dates, ROW 2 = references.
                      NOT nested .row (nested flex makes QtWebKit miscompute the
                      header-frame height and wkhtmltopdf scales the frame 0.625x)
