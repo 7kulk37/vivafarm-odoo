@@ -182,46 +182,52 @@
                  Gated on sale.order so account.move renders are byte-identical.
                  Compact padding so the bar fits the fixed 107mm header frame. -->
             <t t-if="o and o._name == 'sale.order'"><div
-                id="informations_so" class="row mb-2 mx-0"
-                t-att-style="'background-color: %s; border-radius: 8px; padding: 4px 10px; margin-top: 8px; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.secondary_color))">
-                <div class="col" style="width: 16.66%; padding-right: 3px;" name="so_date">
-                    <t t-if="o.state in ['draft', 'sent']">
-                        <t t-if="lang == 'th_TH'"><strong>วันที่เสนอราคา</strong></t>
-                        <t t-else=""><strong>Quotation Date</strong></t>
-                    </t>
-                    <t t-else="">
-                        <t t-if="lang == 'th_TH'"><strong>วันที่สั่งซื้อ</strong></t>
-                        <t t-else=""><strong>Order Date</strong></t>
-                    </t>
-                    <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('date_order')">03/ส.ค./2569</div></t>
-                    <t t-else=""><div t-field="o.date_order" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-08-17</div></t>
+                id="informations" class="row mb-2 mx-0"
+                t-att-style="'background-color: %s; border-radius: 8px; padding: 3px 10px; margin-top: 4px; page-break-inside: avoid; line-height: 1.15;' % (o.company_id._get_light_tint(o.company_id.secondary_color))">
+                <!-- Row 1: dates -->
+                <div class="row" style="margin: 0;">
+                    <div class="col" style="width: 33.33%; padding-right: 3px;" name="so_date">
+                        <t t-if="o.state in ['draft', 'sent']">
+                            <t t-if="lang == 'th_TH'"><strong>วันที่เสนอราคา</strong></t>
+                            <t t-else=""><strong>Quotation Date</strong></t>
+                        </t>
+                        <t t-else="">
+                            <t t-if="lang == 'th_TH'"><strong>วันที่สั่งซื้อ</strong></t>
+                            <t t-else=""><strong>Order Date</strong></t>
+                        </t>
+                        <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('date_order')">03/ส.ค./2569</div></t>
+                        <t t-else=""><div t-field="o.date_order" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-08-17</div></t>
+                    </div>
+                    <div class="col" style="width: 33.33%; padding-right: 3px;" name="so_expiration">
+                        <t t-if="lang == 'th_TH'"><strong>วันหมดอายุ</strong></t>
+                        <t t-else=""><strong>Expiration</strong></t>
+                        <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('validity_date')">03/ส.ค./2569</div></t>
+                        <t t-else=""><div t-field="o.validity_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-09-16</div></t>
+                    </div>
+                    <div class="col" style="width: 33.33%; padding-left: 3px;" name="so_delivery">
+                        <t t-if="lang == 'th_TH'"><strong>วันที่ส่งมอบ</strong></t>
+                        <t t-else=""><strong>Delivery Date</strong></t>
+                        <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('commitment_date')">03/ส.ค./2569</div></t>
+                        <t t-else=""><div t-field="o.commitment_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-08-17</div></t>
+                    </div>
                 </div>
-                <div class="col" style="width: 16.66%; padding-right: 3px;" name="so_expiration">
-                    <t t-if="lang == 'th_TH'"><strong>วันหมดอายุ</strong></t>
-                    <t t-else=""><strong>Expiration</strong></t>
-                    <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('validity_date')">03/ส.ค./2569</div></t>
-                    <t t-else=""><div t-field="o.validity_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-09-16</div></t>
-                </div>
-                <div class="col" style="width: 16.66%; padding-right: 3px;" name="so_delivery">
-                    <t t-if="lang == 'th_TH'"><strong>วันที่ส่งมอบ</strong></t>
-                    <t t-else=""><strong>Delivery Date</strong></t>
-                    <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('commitment_date')">03/ส.ค./2569</div></t>
-                    <t t-else=""><div t-field="o.commitment_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-08-17</div></t>
-                </div>
-                <div class="col" style="width: 16.66%; padding-right: 3px;" name="so_ref">
-                    <t t-if="lang == 'th_TH'"><strong>เลขที่อ้างอิงของท่าน</strong></t>
-                    <t t-else=""><strong>Your Reference</strong></t>
-                    <div t-field="o.client_order_ref"/>
-                </div>
-                <div class="col" style="width: 16.66%; padding-right: 3px;" name="so_terms">
-                    <t t-if="lang == 'th_TH'"><strong>เงื่อนไขการชำระเงิน</strong></t>
-                    <t t-else=""><strong>Payment Terms</strong></t>
-                    <div t-field="o.payment_term_id"/>
-                </div>
-                <div class="col" style="width: 16.66%; padding-left: 3px;" name="so_salesperson">
-                    <t t-if="lang == 'th_TH'"><strong>พนักงานขาย</strong></t>
-                    <t t-else=""><strong>Salesperson</strong></t>
-                    <div t-field="o.user_id"/>
+                <!-- Row 2: references -->
+                <div class="row" style="margin: 0;">
+                    <div class="col" style="width: 33.33%; padding-right: 3px;" name="so_ref">
+                        <t t-if="lang == 'th_TH'"><strong>เลขที่อ้างอิงของท่าน</strong></t>
+                        <t t-else=""><strong>Your Reference</strong></t>
+                        <div t-field="o.client_order_ref"/>
+                    </div>
+                    <div class="col" style="width: 33.33%; padding-right: 3px;" name="so_terms">
+                        <t t-if="lang == 'th_TH'"><strong>เงื่อนไขการชำระเงิน</strong></t>
+                        <t t-else=""><strong>Payment Terms</strong></t>
+                        <div t-field="o.payment_term_id"/>
+                    </div>
+                    <div class="col" style="width: 33.33%; padding-left: 3px;" name="so_salesperson">
+                        <t t-if="lang == 'th_TH'"><strong>พนักงานขาย</strong></t>
+                        <t t-else=""><strong>Salesperson</strong></t>
+                        <div t-field="o.user_id"/>
+                    </div>
                 </div>
             </div></t>
         </div>
