@@ -42,4 +42,48 @@
             </div>
         </xpath>
     </template>
+
+    <!-- Hash block on the Viva Quotation/SO — BELOW the signature block.
+         Shown ONLY when the order is in 'sale' state (accepted) AND has a
+         signed document (customer accepted via portal). The block proves
+         the exact bytes the customer accepted (CCC §456 written evidence).
+         Placement: after #qso_signature_block — the SO has ~76pt of real
+         slack below the signature boxes before the footer (measured on
+         S00028), unlike the invoice where the stamp must sit ABOVE the
+         signatures (wkhtmltopdf clips content at the very bottom). -->
+    <template id="viva_quotation_so_document_sign_stamp"
+              name="Viva Quotation/SO Signed Stamp"
+              inherit_id="vivafarm_report.viva_quotation_so_document">
+        <xpath expr="//div[@id='qso_signature_block']" position="after">
+            <div t-if="o.state == 'sale' and o.signed_document_id" class="row mt-2" style="page-break-inside: avoid;">
+                <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px; padding: 6px 10px; background: #f1f8f1;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="width: 42px; vertical-align: top;">
+                                <img t-att-src="o.signed_document_id[0]._qr_data_uri()"
+                                     style="width: 42px; height: 42px;"
+                                     alt="Verify QR"/>
+                            </td>
+                            <td style="vertical-align: top; font-size: 9px; line-height: 1.35; padding-left: 8px;">
+                                <div style="font-weight: bold; color: #2e7d32;">
+                                    <t t-if="lang == 'th_TH'">เอกสารลงลายมือชื่อดิจิทัล (SIGNED)</t>
+                                    <t t-else="">Digitally Signed Document</t>
+                                </div>
+                                <div><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document</t>:
+                                    <t t-esc="o.signed_document_id[0].document_number"/>
+                                    <t t-if="o.signed_document_id[0].revision > 1"> Rev.<t t-esc="o.signed_document_id[0].revision"/></t>
+                                </div>
+                                <div><t t-if="lang == 'th_TH'">รหัสตรวจสอบ</t><t t-else="">Verification Code</t>:
+                                    <t t-esc="o.signed_document_id[0].verification_code"/>
+                                </div>
+                                <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
+                                    <t t-esc="o.signed_document_id[0]._get_verification_url()"/>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </xpath>
+    </template>
 </odoo>

@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Document Sign',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.3',
     'category': 'Accounting/Localizations',
     'summary': 'Thai tax invoice digital integrity: SHA-256 + RSA signature + lock + QR verification',
     'description': """
@@ -21,7 +21,7 @@
         TEST / NON-PRODUCTION certificate by default. Production = swap the
         cert files / backend provider, no schema change.
     """,
-    'depends': ['account', 'vivafarm_report'],
+    'depends': ['account', 'sale', 'vivafarm_report'],
     'data': [
         'security/ir.model.access.csv',
         'views/signed_document_views.xml',

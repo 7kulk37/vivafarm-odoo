@@ -25,11 +25,14 @@ class VivaSignedDocument(models.Model):
     document_uuid = fields.Char(string='Document UUID', readonly=True, copy=False)
     document_type = fields.Selection([
         ('tax_invoice', 'Tax Invoice'),
+        ('sale_order', 'Sale Order'),
     ], string='Document Type', required=True, default='tax_invoice')
     document_number = fields.Char(string='Document Number', readonly=True, copy=False)
     odoo_model = fields.Char(string='Odoo Model', readonly=True, default='account.move')
     odoo_record_id = fields.Integer(string='Odoo Record ID', readonly=True, index=True)
     move_id = fields.Many2one('account.move', string='Invoice', ondelete='restrict', index=True)
+    sale_order_id = fields.Many2one('sale.order', string='Sale Order',
+                                    ondelete='restrict', index=True)
 
     # ── Revision chain (tamper-evident: Rev N hashes back to Rev N-1) ──
     revision = fields.Integer(string='Revision', readonly=True, default=1, copy=False)
@@ -82,6 +85,7 @@ class VivaSignedDocument(models.Model):
     _sql_constraints = [
         ('token_unique', 'unique(verification_token)', 'Verification token must be unique.'),
         ('move_unique', 'unique(move_id)', 'An invoice can only be signed once.'),
+        ('so_unique', 'unique(sale_order_id)', 'A sale order can only be signed once.'),
     ]
 
     @api.model_create_multi
