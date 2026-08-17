@@ -200,20 +200,20 @@
                                 <t t-if="lang == 'th_TH'"><strong>วันที่สั่งซื้อ</strong></t>
                                 <t t-else=""><strong>Order Date</strong></t>
                             </t>
-                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('date_order')">03/ส.ค./2569</div></t>
-                            <t t-else=""><div t-field="o.date_order" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-08-17</div></t>
+                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('date_order')"></div></t>
+                            <t t-else=""><div t-field="o.date_order" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div></t>
                         </td>
-                        <td style="width: 33.33%; padding-right: 3px; vertical-align: top;" name="so_expiration">
+                        <td t-if="o.validity_date" style="width: 33.33%; padding-right: 3px; vertical-align: top;" name="so_expiration">
                             <t t-if="lang == 'th_TH'"><strong>วันหมดอายุ</strong></t>
                             <t t-else=""><strong>Expiration</strong></t>
-                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('validity_date')">03/ส.ค./2569</div></t>
-                            <t t-else=""><div t-field="o.validity_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-09-16</div></t>
+                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('validity_date')"></div></t>
+                            <t t-else=""><div t-field="o.validity_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div></t>
                         </td>
-                        <td style="width: 33.33%; padding-left: 3px; vertical-align: top;" name="so_delivery">
+                        <td t-if="o.commitment_date" style="width: 33.33%; padding-left: 3px; vertical-align: top;" name="so_delivery">
                             <t t-if="lang == 'th_TH'"><strong>วันที่ส่งมอบ</strong></t>
                             <t t-else=""><strong>Delivery Date</strong></t>
-                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('commitment_date')">03/ส.ค./2569</div></t>
-                            <t t-else=""><div t-field="o.commitment_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}">2026-08-17</div></t>
+                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('commitment_date')"></div></t>
+                            <t t-else=""><div t-field="o.commitment_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div></t>
                         </td>
                     </tr>
                     <tr>
