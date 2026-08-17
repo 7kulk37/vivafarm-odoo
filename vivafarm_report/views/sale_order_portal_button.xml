@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        "View Quotation / Sale Order" portal button.
+
+        The standard "View Details" button (sale.sale_order_portal_template,
+        id=print_invoice_report) hardcodes sale.action_report_saleorder (the
+        DEFAULT Odoo report). The user asked for a SEPARATE button that renders
+        the custom Viva Quotation/SO report instead — this one. It links to
+        vivafarm_report.portal_order_viva_pdf (/my/orders/<id>/viva_pdf).
+    -->
+    <template id="sale_order_portal_viva_button"
+              name="VivaFarm Sale Order Portal Button"
+              inherit_id="sale.sale_order_portal_template">
+        <xpath expr="//a[@id='print_invoice_report']" position="after">
+            <a class="btn btn-light o_print_btn flex-grow-1"
+               t-att-href="sale_order.get_portal_url(suffix='/viva_pdf')"
+               id="print_viva_report"
+               title="View Quotation / Sale Order"
+               role="button"
+               target="_blank"><i class="fa fa-print me-1"/>View Quotation / Sale Order</a>
+        </xpath>
+    </template>
+</odoo>
