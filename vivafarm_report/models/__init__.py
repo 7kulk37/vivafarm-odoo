@@ -4,6 +4,7 @@ from . import account_move
 from . import reissue_wizard
 from . import stock_picking
 from . import purchase_order
+from . import sale_order
 from . import wht_certificate
 from . import pnd_reports
 from . import pnd3_report
