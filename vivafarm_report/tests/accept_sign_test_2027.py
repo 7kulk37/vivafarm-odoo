@@ -179,7 +179,11 @@ try:
 except Exception as e:
     check('T4 route returned ok', False, '(error: %s)' % e)
 
-# The HTTP worker committed its own transaction — re-read the SO fresh.
+# The HTTP worker committed its own transaction. The test session's
+# REPEATABLE READ snapshot predates that commit, so commit here to take a
+# fresh snapshot that sees the worker's changes (the SO itself is already
+# committed from before the HTTP call).
+env.cr.commit()
 so = env['sale.order'].browse(so.id)
 so.invalidate_recordset()
 check('T4 state sale', so.state == 'sale', '(state=%s)' % so.state)
