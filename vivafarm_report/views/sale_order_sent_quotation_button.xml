@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- "Sent Quotation" button — same as "Send" (action_quotation_send) but
+         uses the Viva custom Quotation/SO report via action_sent_quotation.
+         Placed next to the standard Send buttons (primary header + dropdown). -->
+    <record id="view_quotation_sent_quotation_button" model="ir.ui.view">
+        <field name="name">sale.order.form — Sent Quotation button</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Primary header button (draft state) -->
+            <button id="quotation_send_primary" position="after">
+                <button
+                    string="Sent Quotation"
+                    name="action_sent_quotation"
+                    type="object"
+                    context="{'validate_analytic': True}"
+                    class="btn-primary"
+                    invisible="state != 'draft'"/>
+            </button>
+            <!-- Dropdown button (sent/sale states) -->
+            <button id="quotation_send" position="after">
+                <button
+                    string="Sent Quotation"
+                    name="action_sent_quotation"
+                    type="object"
+                    context="{'validate_analytic': True}"
+                    invisible="state not in ('sent', 'sale')"/>
+            </button>
+        </field>
+    </record>
+</odoo>
