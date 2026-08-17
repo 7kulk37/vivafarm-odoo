@@ -189,10 +189,13 @@
                      header-frame height and wkhtmltopdf scales the frame 0.625x)
                      and NOT flex-wrap (unsupported in QtWebKit — stays 1 row).
                      A plain HTML table lays out reliably in old WebKit.
-                     Outer 1px border lives on the TABLE (border-collapse frames
-                     it); putting `border` on the rounded div makes QtWebKit
-                     drop the div's background-color entirely. -->
-                <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #212529;">
+                     Outer 1px #ccc border lives on the TABLE (border-collapse
+                     frames it); putting `border` on the rounded div makes
+                     QtWebKit drop the div's background-color entirely.
+                     #ccc matches the light "blank" border used across the Viva
+                     suite (signature boxes, credit-note info) — the earlier
+                     #212529 black border was the user-visible bug. -->
+                <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #ccc;">
                     <tr>
                         <td style="width: 33.33%; padding-right: 3px; vertical-align: top;" name="so_date">
                             <t t-if="o.state in ['draft', 'sent']">
