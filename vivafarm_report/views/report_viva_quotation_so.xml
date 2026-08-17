@@ -75,77 +75,10 @@
                     <span t-field="o.name">S00000</span>
                 </t>
 
-                <!-- Info rows: beige rounded bar (matches invoice #informations) -->
-                <div id="informations"
-                     t-att-style="'background-color: %s; border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; page-break-inside: avoid;' % (o.company_id._get_light_tint(o.company_id.secondary_color))">
-                    <div class="row" style="margin: 0;">
-                        <div class="col-4" style="width: 33%; padding-right: 3px;">
-                            <strong style="font-size: 12px;">
-                                <t t-if="o.state in ['draft', 'sent']">
-                                    <t t-if="lang == 'th_TH'">วันที่เสนอราคา</t>
-                                    <t t-else="">Quotation Date</t>
-                                </t>
-                                <t t-else="">
-                                    <t t-if="lang == 'th_TH'">วันที่สั่งซื้อ</t>
-                                    <t t-else="">Order Date</t>
-                                </t>
-                            </strong>
-                            <div style="font-size: 12px;">
-                                <t t-if="lang == 'th_TH'"><span t-out="o._get_thai_date_display('date_order')">03/ส.ค./2569</span></t>
-                                <t t-else=""><span t-field="o.date_order" t-options="{&quot;date_only&quot;: &quot;true&quot;}"/></t>
-                            </div>
-                        </div>
-                        <div class="col-4" style="width: 33%; padding-right: 3px;">
-                            <strong style="font-size: 12px;">
-                                <t t-if="lang == 'th_TH'">วันหมดอายุ</t>
-                                <t t-else="">Expiration</t>
-                            </strong>
-                            <div style="font-size: 12px;">
-                                <t t-if="lang == 'th_TH'"><span t-out="o._get_thai_date_display('validity_date')">03/ส.ค./2569</span></t>
-                                <t t-else=""><span t-field="o.validity_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}"/></t>
-                            </div>
-                        </div>
-                        <div class="col-4" style="width: 33%; padding-left: 3px;">
-                            <strong style="font-size: 12px;">
-                                <t t-if="lang == 'th_TH'">วันที่ส่งมอบ</t>
-                                <t t-else="">Delivery Date</t>
-                            </strong>
-                            <div style="font-size: 12px;">
-                                <t t-if="lang == 'th_TH'"><span t-out="o._get_thai_date_display('commitment_date')">03/ส.ค./2569</span></t>
-                                <t t-else=""><span t-field="o.commitment_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}"/></t>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row" style="margin: 0;">
-                        <div class="col-4" style="width: 33%; padding-right: 3px;">
-                            <strong style="font-size: 12px;">
-                                <t t-if="lang == 'th_TH'">เลขที่อ้างอิงของท่าน</t>
-                                <t t-else="">Your Reference</t>
-                            </strong>
-                            <div style="font-size: 12px;">
-                                <span t-field="o.client_order_ref"/>
-                            </div>
-                        </div>
-                        <div class="col-4" style="width: 33%; padding-right: 3px;">
-                            <strong style="font-size: 12px;">
-                                <t t-if="lang == 'th_TH'">เงื่อนไขการชำระเงิน</t>
-                                <t t-else="">Payment Terms</t>
-                            </strong>
-                            <div style="font-size: 12px;">
-                                <span t-field="o.payment_term_id"/>
-                            </div>
-                        </div>
-                        <div class="col-4" style="width: 33%; padding-left: 3px;">
-                            <strong style="font-size: 12px;">
-                                <t t-if="lang == 'th_TH'">พนักงานขาย</t>
-                                <t t-else="">Salesperson</t>
-                            </strong>
-                            <div style="font-size: 12px;">
-                                <span t-field="o.user_id"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Info rows: rendered by the LAYOUT header frame
+                     (report_external_layout_viva, #informations_so) so the bar
+                     sits right below the address block (no dead space) and
+                     inherits the base font size (== line items). -->
 
                 <!-- Line items -->
                 <t t-set="lines_to_report" t-value="o._get_order_lines_to_report()"/>
@@ -293,7 +226,7 @@
 
                 <!-- Signature: acceptance line + TWO boxes (matches invoice) -->
                 <div id="qso_signature_block" class="row" style="margin: 0; width: 100%; page-break-inside: avoid;">
-                    <div style="page-break-inside: avoid;">
+                    <div style="page-break-inside: avoid; margin-top: 14px;">
                         <div class="text-muted" style="font-size: 12px; font-weight: bold; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
                             <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
                             <t t-else="">Signatures below constitute acceptance in accordance with the Terms &amp; Conditions of this document.</t>
