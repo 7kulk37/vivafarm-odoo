@@ -51,6 +51,12 @@ export class AcceptVivaSignatureForm extends SignatureForm {
         if (this.signature.resetSignature) {
             this.signature.resetSignature();
         }
+        // Re-enable the submit button. The stock template disables it while
+        // the signature canvas is empty (t-att-disabled="signature.
+        // isSignatureEmpty ? 'disabled' : ''"), so clearing the canvas on
+        // Reset left the button un-clickable. The empty-canvas case is
+        // guarded in onClickSubmit.
+        this.signature.isSignatureEmpty = false;
     }
 
     onReset() {
@@ -72,6 +78,10 @@ export class AcceptVivaSignatureForm extends SignatureForm {
         }
         if (!position) {
             this.state.error = "Position is required.";
+            return;
+        }
+        if (this.signature.isSignatureEmpty) {
+            this.state.error = "Signature is required.";
             return;
         }
         const button = document.querySelector('.o_portal_sign_submit')
