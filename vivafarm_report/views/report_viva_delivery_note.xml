@@ -23,8 +23,14 @@
             <div class="page">
                 <h3 t-att-style="'margin-top: 0; margin-bottom: 6px; text-align: left; color: %s;' % (o.company_id.primary_color or '#000000')">
                     <strong style="font-size: 24px;">
-                        <t t-if="lang == 'th_TH'">ใบส่งสินค้า: </t>
-                        <t t-else="">Delivery Note: </t>
+                        <t t-if="o.signed_document_id">
+                            <t t-if="lang == 'th_TH'">ใบยืนยันการจัดส่ง: </t>
+                            <t t-else="">Delivery Confirmation: </t>
+                        </t>
+                        <t t-else="">
+                            <t t-if="lang == 'th_TH'">ใบส่งสินค้า: </t>
+                            <t t-else="">Delivery Note: </t>
+                        </t>
                         <span t-field="o.name"/>
                     </strong>
                 </h3>
