@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!--
+        VivaFarm "Accept & Sign quotation" signature form.
+
+        Primary inheritance of the stock portal.SignatureForm component
+        template: the result is a NEW template (vivafarm_report.
+        AcceptVivaSignatureForm) = the stock form + an optional Position
+        input above the Full Name field. The stock portal.signature_form
+        template itself is untouched, so the standard portal accept flow
+        keeps its exact behaviour (same pattern as
+        sale/static/src/xml/sale_product_field.xml).
+
+        The JS side (accept_viva_signature_form.js) extends the stock
+        SignatureForm component and sends {name, position, signature} to
+        /accept_viva.
+    -->
+    <t t-name="vivafarm_report.AcceptVivaSignatureForm"
+       t-inherit="portal.SignatureForm"
+       t-inherit-mode="primary">
+        <xpath expr="//div[hasclass('o_web_sign_name_group')]" position="before">
+            <div class="o_web_sign_position_group mb-2">
+                <label class="col-form-label">Position</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    placeholder="Type your position"
+                    t-on-input="onPositionInput"
+                    t-att-value="position"
+                />
+            </div>
+        </xpath>
+    </t>
+
+</templates>

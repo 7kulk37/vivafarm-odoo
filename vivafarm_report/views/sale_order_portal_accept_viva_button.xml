@@ -57,13 +57,22 @@
                                 for the <b data-id="total_amount" t-field="sale_order.amount_total"/> quote.
                             </span>
                             <b t-if="sale_order.payment_term_id" t-field="sale_order.payment_term_id.note"/>
-                            <t t-call="portal.signature_form">
-                                <t t-set="call_url" t-value="sale_order.get_portal_url(suffix='/accept_viva')"/>
-                                <t
-                                    t-set="default_name"
-                                    t-value="sale_order.partner_id.name or sale_order.partner_id.commercial_partner_id.name"
-                                />
-                            </t>
+                            <t t-set="call_url" t-value="sale_order.get_portal_url(suffix='/accept_viva')"/>
+                            <t
+                                t-set="default_name"
+                                t-value="sale_order.partner_id.name or sale_order.partner_id.commercial_partner_id.name"
+                            />
+                            <t t-set="signature_form_props" t-value="{
+                                'callUrl': call_url,
+                                'defaultName': default_name,
+                                'mode': mode,
+                                'sendLabel': send_label,
+                                'signatureRatio': signature_ratio,
+                                'signatureType': signature_type,
+                                'fontColor': font_color
+                            }"/>
+                            <owl-component name="vivafarm_report.accept_viva_signature_form"
+                                           t-att-props="json.dumps(signature_form_props)"/>
                         </main>
                     </form>
                 </div>

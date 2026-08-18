@@ -8,6 +8,14 @@ class ResCompany(models.Model):
         string='Signature Image (ลายมือชื่อผู้มีอำนาจลงนาม)',
         help='Upload an image of the authorized person\'s signature for display on Thai Tax Invoices.',
     )
+    l10n_th_signatory_name = fields.Char(
+        string='Signatory Name (ชื่อผู้มีอำนาจลงนาม)',
+        help='Name of the authorized signatory, printed under the signature image on the Quotation/SO.',
+    )
+    l10n_th_signatory_position = fields.Char(
+        string='Signatory Position (ตำแหน่งผู้มีอำนาจลงนาม)',
+        help='Position of the authorized signatory (e.g. Managing Director), printed under the signature image on the Quotation/SO.',
+    )
     l10n_th_branch_name = fields.Char(
         string='Branch Name (สาขา)',
         help='Branch name for Thai Tax Invoice. Leave empty if head office.',

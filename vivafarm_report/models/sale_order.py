@@ -1,8 +1,13 @@
-from odoo import _, models
+from odoo import _, fields, models
 
 
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+
+    signed_position = fields.Char(
+        string='Signed Position',
+        help='Position of the person who accepted and signed the quotation on the portal.',
+    )
 
     def _get_thai_date_display(self, field_name):
         """Date in Thai tax-invoice style: '03/ส.ค./2569' (Buddhist Era year = CE + 543).

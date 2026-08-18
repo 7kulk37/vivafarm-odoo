@@ -293,6 +293,98 @@ signed_count2 = env['viva.signed.document'].search_count(
 check('T6 still exactly one signed doc after repeat POST', signed_count2 == 1,
       '(count=%d)' % signed_count2)
 
+# ── T7: seller signatory Name/Position from Thai Tax Invoice tab ──
+# (user decision 2026-08-18: fill the seller signature box from two NEW
+# res.company fields in the Thai Tax Invoice tab, next to the signature
+# image; the signatory is a PERSON, not the company.)
+print('--- T7 seller signatory fields + render ---')
+company = env.company
+check('T7 l10n_th_signatory_name field exists',
+      'l10n_th_signatory_name' in env['res.company']._fields)
+check('T7 l10n_th_signatory_position field exists',
+      'l10n_th_signatory_position' in env['res.company']._fields)
+view = env['ir.ui.view'].search(
+    [('name', '=', 'res.company.form.inherit.vivafarm.report')], limit=1)
+check('T7 company view shows the signatory fields',
+      bool(view) and 'l10n_th_signatory_name' in (view.arch or '')
+      and 'l10n_th_signatory_position' in (view.arch or ''))
+# Set values and render a DRAFT quotation HTML — the seller box must show
+# Name/Position; the buyer box must stay empty (not signed).
+if 'l10n_th_signatory_name' in env['res.company']._fields:
+    company.write({
+        'l10n_th_signatory_name': 'Test Signatory Name',
+        'l10n_th_signatory_position': 'Managing Director',
+    })
+    so7 = make_so(partner, product, pricelist)
+    html7 = env['ir.actions.report']._render_qweb_html(
+        'vivafarm_report.viva_quotation_so', [so7.id])[0]
+    check('T7 seller Name rendered in signature box',
+          b'Test Signatory Name' in html7, '(len=%d)' % len(html7))
+    check('T7 seller Position rendered in signature box',
+          b'Managing Director' in html7)
+    check('T7 buyer box empty when unsigned',
+          ('data:image/png;base64,%s' % SIGNATURE_B64).encode() not in html7)
+    # Undo the company write so later sections start clean.
+    env.cr.rollback()
+
+# ── T8: buyer position captured in Accept & Sign + buyer box rendered ──
+# (user decision 2026-08-18: add a Position field next to the Full Name
+# field in the Accept & Sign quotation flow, stored on the SO and
+# rendered in the buyer signature box — same mechanism as the default
+# Odoo form: image_data_uri(o.signature) + signed_by + sale_include_signature.)
+print('--- T8 accept with position → buyer box rendered ---')
+check('T8 sale.order.signed_position field exists',
+      'signed_position' in env['sale.order']._fields)
+so = make_so(partner, product, pricelist)
+so._portal_ensure_token()
+env.cr.commit()
+url = 'http://127.0.0.1:8069/my/orders/%d/accept_viva' % so.id
+try:
+    resp = http_jsonrpc(url, {
+        'access_token': so.access_token,
+        'name': 'Test Customer',
+        'position': 'Purchasing Manager',
+        'signature': SIGNATURE_B64,
+    })
+    check('T8 route returned ok', resp.get('result', {}).get('force_refresh') is True,
+          '(resp=%s)' % str(resp.get('result'))[:120])
+except Exception as e:
+    check('T8 route returned ok', False, '(error: %s)' % e)
+env.cr.commit()
+so = env['sale.order'].browse(so.id)
+so.invalidate_recordset()
+check('T8 order accepted', so.state == 'sale', '(state=%s)' % so.state)
+if 'signed_position' in env['sale.order']._fields:
+    check('T8 signed_position stored', (so.signed_position or '') == 'Purchasing Manager',
+          '(signed_position=%r)' % so.signed_position)
+    check('T8 signed_by stored', so.signed_by == 'Test Customer',
+          '(signed_by=%r)' % so.signed_by)
+# Render the accepted order HTML WITH sale_include_signature — the buyer
+# signature box must show the drawn signature, name, position and date.
+if 'signed_position' in env['sale.order']._fields:
+    html8 = env['ir.actions.report'].with_context(
+        sale_include_signature=True)._render_qweb_html(
+            'vivafarm_report.viva_quotation_so', [so.id])[0]
+    check('T8 buyer signature image rendered (default method)',
+          ('data:image/png;base64,%s' % SIGNATURE_B64).encode() in html8)
+    check('T8 buyer Name rendered in signature box', b'Test Customer' in html8)
+    check('T8 buyer Position rendered in signature box',
+          b'Purchasing Manager' in html8)
+    # Without the context the gate hides the buyer signature (same as default).
+    html8b = env['ir.actions.report']._render_qweb_html(
+        'vivafarm_report.viva_quotation_so', [so.id])[0]
+    check('T8 buyer signature hidden without sale_include_signature',
+          ('data:image/png;base64,%s' % SIGNATURE_B64).encode() not in html8b)
+    # The STORED signed PDF baked the buyer box too (route confirms with the
+    # context, so the hashed bytes carry the customer signature).
+    signed8 = env['viva.signed.document'].search(
+        [('sale_order_id', '=', so.id)], limit=1)
+    check('T8 exactly one signed doc', bool(signed8))
+    if signed8:
+        signed8_bytes = base64.b64decode(signed8.signed_attachment_id.datas)
+        check('T8 stored signed PDF is Viva-size', len(signed8_bytes) > 155000,
+              '(bytes=%d)' % len(signed8_bytes))
+
 # ── Summary ──
 print('')
 print('RESULT: %d passed, %d failed' % (PASS, FAIL))

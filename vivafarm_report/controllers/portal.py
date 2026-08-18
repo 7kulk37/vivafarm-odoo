@@ -50,7 +50,7 @@ class VivaSalePortal(CustomerPortal):
     @http.route(['/my/orders/<int:order_id>/accept_viva'], type='jsonrpc',
                 auth="public", website=True)
     def portal_order_accept_viva(self, order_id, access_token=None, name=None,
-                                 signature=None):
+                                 signature=None, position=None):
         # Same access + preconditions as the standard accept route.
         access_token = access_token or request.httprequest.args.get('access_token')
         try:
@@ -82,6 +82,7 @@ class VivaSalePortal(CustomerPortal):
         try:
             order_sudo.write({
                 'signed_by': name,
+                'signed_position': position or False,
                 'signed_on': fields.Datetime.now(),
                 'signature': signature,
             })
