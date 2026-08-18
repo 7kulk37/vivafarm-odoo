@@ -95,7 +95,7 @@
                                     <div t-if="o.sale_id">
                                         <t t-if="lang == 'th_TH'">ใบสั่งซื้อที่เกี่ยวข้อง</t><t t-else="">Linked SO</t>:
                                         <t t-esc="o.sale_id.name"/>
-                                        <t t-if="o.sale_id.signed_document_id[:1]"> · Code: <t t-esc="o.sale_id.signed_document_id[:1].verification_code"/></t>
+                                        <t t-if="o.sale_id.signed_document_id.filtered(lambda d: d.document_type == 'sale_order')[:1]"> · Code: <t t-esc="o.sale_id.signed_document_id.filtered(lambda d: d.document_type == 'sale_order')[:1].verification_code"/></t>
                                     </div>
                                     <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
                                         <t t-esc="o.signed_document_id[0]._get_verification_url()"/>

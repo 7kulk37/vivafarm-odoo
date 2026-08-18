@@ -296,19 +296,30 @@ if signed4:
         check('D7 cancel blocked', True, '(UserError)')
     check('D7 picking still done', picking4.state == 'done', '(state=%s)' % picking4.state)
 
-# ── D8: delivery stamp shows Linked SO + verification code ──
+# ── D8: delivery stamp shows Linked SO + its verification code ──
 print('--- D8 linked SO on the stamp ---')
 if signed4:
-    so_signed = env['viva.signed.document'].search([('sale_order_id', '=', so4.id)], limit=1)
+    so_signed = env['viva.signed.document'].search([
+        ('sale_order_id', '=', so4.id),
+        ('document_type', '=', 'sale_order'),
+    ], limit=1)
+    html8 = env['ir.actions.report']._render_qweb_html(
+        'vivafarm_report.viva_delivery_note', [picking4.id])[0]
+    check('D8 stamp shows Linked SO', so4.name.encode() in html8)
     if so_signed:
-        html8 = env['ir.actions.report']._render_qweb_html(
-            'vivafarm_report.viva_delivery_note', [picking4.id])[0]
-        check('D8 stamp shows Linked SO', so4.name.encode() in html8)
         check('D8 stamp shows SO verification code',
               so_signed.verification_code.encode() in html8,
               '(code=%s)' % so_signed.verification_code)
     else:
-        check('D8 stamp shows Linked SO', False, '(no SO signed doc — link missing)')
+        # The SO in this flow was backend-confirmed (no portal signature),
+        # so it has NO own signed doc — the delivery's own record must NOT
+        # masquerade as the SO code (the chained record carries sale_order_id,
+        # which is the bug this check catches: the SO code would equal the
+        # delivery code).
+        check('D8 no SO code when SO unsigned',
+              ('Code: %s' % signed4.verification_code).encode() not in html8,
+              '(delivery code must not appear as SO code)')
+        check('D8 SO name still shown without code', so4.name.encode() in html8)
 
 # ── Summary ──
 print('')
