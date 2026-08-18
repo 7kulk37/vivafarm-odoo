@@ -28,7 +28,7 @@
                     placeholder="Type your position"
                     required="required"
                     t-on-input="onPositionInput"
-                    t-att-value="position"
+                    t-att-value="state.position"
                 />
             </div>
         </xpath>

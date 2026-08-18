@@ -11,6 +11,7 @@
  * ({name, signature} -> {name, position, signature}) and the server
  * ignores the extra key on the standard /accept route.
  */
+import { onMounted } from "@odoo/owl";
 import { addLoadingEffect } from "@web/core/utils/ui";
 import { rpc } from "@web/core/network/rpc";
 import { redirect } from "@web/core/utils/urls";
@@ -22,11 +23,25 @@ export class AcceptVivaSignatureForm extends SignatureForm {
 
     setup() {
         super.setup();
-        this.position = this.props.position || "";
+        // Reactive position: part of the existing useState object so
+        // re-renders (signature state, error state, modal re-show) restore
+        // the typed value instead of wiping it. The previous plain property
+        // made the input appear un-typeable after a validation error
+        // (user report 2026-08-18).
+        this.state.position = this.props.position || "";
+        onMounted(() => {
+            const modal_el = this.rootRef.el.closest('.modal');
+            if (modal_el !== null) {
+                modal_el.addEventListener('shown.bs.modal', () => {
+                    this.state.position = this.props.position || "";
+                    this.state.error = false;
+                });
+            }
+        });
     }
 
     onPositionInput(ev) {
-        this.position = ev.target.value;
+        this.state.position = ev.target.value;
     }
 
     /**
@@ -37,7 +52,7 @@ export class AcceptVivaSignatureForm extends SignatureForm {
      */
     async onClickSubmit() {
         const name = (this.signature.name || "").trim();
-        const position = (this.position || "").trim();
+        const position = (this.state.position || "").trim();
         if (!name) {
             this.state.error = "Full Name is required.";
             return;
