@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Report Enhancements',
-    'version': '19.0.1.0.117',
+    'version': '19.0.1.0.118',
     'category': 'Accounting/Localizations',
     'summary': 'Thai invoice compliance: signature image, branch info, tax breakdown on invoice report',
     'description': """
@@ -50,4 +50,9 @@
     'application': False,
     'auto_install': False,
     'license': 'LGPL-3',
+    'assets': {
+        'web.assets_frontend': [
+            'vivafarm_report/static/src/js/accept_viva_guard.js',
+        ],
+    },
 }
