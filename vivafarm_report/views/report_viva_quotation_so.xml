@@ -84,6 +84,12 @@
                 <t t-set="lines_to_report" t-value="o._get_order_lines_to_report()"/>
                 <t t-set="display_discount" t-value="any(l.discount > 0 for l in lines_to_report)"/>
                 <t t-set="display_taxes" t-value="any(l._has_taxes() for l in lines_to_report)"/>
+                <!-- Margin lives on a WRAPPER div, not the table: QtWebKit
+                     ignores margin-top on <table> elements AND collapses
+                     margin-top on a div whose parent has no padding/border
+                     (verified: 8px margin produced 0 gap). padding-top does
+                     not collapse. -->
+                <div style="padding-top: 8px;">
                 <table class="table table-sm o_main_table table-borderless mb-2" style="table-layout: fixed;" name="so_line_table">
                     <thead>
                         <tr>
@@ -158,6 +164,7 @@
                         </t>
                     </tbody>
                 </table>
+                </div>
 
                 <!-- Totals (right) — matches invoice #right-elements style -->
                 <t t-set="words_text" t-value="o.currency_id.with_context(lang=lang).amount_to_text(o.amount_total)"/>
