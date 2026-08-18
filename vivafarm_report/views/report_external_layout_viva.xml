@@ -189,15 +189,18 @@
                      header-frame height and wkhtmltopdf scales the frame 0.625x)
                      and NOT flex-wrap (unsupported in QtWebKit — stays 1 row).
                      A plain HTML table lays out reliably in old WebKit.
-                     Borderless: explicit border: 0 on the table AND every cell.
-                     wkhtmltopdf + border-collapse: collapse emits degenerate
-                     zero-height #212529 rects at collapsed cell boundaries —
-                     invisible in the raw PDF, but browser PDF viewers (PDF.js)
-                     expand them into visible dark lines. border: 0 kills them
-                     at the source so every viewer renders the bar clean. -->
-                <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 0;">
+                     Borderless: border-collapse: separate is MANDATORY. The
+                     report CSS has a global `table { border-collapse: collapse }`
+                     rule; QtWebKit's collapsed-border algorithm then emits
+                     degenerate zero-height #212529 rects at cell boundaries
+                     even with border: none on every cell (proven by standalone
+                     wkhtmltopdf tests: collapse+none = 16 dark rects,
+                     separate+spacing0+none = 0). border-spacing: 0 keeps cells
+                     flush (same visual) without the collapsed machinery.
+                     border: none on table + cells as belt-and-braces. -->
+                <table style="width: 100%; table-layout: fixed; border: none; border-collapse: separate; border-spacing: 0;">
                     <tr>
-                        <td style="width: 33.33%; padding-right: 3px; vertical-align: top; border: 0;" name="so_date">
+                        <td style="width: 33.33%; padding-right: 3px; vertical-align: top; border: none;" name="so_date">
                             <t t-if="o.state in ['draft', 'sent']">
                                 <t t-if="lang == 'th_TH'"><strong>วันที่เสนอราคา</strong></t>
                                 <t t-else=""><strong>Quotation Date</strong></t>
@@ -209,13 +212,13 @@
                             <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('date_order')"></div></t>
                             <t t-else=""><div t-field="o.date_order" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div></t>
                         </td>
-                        <td t-if="o.validity_date" style="width: 33.33%; padding-right: 3px; vertical-align: top; border: 0;" name="so_expiration">
+                        <td t-if="o.validity_date" style="width: 33.33%; padding-right: 3px; vertical-align: top; border: none;" name="so_expiration">
                             <t t-if="lang == 'th_TH'"><strong>วันหมดอายุ</strong></t>
                             <t t-else=""><strong>Expiration</strong></t>
                             <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('validity_date')"></div></t>
                             <t t-else=""><div t-field="o.validity_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div></t>
                         </td>
-                        <td t-if="o.commitment_date" style="width: 33.33%; padding-left: 3px; vertical-align: top; border: 0;" name="so_delivery">
+                        <td t-if="o.commitment_date" style="width: 33.33%; padding-left: 3px; vertical-align: top; border: none;" name="so_delivery">
                             <t t-if="lang == 'th_TH'"><strong>วันที่ส่งมอบ</strong></t>
                             <t t-else=""><strong>Delivery Date</strong></t>
                             <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('commitment_date')"></div></t>
@@ -223,17 +226,17 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="width: 33.33%; padding-right: 3px; padding-top: 1px; vertical-align: top; border: 0;" name="so_ref">
+                        <td style="width: 33.33%; padding-right: 3px; padding-top: 1px; vertical-align: top; border: none;" name="so_ref">
                             <t t-if="lang == 'th_TH'"><strong>เลขที่อ้างอิงของท่าน</strong></t>
                             <t t-else=""><strong>Your Reference</strong></t>
                             <div t-field="o.client_order_ref"/>
                         </td>
-                        <td style="width: 33.33%; padding-right: 3px; padding-top: 1px; vertical-align: top; border: 0;" name="so_terms">
+                        <td style="width: 33.33%; padding-right: 3px; padding-top: 1px; vertical-align: top; border: none;" name="so_terms">
                             <t t-if="lang == 'th_TH'"><strong>เงื่อนไขการชำระเงิน</strong></t>
                             <t t-else=""><strong>Payment Terms</strong></t>
                             <div t-field="o.payment_term_id"/>
                         </td>
-                        <td style="width: 33.33%; padding-left: 3px; padding-top: 1px; vertical-align: top; border: 0;" name="so_salesperson">
+                        <td style="width: 33.33%; padding-left: 3px; padding-top: 1px; vertical-align: top; border: none;" name="so_salesperson">
                             <t t-if="lang == 'th_TH'"><strong>พนักงานขาย</strong></t>
                             <t t-else=""><strong>Salesperson</strong></t>
                             <div t-field="o.user_id"/>
