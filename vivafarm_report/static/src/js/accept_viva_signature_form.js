@@ -31,16 +31,27 @@ export class AcceptVivaSignatureForm extends SignatureForm {
 
     /**
      * Same as the stock SignatureForm.onClickSubmit, but includes the
-     * optional position in the RPC payload.
+     * optional position in the RPC payload AND enforces mandatory
+     * Position + Full Name (user requirement 2026-08-18: the customer
+     * must enter both — do not allow leaving them empty).
      */
     async onClickSubmit() {
+        const name = (this.signature.name || "").trim();
+        const position = (this.position || "").trim();
+        if (!name) {
+            this.state.error = "Full Name is required.";
+            return;
+        }
+        if (!position) {
+            this.state.error = "Position is required.";
+            return;
+        }
         const button = document.querySelector('.o_portal_sign_submit')
         const icon = button.removeChild(button.firstChild)
         const restoreBtnLoading = addLoadingEffect(button);
 
-        const name = this.signature.name;
         const signature = this.signature.getSignatureImage().split(",")[1];
-        const data = await rpc(this.props.callUrl, { name, position: this.position, signature });
+        const data = await rpc(this.props.callUrl, { name, position, signature });
         if (data.force_refresh) {
             restoreBtnLoading();
             button.prepend(icon)

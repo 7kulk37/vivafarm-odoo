@@ -26,6 +26,7 @@
                     type="text"
                     class="form-control"
                     placeholder="Type your position"
+                    required="required"
                     t-on-input="onPositionInput"
                     t-att-value="position"
                 />
