@@ -12,39 +12,42 @@
              the page — the stamp must live above it (verified: variant test). -->
         <xpath expr="//div[div[contains(., 'Signatures below constitute') or contains(., 'การลงลายมือชื่อในช่องต่อไปนี้')]]" position="before">
             <div t-if="o.signed_document_id" class="row mt-2" style="page-break-inside: avoid;">
-                <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px; padding: 6px 10px;">
-                    <!-- Background lives on the TABLE, not the div: QtWebKit
-                         drops background-color when border + border-radius are
-                         on the SAME element (info-bar quirk). The bare table
-                         also inherits the global table { border-collapse:
-                         collapse } rule which paints cells #e9ecef (grey) and
-                         emits degenerate #212529 rects — border-collapse:
-                         separate + explicit cell background fixes both. -->
-                    <table style="width: 100%; background: #f1f8f1; border-collapse: separate; border-spacing: 0; border: none;">
-                        <tr>
-                            <td style="width: 42px; vertical-align: top; background: #f1f8f1;">
-                                <img t-att-src="o.signed_document_id[0]._qr_data_uri()"
-                                     style="width: 42px; height: 42px;"
-                                     alt="Verify QR"/>
-                            </td>
-                            <td style="vertical-align: top; font-size: 9px; line-height: 1.35; padding-left: 8px; background: #f1f8f1;">
-                                <div style="font-weight: bold; color: #2e7d32;">
-                                    <t t-if="lang == 'th_TH'">เอกสารลงลายมือชื่อดิจิทัล (SIGNED)</t>
-                                    <t t-else="">Digitally Signed Document</t>
-                                </div>
-                                <div><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document</t>:
-                                    <t t-esc="o.signed_document_id[0].document_number"/>
-                                    <t t-if="o.signed_document_id[0].revision > 1"> Rev.<t t-esc="o.signed_document_id[0].revision"/></t>
-                                </div>
-                                <div><t t-if="lang == 'th_TH'">รหัสตรวจสอบ</t><t t-else="">Verification Code</t>:
-                                    <t t-esc="o.signed_document_id[0].verification_code"/>
-                                </div>
-                                <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
-                                    <t t-esc="o.signed_document_id[0]._get_verification_url()"/>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px;">
+                    <!-- Background on an INNER wrapper div (not the bordered
+                         div): QtWebKit drops background-color when border +
+                         border-radius are on the SAME element, and the bare
+                         table inherits the global table { border-collapse:
+                         collapse } rule which paints cells #e9ecef (grey) +
+                         emits degenerate #212529 rects. The wrapper's
+                         background covers the padding ring so the whole block
+                         is light primary inside the darker primary border. -->
+                    <div style="background: #f1f8f1; border-radius: 6px; padding: 6px 10px;">
+                        <table style="width: 100%; background: #f1f8f1; border-collapse: separate; border-spacing: 0; border: none;">
+                            <tr>
+                                <td style="width: 42px; vertical-align: top; background: #f1f8f1;">
+                                    <img t-att-src="o.signed_document_id[0]._qr_data_uri()"
+                                         style="width: 42px; height: 42px;"
+                                         alt="Verify QR"/>
+                                </td>
+                                <td style="vertical-align: top; font-size: 9px; line-height: 1.35; padding-left: 8px; background: #f1f8f1;">
+                                    <div style="font-weight: bold; color: #2e7d32;">
+                                        <t t-if="lang == 'th_TH'">เอกสารลงลายมือชื่อดิจิทัล (SIGNED)</t>
+                                        <t t-else="">Digitally Signed Document</t>
+                                    </div>
+                                    <div><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document</t>:
+                                        <t t-esc="o.signed_document_id[0].document_number"/>
+                                        <t t-if="o.signed_document_id[0].revision > 1"> Rev.<t t-esc="o.signed_document_id[0].revision"/></t>
+                                    </div>
+                                    <div><t t-if="lang == 'th_TH'">รหัสตรวจสอบ</t><t t-else="">Verification Code</t>:
+                                        <t t-esc="o.signed_document_id[0].verification_code"/>
+                                    </div>
+                                    <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
+                                        <t t-esc="o.signed_document_id[0]._get_verification_url()"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
             </div>
         </xpath>
@@ -63,39 +66,42 @@
               inherit_id="vivafarm_report.viva_quotation_so_document">
         <xpath expr="//div[@id='qso_signature_block']" position="after">
             <div t-if="o.state == 'sale' and o.signed_document_id" class="row mt-2" style="page-break-inside: avoid;">
-                <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px; padding: 6px 10px;">
-                    <!-- Background lives on the TABLE, not the div: QtWebKit
-                         drops background-color when border + border-radius are
-                         on the SAME element (info-bar quirk). The bare table
-                         also inherits the global table { border-collapse:
-                         collapse } rule which paints cells #e9ecef (grey) and
-                         emits degenerate #212529 rects — border-collapse:
-                         separate + explicit cell background fixes both. -->
-                    <table style="width: 100%; background: #f1f8f1; border-collapse: separate; border-spacing: 0; border: none;">
-                        <tr>
-                            <td style="width: 42px; vertical-align: top; background: #f1f8f1;">
-                                <img t-att-src="o.signed_document_id[0]._qr_data_uri()"
-                                     style="width: 42px; height: 42px;"
-                                     alt="Verify QR"/>
-                            </td>
-                            <td style="vertical-align: top; font-size: 9px; line-height: 1.35; padding-left: 8px; background: #f1f8f1;">
-                                <div style="font-weight: bold; color: #2e7d32;">
-                                    <t t-if="lang == 'th_TH'">เอกสารลงลายมือชื่อดิจิทัล (SIGNED)</t>
-                                    <t t-else="">Digitally Signed Document</t>
-                                </div>
-                                <div><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document</t>:
-                                    <t t-esc="o.signed_document_id[0].document_number"/>
-                                    <t t-if="o.signed_document_id[0].revision > 1"> Rev.<t t-esc="o.signed_document_id[0].revision"/></t>
-                                </div>
-                                <div><t t-if="lang == 'th_TH'">รหัสตรวจสอบ</t><t t-else="">Verification Code</t>:
-                                    <t t-esc="o.signed_document_id[0].verification_code"/>
-                                </div>
-                                <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
-                                    <t t-esc="o.signed_document_id[0]._get_verification_url()"/>
-                                </div>
-                            </td>
-                        </tr>
-                    </table>
+                <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px;">
+                    <!-- Background on an INNER wrapper div (not the bordered
+                         div): QtWebKit drops background-color when border +
+                         border-radius are on the SAME element, and the bare
+                         table inherits the global table { border-collapse:
+                         collapse } rule which paints cells #e9ecef (grey) +
+                         emits degenerate #212529 rects. The wrapper's
+                         background covers the padding ring so the whole block
+                         is light primary inside the darker primary border. -->
+                    <div style="background: #f1f8f1; border-radius: 6px; padding: 6px 10px;">
+                        <table style="width: 100%; background: #f1f8f1; border-collapse: separate; border-spacing: 0; border: none;">
+                            <tr>
+                                <td style="width: 42px; vertical-align: top; background: #f1f8f1;">
+                                    <img t-att-src="o.signed_document_id[0]._qr_data_uri()"
+                                         style="width: 42px; height: 42px;"
+                                         alt="Verify QR"/>
+                                </td>
+                                <td style="vertical-align: top; font-size: 9px; line-height: 1.35; padding-left: 8px; background: #f1f8f1;">
+                                    <div style="font-weight: bold; color: #2e7d32;">
+                                        <t t-if="lang == 'th_TH'">เอกสารลงลายมือชื่อดิจิทัล (SIGNED)</t>
+                                        <t t-else="">Digitally Signed Document</t>
+                                    </div>
+                                    <div><t t-if="lang == 'th_TH'">เลขที่เอกสาร</t><t t-else="">Document</t>:
+                                        <t t-esc="o.signed_document_id[0].document_number"/>
+                                        <t t-if="o.signed_document_id[0].revision > 1"> Rev.<t t-esc="o.signed_document_id[0].revision"/></t>
+                                    </div>
+                                    <div><t t-if="lang == 'th_TH'">รหัสตรวจสอบ</t><t t-else="">Verification Code</t>:
+                                        <t t-esc="o.signed_document_id[0].verification_code"/>
+                                    </div>
+                                    <div><t t-if="lang == 'th_TH'">ตรวจสอบ</t><t t-else="">Verify</t>:
+                                        <t t-esc="o.signed_document_id[0]._get_verification_url()"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
             </div>
         </xpath>
