@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Document Sign',
-    'version': '19.0.1.0.7',
+    'version': '19.0.1.0.8',
     'category': 'Accounting/Localizations',
     'summary': 'Thai tax invoice digital integrity: SHA-256 + RSA signature + lock + QR verification',
     'description': """

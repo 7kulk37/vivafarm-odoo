@@ -390,19 +390,16 @@ try:
 except Exception as e:
     check('D9 route rejects force-done', False, '(error: %s)' % e)
 
-# ── D10: delivery stamp shows Linked SO (no masquerade) ──
-print('--- D10 linked SO on the stamp ---')
+# ── D10: signed document title is "Delivery Confirmation: <name>" ──
+print('--- D10 signed document title ---')
 if signed5:
-    so_signed = env['viva.signed.document'].search([
-        ('sale_order_id', '=', so5.id),
-        ('document_type', '=', 'sale_order'),
-    ], limit=1)
+    check('D10 title is Delivery Confirmation', signed5.document_number == 'Delivery Confirmation: %s' % picking5.name,
+          '(got %s)' % signed5.document_number)
     html10 = env['ir.actions.report']._render_qweb_html(
         'vivafarm_report.viva_delivery_note', [picking5.id])[0]
-    check('D10 stamp shows Linked SO', so5.name.encode() in html10)
-    check('D10 no SO code when SO unsigned',
-          ('Code: %s' % signed5.verification_code).encode() not in html10,
-          '(delivery code must not appear as SO code)')
+    check('D10 stamp shows Delivery Confirmation title',
+          b'Delivery Confirmation: ' in html10)
+    check('D10 no Linked SO on stamp', b'Linked SO' not in html10)
 
 # ── Summary ──
 print('')

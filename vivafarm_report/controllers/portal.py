@@ -274,5 +274,5 @@ class VivaSalePortal(CustomerPortal):
         so = picking.sale_id
         if so:
             so._portal_ensure_token()
-            return so.get_portal_url(query_string='&message=sign_ok')
+            return so.get_portal_url(query_string='&message=delivery_sign_ok')
         return '/my'

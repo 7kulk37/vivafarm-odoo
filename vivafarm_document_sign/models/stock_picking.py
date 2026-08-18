@@ -77,7 +77,7 @@ class StockPicking(models.Model):
         try:
             with self.env.cr.savepoint():
                 signed = self.env['viva.signed.document'].create({
-                    'document_number': self.name,
+                    'document_number': 'Delivery Confirmation: %s' % self.name,
                     'document_type': 'delivery_note',
                     'odoo_model': 'stock.picking',
                     'odoo_record_id': self.id,

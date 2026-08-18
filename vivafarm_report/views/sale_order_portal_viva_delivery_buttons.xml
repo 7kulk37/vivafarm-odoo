@@ -19,6 +19,18 @@
         lock the right form. Same parallel-button pattern as the SO Accept &
         Sign (bug 2): stock portal code is untouched.
     -->
+    <template id="sale_order_portal_viva_delivery_message"
+              name="VivaFarm Delivery Sign Success Message"
+              inherit_id="sale.sale_order_portal_template">
+        <xpath expr="//div[@t-if=&quot;message == 'sign_ok'&quot;]" position="before">
+            <div t-if="message == 'delivery_sign_ok'" class="alert alert-success alert-dismissible d-print-none" role="status">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <strong>Thank You!</strong><br/>
+                Your delivery has been received and confirmed. The signed delivery note is available below.
+            </div>
+        </xpath>
+    </template>
+
     <template id="sale_order_portal_viva_delivery_buttons"
               name="VivaFarm Sale Order Portal Delivery Buttons"
               inherit_id="sale_stock.sale_order_portal_content_inherit_sale_stock">
