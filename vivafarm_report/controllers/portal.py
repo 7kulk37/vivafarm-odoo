@@ -168,8 +168,18 @@ class VivaSalePortal(CustomerPortal):
             return request.redirect('/my')
         report = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
             'vivafarm_report.viva_delivery_note', [picking_sudo.id])[0]
-        headers = self._get_http_headers(picking_sudo, 'pdf', report, download)
-        return request.make_response(report, headers=list(headers.items()))
+        # stock.picking has no _get_report_base_filename() (the standard
+        # sale_stock delivery route builds headers manually too).
+        pdfhttpheaders = [
+            ('Content-Type', 'application/pdf'),
+            ('Content-Length', len(report)),
+        ]
+        if download:
+            pdfhttpheaders.append((
+                'Content-Disposition',
+                'attachment; filename=%s.pdf' % picking_sudo.name.replace('/', '_'),
+            ))
+        return request.make_response(report, headers=pdfhttpheaders)
 
     @http.route(['/my/picking/<int:picking_id>/accept_viva'], type='jsonrpc',
                 auth="public", website=True)

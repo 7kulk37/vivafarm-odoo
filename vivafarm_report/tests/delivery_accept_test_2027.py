@@ -133,7 +133,11 @@ def make_so(qty=2, price=100):
 
 
 def deliver_and_done(so):
-    """Confirm the SO and validate the outgoing picking -> done."""
+    """Confirm the SO and validate the outgoing picking -> done.
+
+    Odoo 19: button_validate() with all quantities set done transitions
+    the picking directly to 'done' (there is no button_done()).
+    """
     so.action_confirm()
     picking = so.picking_ids.filtered(lambda p: p.picking_type_id.code == 'outgoing')
     for move in picking.move_ids:
@@ -141,7 +145,6 @@ def deliver_and_done(so):
         move.picked = True
     picking.button_validate()
     picking = so.picking_ids.filtered(lambda p: p.picking_type_id.code == 'outgoing')
-    picking.button_done()
     picking.invalidate_recordset()
     return picking
 
@@ -170,10 +173,7 @@ print('--- D3 portal page delivery buttons ---')
 so3 = make_so()
 so3._portal_ensure_token()
 env.cr.commit()
-so3.action_confirm()
-env.cr.commit()
-# The Accept & Sign Delivery button only renders on DONE pickings; the
-# View button renders for any picking in the delivery section.
+# deliver_and_done() confirms internally — do NOT confirm here again.
 picking3 = deliver_and_done(so3)
 env.cr.commit()
 try:
@@ -191,8 +191,7 @@ print('--- D4 accept via /my/picking/<id>/accept_viva → signed + chained ---')
 so4 = make_so()
 so4._portal_ensure_token()
 env.cr.commit()
-so4.action_confirm()
-env.cr.commit()
+# deliver_and_done() confirms internally — do NOT confirm here again.
 picking4 = deliver_and_done(so4)
 env.cr.commit()
 picking4 = env['stock.picking'].browse(picking4.id)
