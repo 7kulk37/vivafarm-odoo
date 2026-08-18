@@ -1,26 +1,50 @@
 /**
- * vivafarm_report — client-side one-shot guard for "Accept & Sign quotation".
+ * vivafarm_report — client-side one-shot guard for Accept & Sign forms.
  *
  * Why (bug 2 follow-up, 2026-08-17): the stock portal.signature_form already
  * disables its submit button while the RPC is in flight (addLoadingEffect),
  * but closing and reopening the modal re-mounts the component with a fresh,
- * enabled button — so the same page can fire a second /accept_viva POST.
- * The server-side idempotency check (controllers/portal.py) turns any second
- * POST into a benign sign_ok, and this file adds the customer-side second
- * guard the user asked for: the button cannot be spammed while the server
- * is working.
+ * enabled button — so the same page can fire a second POST. The server-side
+ * idempotency check (controllers/portal.py) turns any second POST into a
+ * benign sign_ok, and this file adds the customer-side second guard the
+ * user asked for: the button cannot be spammed while the server is working.
  *
- * This lock is page-lifetime: after the FIRST submit attempt on this page the
+ * Handles BOTH signature-form families that can coexist on one order page:
+ *   - #accept_viva            — SO quotation acceptance (/accept_viva)
+ *   - #accept_viva_delivery_<id> — delivery note receipt acknowledgment
+ *                               (/my/picking/<id>/accept_viva)
+ *
+ * The lock is page-lifetime per form: after the FIRST submit attempt the
  * submit button stays locked and the modal can no longer be re-opened, even
  * after the component re-mounts. A reload re-renders the page server-side —
- * if the order was already signed the button is not rendered at all.
+ * if the document was already signed the button is not rendered at all.
  */
 (function () {
     'use strict';
 
+    function isVivaForm(el) {
+        if (!el || el.nodeType !== 1) {
+            return false;
+        }
+        if (el.id === 'accept_viva') {
+            return true;
+        }
+        return (el.id || '').indexOf('accept_viva_delivery_') === 0;
+    }
+
+    function isVivaButton(el) {
+        if (!el || el.nodeType !== 1) {
+            return false;
+        }
+        if (el.id === 'accept_viva_button') {
+            return true;
+        }
+        return (el.id || '').indexOf('accept_viva_delivery_button_') === 0;
+    }
+
     function lockForm(form) {
         form.dataset.vivaSubmitted = '1';
-        const btn = form.querySelector('.o_portal_sign_submit');
+        var btn = form.querySelector('.o_portal_sign_submit');
         if (btn) {
             btn.disabled = true;
             btn.classList.add('disabled', 'pe-none');
@@ -31,39 +55,47 @@
     // the flag is set before the first RPC fires and every later click on
     // the submit button is blocked.
     document.addEventListener('click', function (ev) {
-        const target = ev.target;
+        var target = ev.target;
         if (!target || typeof target.closest !== 'function') {
             return;
         }
-        const form = document.getElementById('accept_viva');
-        if (!form) {
-            return;
-        }
-        if (target.closest('#accept_viva .o_portal_sign_submit')) {
-            if (form.dataset.vivaSubmitted === '1') {
-                ev.preventDefault();
-                ev.stopPropagation();
+        // A submit button inside a Viva form.
+        var formEl = target.closest('.o_portal_sign_submit');
+        if (formEl) {
+            var form = formEl.closest('form');
+            if (form && isVivaForm(form)) {
+                if (form.dataset.vivaSubmitted === '1') {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    return;
+                }
+                lockForm(form);
                 return;
             }
-            lockForm(form);
-            return;
         }
-        // Once submitted, the sidebar opener must not re-open the modal.
-        if (form.dataset.vivaSubmitted === '1'
-                && target.closest('#accept_viva_button')) {
+        // A Viva modal opener button.
+        var opener = target.closest('[data-bs-toggle="modal"]');
+        if (opener && isVivaButton(opener)) {
+            var targetForm = null;
+            if (opener.id === 'accept_viva_button') {
+                targetForm = document.getElementById('accept_viva');
+            } else {
+                targetForm = document.getElementById(
+                    'accept_viva_delivery_' + opener.id.replace('accept_viva_delivery_button_', ''));
+            }
+            if (targetForm && targetForm.dataset.vivaSubmitted === '1') {
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
+        }
+    }, true);
+
+    // Also block Enter-key / programmatic re-submits of locked forms.
+    document.addEventListener('submit', function (ev) {
+        var form = ev.target;
+        if (form && isVivaForm(form) && form.dataset.vivaSubmitted === '1') {
             ev.preventDefault();
             ev.stopPropagation();
         }
     }, true);
-
-    const form = document.getElementById('accept_viva');
-    if (form) {
-        // Also block Enter-key / programmatic re-submits of the form.
-        form.addEventListener('submit', function (ev) {
-            if (form.dataset.vivaSubmitted === '1') {
-                ev.preventDefault();
-                ev.stopPropagation();
-            }
-        });
-    }
 })();

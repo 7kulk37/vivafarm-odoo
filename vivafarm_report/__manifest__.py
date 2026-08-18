@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Report Enhancements',
-    "version": "19.0.1.0.131",
+    "version": "19.0.1.0.132",
     'category': 'Accounting/Localizations',
     'summary': 'Thai invoice compliance: signature image, branch info, tax breakdown on invoice report',
     'description': """
@@ -13,7 +13,7 @@
         - Unified default-report address pattern: customer LEFT, shipping RIGHT
           (when separate), invoice address hidden (default_report_unify.xml)
     """,
-    'depends': ['l10n_th', 'account', 'sale'],
+    'depends': ['l10n_th', 'account', 'sale', 'sale_stock'],
     'data': [
         'security/ir.model.access.csv',
         'views/report_external_layout_viva.xml',
@@ -31,6 +31,7 @@
         'views/sale_order_sent_quotation_button.xml',
         'views/sale_order_portal_button.xml',
         'views/sale_order_portal_accept_viva_button.xml',
+        'views/sale_order_portal_viva_delivery_buttons.xml',
         'views/report_viva_wht_certificate.xml',
         'views/report_asset_override.xml',
         'views/account_move_views.xml',

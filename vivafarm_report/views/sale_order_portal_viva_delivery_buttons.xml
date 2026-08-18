@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VivaFarm delivery-note portal buttons: "View Viva Delivery Note" +
+        "Accept & Sign Delivery" in the "Last Delivery Orders" section.
+
+        The stock section (sale_stock.sale_order_portal_content_inherit_
+        sale_stock) links each picking to /my/picking/pdf/<id> which renders
+        the DEFAULT stock.action_report_delivery. This inheritance adds:
+          - "View Viva Delivery Note" → /my/picking/<id>/viva_pdf (the custom
+            vivafarm_report.viva_delivery_note; once acknowledged, the
+            ir_actions_report override serves the STORED signed bytes).
+          - "Accept & Sign Delivery" (done, unsigned pickings only) → modal
+            with the existing Viva signature form → /my/picking/<id>/accept_viva.
+
+        The modal lives INSIDE the delivery-row loop because `picking` is only
+        in scope there (the order-page modal template has no picking context).
+        Each picking gets a unique modal/form/button id so the guard JS can
+        lock the right form. Same parallel-button pattern as the SO Accept &
+        Sign (bug 2): stock portal code is untouched.
+    -->
+    <template id="sale_order_portal_viva_delivery_buttons"
+              name="VivaFarm Sale Order Portal Delivery Buttons"
+              inherit_id="sale_stock.sale_order_portal_content_inherit_sale_stock">
+        <!-- Buttons + per-picking signature modal inside the delivery row. -->
+        <xpath expr="//div[@name='delivery_details']" position="after">
+            <div class="d-flex gap-2 flex-wrap mt-1" name="viva_delivery_actions">
+                <a
+                    class="btn btn-sm btn-light o_print_btn"
+                    t-att-href="'/my/picking/%s/viva_pdf?%s' % (picking.id, keep_query())"
+                    target="_blank"
+                >
+                    <i class="fa fa-print me-1"/>View Viva Delivery Note
+                </a>
+                <a
+                    t-if="picking.state == 'done' and not picking.signature"
+                    role="button"
+                    class="btn btn-sm btn-primary"
+                    t-att-data-bs-target="'#modalaccept_viva_delivery_%s' % picking.id"
+                    data-bs-toggle="modal"
+                    href="#"
+                    t-att-id="'accept_viva_delivery_button_%s' % picking.id"
+                >
+                    <i class="fa fa-check me-1"/>Accept &amp; Sign Delivery
+                </a>
+            </div>
+
+            <div role="dialog" class="modal fade"
+                 t-att-id="'modalaccept_viva_delivery_%s' % picking.id"
+                 name="sale_order_modal_sign_viva_delivery">
+                <div
+                    t-if="picking.state == 'done' and not picking.signature"
+                    class="modal-dialog"
+                >
+                    <form
+                        t-att-id="'accept_viva_delivery_%s' % picking.id"
+                        method="POST"
+                        t-att-data-order-id="picking.id"
+                        t-att-data-token="sale_order.access_token"
+                        class="js_accept_json modal-content js_website_submit_form"
+                    >
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <header class="modal-header">
+                            <h4 class="modal-title">Accept &amp; Sign Delivery</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                        </header>
+                        <main class="modal-body" id="sign-dialog-viva-delivery">
+                            <span>
+                                By signing, you acknowledge receipt of
+                                <b t-field="sale_order.partner_id.commercial_partner_id"/>
+                                for delivery
+                                <b t-esc="picking.name"/>.
+                            </span>
+                            <t t-set="call_url" t-value="'/my/picking/%s/accept_viva?access_token=%s' % (picking.id, sale_order.access_token)"/>
+                            <t
+                                t-set="default_name"
+                                t-value="sale_order.partner_id.name or sale_order.partner_id.commercial_partner_id.name"
+                            />
+                            <t t-set="signature_form_props" t-value="{
+                                'callUrl': call_url,
+                                'defaultName': default_name,
+                                'mode': mode,
+                                'sendLabel': 'Accept &amp; Sign',
+                                'signatureRatio': signature_ratio,
+                                'signatureType': signature_type,
+                                'fontColor': font_color
+                            }"/>
+                            <owl-component name="vivafarm_report.accept_viva_signature_form"
+                                           t-att-props="json.dumps(signature_form_props)"/>
+                        </main>
+                    </form>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

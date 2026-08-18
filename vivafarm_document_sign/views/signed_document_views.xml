@@ -36,6 +36,7 @@
                             <field name="state"/>
                             <field name="move_id"/>
                             <field name="sale_order_id"/>
+                            <field name="picking_id"/>
                             <field name="verification_token"/>
                             <field name="signed_attachment_id" widget="binary"/>
                         </group>
