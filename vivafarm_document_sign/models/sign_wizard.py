@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from odoo import _, fields, models
 from odoo.exceptions import UserError
 
+from psycopg2 import IntegrityError
+
 from ..services.signing_service import SigningService, sha256_hex
 
 
@@ -126,24 +128,35 @@ class VivaSignWizard(models.TransientModel):
         previous_hash = previous_signed.pdf_sha256 if previous_signed else False
 
         # 1. Pre-create the record (token + identity known before rendering)
-        signed = self.env['viva.signed.document'].create({
-            'document_number': self.move_id.name,
-            'document_type': 'tax_invoice',
-            'odoo_model': 'account.move',
-            'odoo_record_id': self.move_id.id,
-            'move_id': self.move_id.id,
-            'revision': revision,
-            'previous_document_hash': previous_hash,
-            'certificate_type': 'TEST' if self._is_test_cert(cert_info) else 'PRODUCTION',
-            'certificate_subject': cert_info['subject'],
-            'certificate_issuer': cert_info['issuer'],
-            'certificate_serial': cert_info['serial'],
-            'certificate_fingerprint': cert_info['fingerprint'],
-            'certificate_valid_from': self._to_odoo_datetime(cert_info['not_before']),
-            'certificate_valid_to': self._to_odoo_datetime(cert_info['not_after']),
-            'signer_user_id': self.env.user.id,
-            'signed_at': fields.Datetime.now(),
-        })
+        # DB-layer race (same class as the SO path, guard 3): a concurrent
+        # sign of the SAME invoice raises IntegrityError on the
+        # unique(move_id) constraint. Converge — reuse the winner's record
+        # (its stored bytes are the signed document) instead of crashing.
+        try:
+            with self.env.cr.savepoint():
+                signed = self.env['viva.signed.document'].create({
+                    'document_number': self.move_id.name,
+                    'document_type': 'tax_invoice',
+                    'odoo_model': 'account.move',
+                    'odoo_record_id': self.move_id.id,
+                    'move_id': self.move_id.id,
+                    'revision': revision,
+                    'previous_document_hash': previous_hash,
+                    'certificate_type': 'TEST' if self._is_test_cert(cert_info) else 'PRODUCTION',
+                    'certificate_subject': cert_info['subject'],
+                    'certificate_issuer': cert_info['issuer'],
+                    'certificate_serial': cert_info['serial'],
+                    'certificate_fingerprint': cert_info['fingerprint'],
+                    'certificate_valid_from': self._to_odoo_datetime(cert_info['not_before']),
+                    'certificate_valid_to': self._to_odoo_datetime(cert_info['not_after']),
+                    'signer_user_id': self.env.user.id,
+                    'signed_at': fields.Datetime.now(),
+                })
+        except IntegrityError:
+            signed = self.env['viva.signed.document'].search(
+                [('move_id', '=', self.move_id.id)], limit=1)
+            if not signed:
+                raise
 
         # 2. Render the STAMPED PDF (record exists → stamp + QR render)
         pdf_bytes = self._render_invoice_pdf()
