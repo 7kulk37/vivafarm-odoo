@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- "Ship & Send DN" + "Force Done" buttons on the delivery form.
+
+         Path B (customer-signing flow, user design 2026-08-18):
+           Ready -> In Transit -> (customer signs) -> Done
+         "Ship & Send DN" is a SEPARATE button next to Validate — it marks
+         the delivery In Transit (yellow portal badge) and emails the DN to
+         the customer. It does NOT touch the stock Validate button (Path A
+         stays pure default Odoo).
+
+         "Force Done" is the fallback (user choice A): visible ONLY on
+         in_transit deliveries, completes without the customer signature
+         (negotiation happened outside Odoo).
+    -->
+    <record id="view_stock_picking_ship_dn_buttons" model="ir.ui.view">
+        <field name="name">stock.picking.form — Ship &amp; Send DN / Force Done buttons</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- Ship & Send DN: next to Validate, visible on Ready/in_transit -->
+            <button name="button_validate" position="after">
+                <button
+                    name="action_ship_and_send_dn"
+                    string="Ship &amp; Send DN"
+                    type="object"
+                    class="btn-primary"
+                    groups="stock.group_stock_user"
+                    invisible="state not in ('assigned', 'in_transit')"/>
+            </button>
+            <!-- Force Done: only on in_transit (customer never signed) -->
+            <button name="action_ship_and_send_dn" position="after">
+                <button
+                    name="action_force_done"
+                    string="Force Done"
+                    type="object"
+                    confirm="Complete this delivery WITHOUT the customer signature? Use only when the customer cannot sign (negotiated outside Odoo)."
+                    groups="stock.group_stock_user"
+                    invisible="state != 'in_transit'"/>
+            </button>
+        </field>
+    </record>
+</odoo>

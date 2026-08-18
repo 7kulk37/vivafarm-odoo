@@ -22,6 +22,16 @@
     <template id="sale_order_portal_viva_delivery_buttons"
               name="VivaFarm Sale Order Portal Delivery Buttons"
               inherit_id="sale_stock.sale_order_portal_content_inherit_sale_stock">
+        <!-- Yellow "In Transit" badge (user design 2026-08-18): the stock
+             badge logic shows Preparation/Shipped/Cancelled — add the
+             in_transit branch between Shipped and Preparation. -->
+        <xpath expr="//span[hasclass('text-bg-success')]" position="before">
+            <span
+                t-if="picking.state == 'in_transit'"
+                class="small badge rounded-pill text-bg-warning orders_label_text_align">
+                <i class="fa fa-fw fa-truck"/> In Transit
+            </span>
+        </xpath>
         <!-- Buttons + per-picking signature modal inside the delivery row. -->
         <xpath expr="//div[@name='delivery_details']" position="after">
             <div class="d-flex gap-2 flex-wrap mt-1" name="viva_delivery_actions">
@@ -33,7 +43,7 @@
                     <i class="fa fa-print me-1"/>View Viva Delivery Note
                 </a>
                 <a
-                    t-if="picking.state == 'done' and not picking.signature"
+                    t-if="picking.state == 'in_transit'"
                     role="button"
                     class="btn btn-sm btn-primary"
                     t-att-data-bs-target="'#modalaccept_viva_delivery_%s' % picking.id"
@@ -49,7 +59,7 @@
                  t-att-id="'modalaccept_viva_delivery_%s' % picking.id"
                  name="sale_order_modal_sign_viva_delivery">
                 <div
-                    t-if="picking.state == 'done' and not picking.signature"
+                    t-if="picking.state == 'in_transit'"
                     class="modal-dialog"
                 >
                     <form

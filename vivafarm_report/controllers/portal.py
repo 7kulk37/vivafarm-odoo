@@ -206,15 +206,19 @@ class VivaSalePortal(CustomerPortal):
         except (AccessError, MissingError):
             return {'error': 'Invalid delivery note.'}
 
-        # Idempotency: already signed + done -> benign success.
+        # Idempotency: already signed (customer signed -> flag cleared ->
+        # state done) -> benign success.
         if picking_sudo.state == 'done' and picking_sudo.signature:
             return {
                 'force_refresh': True,
                 'redirect_url': self._delivery_redirect_url(picking_sudo),
             }
 
-        if picking_sudo.state != 'done':
-            return {'error': 'The delivery note is not in a state requiring customer acknowledgment.'}
+        # The customer can only sign an IN TRANSIT delivery (user design
+        # 2026-08-18: Ready > In Transit > Done). 'done' without signature
+        # means Path A (Validate) or Force Done — signing is meaningless.
+        if picking_sudo.state != 'in_transit':
+            return {'error': 'The delivery note is not in transit.'}
         if not signature:
             return {'error': 'Signature is missing.'}
 
@@ -229,6 +233,10 @@ class VivaSalePortal(CustomerPortal):
             request.env.cr.flush()
         except (TypeError, binascii.Error):
             return {'error': 'Invalid signature data.'}
+
+        # Complete the delivery the way Validate would (clears in_transit,
+        # moves stock, state -> done), THEN hash the acknowledged DN.
+        picking_sudo._complete_delivery()
 
         # Hash the acknowledged delivery note (receiver signature baked in).
         picking_sudo.with_context(delivery_include_signature=True)._hash_delivery_accepted()

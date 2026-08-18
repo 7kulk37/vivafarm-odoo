@@ -7,32 +7,30 @@ Run against test_sign (vivafarm_report + vivafarm_document_sign installed):
       --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/opt/odoo-custom-addons \
       < delivery_accept_test_2027.py
 
-WHY THIS FEATURE (user request 2026-08-18):
-  Digital sign on the delivery note (ใบส่งสินค้า) chained to the linked SO,
-  portal-first like the SO flow. The customer acknowledges receipt via a
-  portal modal ("Accept & Sign Delivery") that posts to
-  /my/picking/<id>/accept_viva — the route writes the drawn signature on
-  the picking, hashes the delivery note (receiver signature baked in), and
-  stores the signed PDF. The delivery note stamp shows the linked SO + its
-  verification code (record-level chain, user decision). No confirmation
-  email (user decision — customer has the goods physically); chatter post
-  + stored signed bytes served is enough. Signed deliveries are locked
-  (substance edits + cancel blocked — user decision).
+WHY THIS FEATURE (user design 2026-08-18, Option D):
+  Delivery state machine becomes Ready > In Transit > Done. "Ship & Send DN"
+  (NEW button, next to Validate) moves a Ready delivery to In Transit and
+  emails the customer the Viva DN PDF + portal link. The customer signs via
+  "Accept & Sign Delivery" in the portal — the route runs the
+  Validate-equivalent (_complete_delivery: stock moves + done), then hashes
+  + RSA-signs the DN. Validate stays untouched (Path A direct-done, no sign).
+  Force Done (user choice A) is the fallback for never-signed deliveries.
 
 Checks:
-  D1  viva.signed.document has delivery_note type + picking_id + UNIQUE
-  D2  Routes registered: /my/picking/<id>/viva_pdf (http) +
-      /my/picking/<id>/accept_viva (jsonrpc)
-  D3  SO portal page shows delivery section with View Viva Delivery Note +
-      Accept & Sign Delivery buttons + modal
-  D4  Full flow: SO -> confirm -> deliver -> done -> POST accept_viva ->
-      signed doc created (type delivery_note, chained sale_order_id),
-      receiver signature baked in the signed PDF, chatter post
-  D5  Stored bytes served on print (ir_actions_report override) — the
-      viva_pdf route returns byte-identical bytes to the stored attachment
-  D6  Idempotent repeat POST (same 3-layer guard as /accept_viva)
-  D7  Lock: substance edits + cancel blocked on a signed picking
-  D8  Delivery stamp shows Linked SO + its verification code
+  D1  Model: in_transit field + state selection has in_transit + compute
+  D2  Routes registered: /my/picking/<id>/viva_pdf + /accept_viva
+  D3  Portal page: yellow In Transit badge + Accept & Sign Delivery button
+      (button ONLY on in_transit — NOT on done)
+  D4  Ship & Send DN: state in_transit + email with DN PDF + portal link
+  D5  Full flow: sign in transit -> _complete_delivery (state done, stock
+      moved) + signed doc + chain + byte-identical stored bytes + chatter
+  D6  Idempotent repeat POST
+  D7  Lock: substance edits + cancel blocked on signed delivery
+  D8  Path A (Validate): done WITHOUT signature — no sign button, no signed
+      doc, route rejects (not in transit)
+  D9  Force Done: in_transit -> done without signature (fallback), no signed
+      doc, route rejects
+  D10 Delivery stamp shows Linked SO (no masquerade)
 """
 import base64
 import json
@@ -58,7 +56,6 @@ SIGNATURE_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9
 
 
 def http_jsonrpc(url, payload, headers=None):
-    """POST a jsonrpc payload; return parsed response or raise."""
     data = json.dumps({'jsonrpc': '2.0', 'method': 'call', 'params': payload}).encode()
     req = urllib.request.Request(url, data=data, method='POST')
     req.add_header('Content-Type', 'application/json')
@@ -79,7 +76,6 @@ def http_get_bytes(url, headers=None):
 
 
 def http_status(method, url, payload=None):
-    """Return HTTP status code for a request (does not raise on 4xx)."""
     import http.client
     from urllib.parse import urlparse
     u = urlparse(url)
@@ -106,7 +102,6 @@ if not partner:
     })
 product = env['product.product'].search([('name', '=', 'Delivery Sign Test Product')], limit=1)
 if not product:
-    # Storable product in a real-time valuation category so delivery moves work.
     goods_cat = env['product.category'].search(
         [('name', '=', 'All'), ('property_valuation', '=', 'real_time')], limit=1) or \
         env['product.category'].search([], limit=1)
@@ -132,31 +127,33 @@ def make_so(qty=2, price=100):
     })
 
 
-def deliver_and_done(so):
-    """Confirm the SO and validate the outgoing picking -> done.
-
-    Odoo 19: button_validate() with all quantities set done transitions
-    the picking directly to 'done' (there is no button_done()).
-    """
+def confirm_and_ready(so):
+    """Confirm the SO and return the outgoing picking (state assigned/ready)."""
     so.action_confirm()
     picking = so.picking_ids.filtered(lambda p: p.picking_type_id.code == 'outgoing')
-    for move in picking.move_ids:
-        move.quantity = move.product_uom_qty
-        move.picked = True
-    picking.button_validate()
-    picking = so.picking_ids.filtered(lambda p: p.picking_type_id.code == 'outgoing')
+    picking.move_ids._action_assign()
     picking.invalidate_recordset()
     return picking
 
 
-# ── D1: model + constraint ──
-print('--- D1 signed.document delivery support ---')
-check('D1 delivery_note type exists',
-      any(v == 'delivery_note' for v, _ in env['viva.signed.document']._fields['document_type'].selection))
-check('D1 picking_id field exists', 'picking_id' in env['viva.signed.document']._fields)
+def validate_direct(picking):
+    """Path A: stock Validate-equivalent — quantities + _action_done -> done."""
+    for move in picking.move_ids:
+        move.quantity = move.product_uom_qty
+        move.picked = True
+    picking._action_done()
+    picking.invalidate_recordset()
+    return picking
+
+
+# ── D1: model + state machine ──
+print('--- D1 in_transit model ---')
+check('D1 in_transit field exists', 'in_transit' in env['stock.picking']._fields)
+states = dict(env['stock.picking']._fields['state'].selection)
+check('D1 state selection has in_transit', 'in_transit' in states,
+      '(states=%s)' % sorted(states.keys()))
 check('D1 stock.picking.signed_by exists', 'signed_by' in env['stock.picking']._fields)
-check('D1 stock.picking.signed_on exists', 'signed_on' in env['stock.picking']._fields)
-check('D1 stock.picking.signed_position exists', 'signed_position' in env['stock.picking']._fields)
+check('D1 viva.signed.document picking_id exists', 'picking_id' in env['viva.signed.document']._fields)
 
 # ── D2: routes registered ──
 print('--- D2 routes registered ---')
@@ -168,101 +165,123 @@ check('D2 /my/picking/<id>/accept_viva route registered',
                   {'access_token': 'x', 'name': 'x', 'signature': 'x'}) != 404,
       '(not 404 = route present)')
 
-# ── D3: portal page shows delivery buttons ──
-print('--- D3 portal page delivery buttons ---')
+# ── D3: portal page — In Transit badge + sign button only in transit ──
+print('--- D3 portal page (in transit) ---')
 so3 = make_so()
 so3._portal_ensure_token()
 env.cr.commit()
-# deliver_and_done() confirms internally — do NOT confirm here again.
-picking3 = deliver_and_done(so3)
+picking3 = confirm_and_ready(so3)
 env.cr.commit()
+picking3.action_ship_and_send_dn()
+env.cr.commit()
+picking3 = env['stock.picking'].browse(picking3.id)
+picking3.invalidate_recordset()
+check('D3 ship & send -> state in_transit', picking3.state == 'in_transit',
+      '(state=%s)' % picking3.state)
 try:
     page = http_get_bytes('http://127.0.0.1:8069/my/orders/%d?access_token=%s' % (so3.id, so3.access_token)).decode()
 except Exception as e:
     page = ''
     print('  (portal page fetch failed: %s)' % e)
-check('D3 page has View Viva Delivery Note button', 'View Viva Delivery Note' in page)
+check('D3 page has In Transit badge', 'In Transit' in page)
 check('D3 page has Accept & Sign Delivery button', 'Accept & Sign Delivery' in page)
+check('D3 page has View Viva Delivery Note button', 'View Viva Delivery Note' in page)
 check('D3 page has delivery signature modal', 'modalaccept_viva_delivery' in page)
 check('D3 page has viva_pdf route link', '/viva_pdf' in page)
 
-# ── D4: full flow via the new route ──
-print('--- D4 accept via /my/picking/<id>/accept_viva → signed + chained ---')
-so4 = make_so()
-so4._portal_ensure_token()
-env.cr.commit()
-# deliver_and_done() confirms internally — do NOT confirm here again.
-picking4 = deliver_and_done(so4)
-env.cr.commit()
-picking4 = env['stock.picking'].browse(picking4.id)
-picking4.invalidate_recordset()
-check('D4 picking done', picking4.state == 'done', '(state=%s)' % picking4.state)
-check('D4 picking linked to SO', picking4.sale_id.id == so4.id)
+# ── D4: ship & send email with DN PDF + portal link ──
+print('--- D4 Ship & Send DN email ---')
+msgs4 = env['mail.message'].search([
+    ('model', '=', 'stock.picking'),
+    ('res_id', '=', picking3.id),
+], order='id desc', limit=5)
+dn_att = any(
+    att.name.startswith(picking3.name) and att.name.endswith('.pdf')
+    for m in msgs4 for att in m.attachment_ids
+)
+check('D4 email has DN PDF attachment', dn_att)
 
-url = 'http://127.0.0.1:8069/my/picking/%d/accept_viva' % picking4.id
+# ── D5: full flow via the new route (in transit -> sign -> done + signed) ──
+print('--- D5 sign in transit -> complete + signed + chained ---')
+so5 = make_so()
+so5._portal_ensure_token()
+env.cr.commit()
+picking5 = confirm_and_ready(so5)
+env.cr.commit()
+picking5.action_ship_and_send_dn()
+env.cr.commit()
+picking5 = env['stock.picking'].browse(picking5.id)
+picking5.invalidate_recordset()
+check('D5 picking in_transit before sign', picking5.state == 'in_transit',
+      '(state=%s)' % picking5.state)
+url = 'http://127.0.0.1:8069/my/picking/%d/accept_viva' % picking5.id
 try:
     resp = http_jsonrpc(url, {
-        'access_token': so4.access_token,
+        'access_token': so5.access_token,
         'name': 'Delivery Receiver',
         'position': 'Store Manager',
         'signature': SIGNATURE_B64,
     })
-    check('D4 route returned ok', resp.get('result', {}).get('force_refresh') is True,
+    check('D5 route returned ok', resp.get('result', {}).get('force_refresh') is True,
           '(resp=%s)' % str(resp.get('result'))[:120])
 except Exception as e:
-    check('D4 route returned ok', False, '(error: %s)' % e)
+    check('D5 route returned ok', False, '(error: %s)' % e)
 
 env.cr.commit()
-picking4 = env['stock.picking'].browse(picking4.id)
-picking4.invalidate_recordset()
-check('D4 signed_by stored', picking4.signed_by == 'Delivery Receiver',
-      '(signed_by=%r)' % picking4.signed_by)
-check('D4 signed_position stored', picking4.signed_position == 'Store Manager',
-      '(signed_position=%r)' % picking4.signed_position)
-check('D4 signature stored', bool(picking4.signature))
-signed4 = env['viva.signed.document'].search([('picking_id', '=', picking4.id)], limit=1)
-check('D4 signed doc created', bool(signed4))
-signed4_bytes = b''
-if signed4:
-    check('D4 document_type delivery_note', signed4.document_type == 'delivery_note',
-          '(type=%s)' % signed4.document_type)
-    check('D4 chained to linked SO', signed4.sale_order_id.id == so4.id,
-          '(sale_order_id=%s)' % signed4.sale_order_id.id)
-    signed4_bytes = base64.b64decode(signed4.signed_attachment_id.datas)
-    check('D4 signed attachment exists', len(signed4_bytes) > 50000,
-          '(bytes=%d)' % len(signed4_bytes))
-    check('D4 hash block in delivery render',
+picking5 = env['stock.picking'].browse(picking5.id)
+picking5.invalidate_recordset()
+check('D5 state done after sign', picking5.state == 'done', '(state=%s)' % picking5.state)
+check('D5 in_transit flag cleared', not picking5.in_transit)
+check('D5 signed_by stored', picking5.signed_by == 'Delivery Receiver',
+      '(signed_by=%r)' % picking5.signed_by)
+check('D5 signed_position stored', picking5.signed_position == 'Store Manager',
+      '(signed_position=%r)' % picking5.signed_position)
+check('D5 signature stored', bool(picking5.signature))
+signed5 = env['viva.signed.document'].search([('picking_id', '=', picking5.id)], limit=1)
+check('D5 signed doc created', bool(signed5))
+signed5_bytes = b''
+if signed5:
+    check('D5 document_type delivery_note', signed5.document_type == 'delivery_note',
+          '(type=%s)' % signed5.document_type)
+    check('D5 chained to linked SO', signed5.sale_order_id.id == so5.id,
+          '(sale_order_id=%s)' % signed5.sale_order_id.id)
+    signed5_bytes = base64.b64decode(signed5.signed_attachment_id.datas)
+    check('D5 signed attachment exists', len(signed5_bytes) > 50000,
+          '(bytes=%d)' % len(signed5_bytes))
+    check('D5 hash block in delivery render',
           b'Digitally Signed Document' in env['ir.actions.report']._render_qweb_html(
-              'vivafarm_report.viva_delivery_note', [picking4.id])[0])
-    check('D4 receiver signature baked in signed PDF',
+              'vivafarm_report.viva_delivery_note', [picking5.id])[0])
+    check('D5 receiver signature baked in signed PDF',
           b'Delivery Receiver' in env['ir.actions.report'].with_context(
               delivery_include_signature=True)._render_qweb_html(
-                  'vivafarm_report.viva_delivery_note', [picking4.id])[0])
-# Chatter post (no email — user decision).
-msgs = env['mail.message'].search([
+                  'vivafarm_report.viva_delivery_note', [picking5.id])[0])
+msgs5 = env['mail.message'].search([
     ('model', '=', 'stock.picking'),
-    ('res_id', '=', picking4.id),
+    ('res_id', '=', picking5.id),
 ], order='id desc', limit=5)
 att_found = any(
-    att.name.startswith(picking4.name) and att.name.endswith('.pdf')
-    for m in msgs for att in m.attachment_ids
+    att.name.startswith(picking5.name) and att.name.endswith('.pdf')
+    for m in msgs5 for att in m.attachment_ids
 )
-check('D4 chatter post with delivery PDF', att_found)
+check('D5 chatter post with delivery PDF', att_found)
+# Stock actually moved (Validate-equivalent ran)
+moves_done = all(m.state == 'done' for m in picking5.move_ids)
+check('D5 stock moves done after sign', moves_done)
 
-# ── D5: stored bytes served on print (override) ──
-print('--- D5 stored bytes served ---')
-if signed4:
+# ── Stored bytes served on print (override) ──
+print('--- D5b stored bytes served ---')
+if signed5:
     route_bytes = http_get_bytes(
-        'http://127.0.0.1:8069/my/picking/%d/viva_pdf?access_token=%s' % (picking4.id, so4.access_token))
-    check('D5 viva_pdf route returns stored signed bytes (byte-identical)',
-          route_bytes == signed4_bytes,
-          '(route=%dB stored=%dB)' % (len(route_bytes), len(signed4_bytes)))
+        'http://127.0.0.1:8069/my/picking/%d/viva_pdf?access_token=%s' % (picking5.id, so5.access_token))
+    check('D5b viva_pdf route returns stored signed bytes (byte-identical)',
+          route_bytes == signed5_bytes,
+          '(route=%dB stored=%dB)' % (len(route_bytes), len(signed5_bytes)))
 
 # ── D6: idempotent repeat POST ──
 print('--- D6 repeat POST on already-signed delivery is a benign success ---')
 try:
     resp6 = http_jsonrpc(url, {
-        'access_token': so4.access_token,
+        'access_token': so5.access_token,
         'name': 'Delivery Receiver',
         'signature': SIGNATURE_B64,
     })
@@ -273,53 +292,106 @@ try:
     check('D6 repeat POST redirect is sign_ok', 'sign_ok' in (res6.get('redirect_url') or ''),
           '(url=%s)' % (res6.get('redirect_url') or ''))
     check('D6 repeat POST has no guard error',
-          'not in a state requiring customer acknowledgment' not in json.dumps(res6))
+          'not in transit' not in json.dumps(res6))
 except Exception as e:
     check('D6 repeat POST returns success shape (force_refresh)', False, '(error: %s)' % e)
 env.cr.commit()
-signed_count6 = env['viva.signed.document'].search_count([('picking_id', '=', picking4.id)])
+signed_count6 = env['viva.signed.document'].search_count([('picking_id', '=', picking5.id)])
 check('D6 still exactly one signed doc after repeat POST', signed_count6 == 1,
       '(count=%d)' % signed_count6)
 
 # ── D7: lock — substance edits + cancel blocked ──
 print('--- D7 signed delivery locked ---')
-if signed4:
+if signed5:
     try:
-        picking4.write({'origin': 'CHANGED-ORIGIN'})
+        picking5.write({'origin': 'CHANGED-ORIGIN'})
         check('D7 substance edit blocked', False, '(write succeeded!)')
     except UserError:
         check('D7 substance edit blocked', True, '(UserError)')
     try:
-        picking4.action_cancel()
+        picking5.action_cancel()
         check('D7 cancel blocked', False, '(cancel succeeded!)')
     except UserError:
         check('D7 cancel blocked', True, '(UserError)')
-    check('D7 picking still done', picking4.state == 'done', '(state=%s)' % picking4.state)
+    check('D7 picking still done', picking5.state == 'done', '(state=%s)' % picking5.state)
 
-# ── D8: delivery stamp shows Linked SO + its verification code ──
-print('--- D8 linked SO on the stamp ---')
-if signed4:
+# ── D8: Path A — Validate direct: done WITHOUT signature ──
+print('--- D8 Path A (Validate) done without sign ---')
+so8 = make_so()
+so8._portal_ensure_token()
+env.cr.commit()
+picking8 = confirm_and_ready(so8)
+env.cr.commit()
+validate_direct(picking8)
+env.cr.commit()
+picking8 = env['stock.picking'].browse(picking8.id)
+picking8.invalidate_recordset()
+check('D8 Path A state done', picking8.state == 'done', '(state=%s)' % picking8.state)
+check('D8 no signed doc on Path A', not env['viva.signed.document'].search(
+    [('picking_id', '=', picking8.id)], limit=1))
+try:
+    page8 = http_get_bytes('http://127.0.0.1:8069/my/orders/%d?access_token=%s' % (so8.id, so8.access_token)).decode()
+except Exception as e:
+    page8 = ''
+    print('  (portal page fetch failed: %s)' % e)
+check('D8 no Accept & Sign button on done-without-sign', 'Accept & Sign Delivery' not in page8)
+# Route rejects: not in transit
+try:
+    resp8 = http_jsonrpc('http://127.0.0.1:8069/my/picking/%d/accept_viva' % picking8.id, {
+        'access_token': so8.access_token,
+        'name': 'Delivery Receiver',
+        'signature': SIGNATURE_B64,
+    })
+    check('D8 route rejects done-without-sign', 'not in transit' in json.dumps(resp8),
+          '(resp=%s)' % str(resp8.get('result'))[:120])
+except Exception as e:
+    check('D8 route rejects done-without-sign', False, '(error: %s)' % e)
+
+# ── D9: Force Done fallback (user choice A) ──
+print('--- D9 Force Done fallback ---')
+so9 = make_so()
+so9._portal_ensure_token()
+env.cr.commit()
+picking9 = confirm_and_ready(so9)
+env.cr.commit()
+picking9.action_ship_and_send_dn()
+env.cr.commit()
+picking9 = env['stock.picking'].browse(picking9.id)
+picking9.invalidate_recordset()
+check('D9 in_transit before force', picking9.state == 'in_transit')
+picking9.action_force_done()
+env.cr.commit()
+picking9 = env['stock.picking'].browse(picking9.id)
+picking9.invalidate_recordset()
+check('D9 force done -> state done', picking9.state == 'done', '(state=%s)' % picking9.state)
+check('D9 in_transit flag cleared', not picking9.in_transit)
+check('D9 no signed doc on force done', not env['viva.signed.document'].search(
+    [('picking_id', '=', picking9.id)], limit=1))
+# Route rejects: done without signature
+try:
+    resp9 = http_jsonrpc('http://127.0.0.1:8069/my/picking/%d/accept_viva' % picking9.id, {
+        'access_token': so9.access_token,
+        'name': 'Delivery Receiver',
+        'signature': SIGNATURE_B64,
+    })
+    check('D9 route rejects force-done', 'not in transit' in json.dumps(resp9),
+          '(resp=%s)' % str(resp9.get('result'))[:120])
+except Exception as e:
+    check('D9 route rejects force-done', False, '(error: %s)' % e)
+
+# ── D10: delivery stamp shows Linked SO (no masquerade) ──
+print('--- D10 linked SO on the stamp ---')
+if signed5:
     so_signed = env['viva.signed.document'].search([
-        ('sale_order_id', '=', so4.id),
+        ('sale_order_id', '=', so5.id),
         ('document_type', '=', 'sale_order'),
     ], limit=1)
-    html8 = env['ir.actions.report']._render_qweb_html(
-        'vivafarm_report.viva_delivery_note', [picking4.id])[0]
-    check('D8 stamp shows Linked SO', so4.name.encode() in html8)
-    if so_signed:
-        check('D8 stamp shows SO verification code',
-              so_signed.verification_code.encode() in html8,
-              '(code=%s)' % so_signed.verification_code)
-    else:
-        # The SO in this flow was backend-confirmed (no portal signature),
-        # so it has NO own signed doc — the delivery's own record must NOT
-        # masquerade as the SO code (the chained record carries sale_order_id,
-        # which is the bug this check catches: the SO code would equal the
-        # delivery code).
-        check('D8 no SO code when SO unsigned',
-              ('Code: %s' % signed4.verification_code).encode() not in html8,
-              '(delivery code must not appear as SO code)')
-        check('D8 SO name still shown without code', so4.name.encode() in html8)
+    html10 = env['ir.actions.report']._render_qweb_html(
+        'vivafarm_report.viva_delivery_note', [picking5.id])[0]
+    check('D10 stamp shows Linked SO', so5.name.encode() in html10)
+    check('D10 no SO code when SO unsigned',
+          ('Code: %s' % signed5.verification_code).encode() not in html10,
+          '(delivery code must not appear as SO code)')
 
 # ── Summary ──
 print('')

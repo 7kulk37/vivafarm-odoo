@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- "Delivery: Shipment Notification" email — sent by the "Ship & Send DN"
+         button (stock_picking.action_ship_and_send_dn). Tells the customer
+         the goods are In Transit and links them to the portal order page
+         where they can open + sign the Viva delivery note (ใบส่งสินค้า).
+         The DN PDF is attached (fresh render — not signed yet). -->
+    <record id="viva_email_template_ship_delivery" model="mail.template">
+        <field name="name">Delivery: Shipment Notification (Viva)</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="subject">{{ object.company_id.name }} Delivery {{ object.name }} is on its way</field>
+        <field name="email_from">{{ (object.picking_type_id.warehouse_id.partner_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="partner_to" eval="False"/>
+        <field name="use_default_to" eval="True"/>
+        <field name="description">Sent when the seller clicks Ship &amp; Send DN — the delivery is In Transit and the customer can sign it on the portal</field>
+        <field name="report_template_ids" eval="[(4, ref('vivafarm_report.action_report_viva_delivery_note'))]"/>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Hello,
+        <br/><br/>
+        Your delivery
+        <span style="font-weight: bold;" t-out="object.name or ''">WH/OUT/00000</span>
+        has been shipped and is on its way. The delivery note is attached to
+        this email.
+        <br/><br/>
+        <t t-if="object.sale_id">
+            To view or sign the delivery note, open your order
+            <a t-att-href="object.sale_id.get_portal_url()">
+                <span t-out="object.sale_id.name or ''">SO/2026/00000</span>
+            </a>
+            on the portal and use the "Accept &amp; Sign Delivery" button.
+        </t>
+        <t t-else="">
+            You can sign the delivery note when it arrives.
+        </t>
+        <br/><br/>
+        Do not hesitate to contact us if you have any questions.
+        <t t-if="not is_html_empty(object.user_id.signature)">
+            <div>--<br/><t t-out="object.user_id.signature or ''">Odoo</t></div>
+        </t>
+    </p>
+</div>
+        </field>
+    </record>
+</odoo>
