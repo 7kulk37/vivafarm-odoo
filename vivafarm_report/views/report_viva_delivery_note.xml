@@ -227,6 +227,7 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">vivafarm_report.viva_delivery_note</field>
         <field name="report_file">vivafarm_report.viva_delivery_note</field>
+        <field name="print_report_name">'Delivery Note - %s' % (object.name)</field>
         <field name="binding_model_id" ref="stock.model_stock_picking"/>
         <field name="binding_type">report</field>
     </record>

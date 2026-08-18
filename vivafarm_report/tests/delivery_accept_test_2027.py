@@ -128,7 +128,17 @@ def make_so(qty=2, price=100):
 
 
 def confirm_and_ready(so):
-    """Confirm the SO and return the outgoing picking (state assigned/ready)."""
+    """Confirm the SO and return the outgoing picking (state assigned/ready).
+
+    Ensures the product has available stock first — a storable product with
+    zero (or negative — accumulated from prior committed runs) on-hand never
+    reaches 'assigned' (it stays 'confirmed'/Waiting), and Ship & Send DN
+    requires Ready. Replenish a large buffer (1000) so every run reserves.
+    """
+    for line in so.order_line:
+        wh = env['stock.warehouse'].search([], limit=1)
+        stock_loc = wh.lot_stock_id if wh else env.ref('stock.stock_location_stock')
+        env['stock.quant']._update_available_quantity(line.product_id, stock_loc, 1000)
     so.action_confirm()
     picking = so.picking_ids.filtered(lambda p: p.picking_type_id.code == 'outgoing')
     picking.move_ids._action_assign()
@@ -196,10 +206,11 @@ msgs4 = env['mail.message'].search([
     ('res_id', '=', picking3.id),
 ], order='id desc', limit=5)
 dn_att = any(
-    att.name.startswith(picking3.name) and att.name.endswith('.pdf')
+    ('Delivery Note - %s' % picking3.name) == att.name
     for m in msgs4 for att in m.attachment_ids
 )
-check('D4 email has DN PDF attachment', dn_att)
+check('D4 email has DN PDF attachment', dn_att,
+      '(pick=%s)' % picking3.name)
 
 # ── D5: full flow via the new route (in transit -> sign -> done + signed) ──
 print('--- D5 sign in transit -> complete + signed + chained ---')
