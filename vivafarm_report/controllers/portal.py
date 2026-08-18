@@ -200,8 +200,7 @@ class VivaSalePortal(CustomerPortal):
         if picking_sudo.state == 'done' and picking_sudo.signature:
             return {
                 'force_refresh': True,
-                'redirect_url': picking_sudo.get_portal_url(
-                    query_string='&message=sign_ok'),
+                'redirect_url': self._delivery_redirect_url(picking_sudo),
             }
 
         if picking_sudo.state != 'done':
@@ -244,5 +243,18 @@ class VivaSalePortal(CustomerPortal):
 
         return {
             'force_refresh': True,
-            'redirect_url': picking_sudo.get_portal_url(query_string='&message=sign_ok'),
+            'redirect_url': self._delivery_redirect_url(picking_sudo),
         }
+
+    def _delivery_redirect_url(self, picking):
+        """Where the customer lands after acknowledging a delivery.
+
+        stock.picking has no portal.mixin / get_portal_url — deliveries live
+        on the linked SO's portal page, so redirect there (with the sign_ok
+        message like the SO flow). Fall back to /my when no SO link.
+        """
+        so = picking.sale_id
+        if so:
+            so._portal_ensure_token()
+            return so.get_portal_url(query_string='&message=sign_ok')
+        return '/my'

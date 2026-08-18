@@ -172,6 +172,10 @@ so3._portal_ensure_token()
 env.cr.commit()
 so3.action_confirm()
 env.cr.commit()
+# The Accept & Sign Delivery button only renders on DONE pickings; the
+# View button renders for any picking in the delivery section.
+picking3 = deliver_and_done(so3)
+env.cr.commit()
 try:
     page = http_get_bytes('http://127.0.0.1:8069/my/orders/%d?access_token=%s' % (so3.id, so3.access_token)).decode()
 except Exception as e:
