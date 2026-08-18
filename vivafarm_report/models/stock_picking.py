@@ -4,9 +4,9 @@ from odoo import fields, models
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
-    signed_by = models.Char(string='Received By')
-    signed_on = models.Datetime(string='Received On')
-    signed_position = models.Char(string='Received Position')
+    signed_by = fields.Char(string='Received By')
+    signed_on = fields.Datetime(string='Received On')
+    signed_position = fields.Char(string='Received Position')
 
     def _get_thai_date_display(self, field_name):
         """Date in Thai tax-invoice style: '03/ส.ค./2569' (Buddhist Era year = CE + 543).
