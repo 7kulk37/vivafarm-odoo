@@ -134,118 +134,115 @@ class VivaSalePortal(CustomerPortal):
             'redirect_url': order_sudo.get_portal_url(query_string='&message=sign_ok'),
         }
 
+    def _stock_picking_check_access(self, picking_id, access_token=None):
+        """Access check for a picking via its linked SO's portal token.
 
-def _stock_picking_check_access(picking_id, access_token=None):
-    """Access check for a picking via its linked SO's portal token.
+        Mirrors sale_stock/controllers/portal.py: a picking is reachable
+        through the customer's order portal when the caller has the SO's
+        access_token (or read rights on the picking itself).
+        """
+        picking = request.env['stock.picking'].browse([picking_id])
+        picking_sudo = picking.sudo()
+        try:
+            picking.check_access('read')
+        except AccessError:
+            if not access_token or not picking_sudo.sale_id or \
+                    access_token != picking_sudo.sale_id.access_token:
+                raise
+        return picking_sudo
 
-    Mirrors sale_stock/controllers/portal.py: a picking is reachable
-    through the customer's order portal when the caller has the SO's
-    access_token (or read rights on the picking itself).
-    """
-    picking = request.env['stock.picking'].browse([picking_id])
-    picking_sudo = picking.sudo()
-    try:
-        picking.check_access('read')
-    except AccessError:
-        if not access_token or not picking_sudo.sale_id or \
-                access_token != picking_sudo.sale_id.access_token:
-            raise
-    return picking_sudo
+    @http.route(['/my/picking/<int:picking_id>/viva_pdf'], type='http',
+                auth="public", website=True)
+    def portal_picking_viva_pdf(self, picking_id, access_token=None, download=False, **kw):
+        """View the custom Viva delivery note (ใบส่งสินค้า).
 
+        Standard portal delivery link (/my/picking/pdf/<id>) renders the
+        DEFAULT stock.action_report_delivery. This route renders the custom
+        vivafarm_report.viva_delivery_note — and once the customer has
+        acknowledged receipt, the ir_actions_report override serves the
+        STORED signed bytes (hash block included).
+        """
+        try:
+            picking_sudo = self._stock_picking_check_access(picking_id, access_token=access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+        report = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
+            'vivafarm_report.viva_delivery_note', [picking_sudo.id])[0]
+        headers = self._get_http_headers(picking_sudo, 'pdf', report, download)
+        return request.make_response(report, headers=list(headers.items()))
 
-@http.route(['/my/picking/<int:picking_id>/viva_pdf'], type='http',
-            auth="public", website=True)
-def portal_picking_viva_pdf(self, picking_id, access_token=None, download=False, **kw):
-    """View the custom Viva delivery note (ใบส่งสินค้า).
+    @http.route(['/my/picking/<int:picking_id>/accept_viva'], type='jsonrpc',
+                auth="public", website=True)
+    def portal_picking_accept_viva(self, picking_id, access_token=None, name=None,
+                                   signature=None, position=None):
+        """Customer acknowledges receipt of a delivery (ใบส่งสินค้า).
 
-    Standard portal delivery link (/my/picking/pdf/<id>) renders the
-    DEFAULT stock.action_report_delivery. This route renders the custom
-    vivafarm_report.viva_delivery_note — and once the customer has
-    acknowledged receipt, the ir_actions_report override serves the
-    STORED signed bytes (hash block included).
-    """
-    try:
-        picking_sudo = _stock_picking_check_access(picking_id, access_token=access_token)
-    except (AccessError, MissingError):
-        return request.redirect('/my')
-    report = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
-        'vivafarm_report.viva_delivery_note', [picking_sudo.id])[0]
-    headers = self._get_http_headers(picking_sudo, 'pdf', report, download)
-    return request.make_response(report, headers=list(headers.items()))
+        Same 3-layer guard design as /accept_viva:
+          1. Server idempotency — a repeat POST on an already-signed picking
+             is a benign success (force_refresh + sign_ok), checked BEFORE
+             the state guard.
+          2. Customer-side JS one-shot lock (accept_viva_guard.js).
+          3. DB UNIQUE(picking_id) constraint + IntegrityError convergence
+             in _hash_delivery_accepted.
+        Writes the customer's drawn signature + name + position on the
+        picking, hashes the delivery note (baking the receiver signature in
+        via delivery_include_signature), posts the signed PDF in the
+        chatter. No confirmation email — the customer has the goods
+        physically (user decision 2026-08-18).
+        """
+        access_token = access_token or request.httprequest.args.get('access_token')
+        try:
+            picking_sudo = self._stock_picking_check_access(picking_id, access_token=access_token)
+        except (AccessError, MissingError):
+            return {'error': 'Invalid delivery note.'}
 
+        # Idempotency: already signed + done -> benign success.
+        if picking_sudo.state == 'done' and picking_sudo.signature:
+            return {
+                'force_refresh': True,
+                'redirect_url': picking_sudo.get_portal_url(
+                    query_string='&message=sign_ok'),
+            }
 
-@http.route(['/my/picking/<int:picking_id>/accept_viva'], type='jsonrpc',
-            auth="public", website=True)
-def portal_picking_accept_viva(self, picking_id, access_token=None, name=None,
-                               signature=None, position=None):
-    """Customer acknowledges receipt of a delivery (ใบส่งสินค้า).
+        if picking_sudo.state != 'done':
+            return {'error': 'The delivery note is not in a state requiring customer acknowledgment.'}
+        if not signature:
+            return {'error': 'Signature is missing.'}
 
-    Same 3-layer guard design as /accept_viva:
-      1. Server idempotency — a repeat POST on an already-signed picking
-         is a benign success (force_refresh + sign_ok), checked BEFORE
-         the state guard.
-      2. Customer-side JS one-shot lock (accept_viva_guard.js).
-      3. DB UNIQUE(picking_id) constraint + IntegrityError convergence
-         in _hash_delivery_accepted.
-    Writes the customer's drawn signature + name + position on the
-    picking, hashes the delivery note (baking the receiver signature in
-    via delivery_include_signature), posts the signed PDF in the
-    chatter. No confirmation email — the customer has the goods
-    physically (user decision 2026-08-18).
-    """
-    access_token = access_token or request.httprequest.args.get('access_token')
-    try:
-        picking_sudo = _stock_picking_check_access(picking_id, access_token=access_token)
-    except (AccessError, MissingError):
-        return {'error': 'Invalid delivery note.'}
+        try:
+            picking_sudo.write({
+                'signed_by': name,
+                'signed_position': position or False,
+                'signed_on': fields.Datetime.now(),
+                'signature': signature,
+            })
+            # flush now to make signature data available to PDF render request
+            request.env.cr.flush()
+        except (TypeError, binascii.Error):
+            return {'error': 'Invalid signature data.'}
 
-    # Idempotency: already signed + done -> benign success.
-    if picking_sudo.state == 'done' and picking_sudo.signature:
+        # Hash the acknowledged delivery note (receiver signature baked in).
+        picking_sudo.with_context(delivery_include_signature=True)._hash_delivery_accepted()
+
+        # Render the Viva report — the override serves the STORED signed bytes.
+        pdf = request.env['ir.actions.report'].sudo().with_context(
+            delivery_include_signature=True)._render_qweb_pdf(
+                'vivafarm_report.viva_delivery_note', [picking_sudo.id])[0]
+
+        # Post the signed PDF in the chatter.
+        picking_sudo.message_post(
+            attachments=[('%s.pdf' % picking_sudo.name, pdf)],
+            author_id=(
+                picking_sudo.partner_id.id
+                if request.env.user._is_public()
+                else request.env.user.partner_id.id
+            ),
+            body='Delivery received by %s' % name,
+            message_type='comment',
+            subtype_xmlid='mail.mt_comment',
+        )
+
         return {
             'force_refresh': True,
-            'redirect_url': picking_sudo.get_portal_url(
-                query_string='&message=sign_ok'),
+            'redirect_url': picking_sudo.get_portal_url(query_string='&message=sign_ok'),
         }
-
-    if picking_sudo.state != 'done':
-        return {'error': 'The delivery note is not in a state requiring customer acknowledgment.'}
-    if not signature:
-        return {'error': 'Signature is missing.'}
-
-    try:
-        picking_sudo.write({
-            'signed_by': name,
-            'signed_position': position or False,
-            'signed_on': fields.Datetime.now(),
-            'signature': signature,
-        })
-        # flush now to make signature data available to PDF render request
-        request.env.cr.flush()
-    except (TypeError, binascii.Error):
-        return {'error': 'Invalid signature data.'}
-
-    # Hash the acknowledged delivery note (receiver signature baked in).
-    picking_sudo.with_context(delivery_include_signature=True)._hash_delivery_accepted()
-
-    # Render the Viva report — the override serves the STORED signed bytes.
-    pdf = request.env['ir.actions.report'].sudo().with_context(
-        delivery_include_signature=True)._render_qweb_pdf(
-            'vivafarm_report.viva_delivery_note', [picking_sudo.id])[0]
-
-    # Post the signed PDF in the chatter.
-    picking_sudo.message_post(
-        attachments=[('%s.pdf' % picking_sudo.name, pdf)],
-        author_id=(
-            picking_sudo.partner_id.id
-            if request.env.user._is_public()
-            else request.env.user.partner_id.id
-        ),
-        body='Delivery received by %s' % name,
-        message_type='comment',
-        subtype_xmlid='mail.mt_comment',
-    )
-
-    return {
-        'force_refresh': True,
-        'redirect_url': picking_sudo.get_portal_url(query_string='&message=sign_ok'),
-    }
