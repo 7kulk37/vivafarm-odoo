@@ -6,15 +6,21 @@
 
         Primary inheritance of the stock portal.SignatureForm component
         template: the result is a NEW template (vivafarm_report.
-        AcceptVivaSignatureForm) = the stock form + an optional Position
-        input above the Full Name field. The stock portal.signature_form
-        template itself is untouched, so the standard portal accept flow
-        keeps its exact behaviour (same pattern as
-        sale/static/src/xml/sale_product_field.xml).
+        AcceptVivaSignatureForm) = the stock form + a mandatory Position
+        input above the Full Name field + a Reset button next to the
+        submit button. The stock portal.signature_form template itself is
+        untouched, so the standard portal accept flow keeps its exact
+        behaviour (same pattern as sale/static/src/xml/sale_product_field.xml).
+
+        The Position input is UNCONTROLLED (no t-on-input / t-att-value):
+        the value is read from the DOM on submit. Binding it to reactive
+        state made the input appear un-typeable after a validation error
+        (re-render re-applied the stale value — user report 2026-08-18).
 
         The JS side (accept_viva_signature_form.js) extends the stock
-        SignatureForm component and sends {name, position, signature} to
-        /accept_viva.
+        SignatureForm component, sends {name, position, signature} to
+        /accept_viva, and the Reset button clears error + position +
+        full name + signature canvas.
     -->
     <t t-name="vivafarm_report.AcceptVivaSignatureForm"
        t-inherit="portal.SignatureForm"
@@ -27,10 +33,14 @@
                     class="form-control"
                     placeholder="Type your position"
                     required="required"
-                    t-on-input="onPositionInput"
-                    t-att-value="state.position"
                 />
             </div>
+        </xpath>
+        <xpath expr="//button[hasclass('o_portal_sign_submit')]" position="before">
+            <button type="button" class="btn btn-secondary me-2" t-on-click="onReset">
+                <i class="fa fa-undo me-1"/>
+                Reset
+            </button>
         </xpath>
     </t>
 

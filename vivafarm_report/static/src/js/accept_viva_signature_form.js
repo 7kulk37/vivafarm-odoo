@@ -1,15 +1,18 @@
 /**
  * vivafarm_report — "Accept & Sign quotation" signature form with Position.
  *
- * Extends the stock portal SignatureForm (portal.signature_form) with an
- * optional Position input and passes it to /accept_viva alongside name +
+ * Extends the stock portal SignatureForm (portal.signature_form) with a
+ * mandatory Position input and passes it to /accept_viva alongside name +
  * signature. The stock form/modal are untouched: this component is mounted
  * only by vivafarm_report's own Accept & Sign modal, so the standard
  * Odoo portal accept flow keeps its exact behaviour.
  *
- * Same method as default: the RPC payload only grows by one field
- * ({name, signature} -> {name, position, signature}) and the server
- * ignores the extra key on the standard /accept route.
+ * Position is an UNCONTROLLED input (no t-att-value / t-on-input): the
+ * value is read from the DOM on submit. Binding the value to reactive
+ * state made the input appear un-typeable after a validation error
+ * (re-render re-applied the stale value — user report 2026-08-18).
+ * A Reset button clears the error + position + signature so the customer
+ * can re-enter after a validation failure.
  */
 import { onMounted } from "@odoo/owl";
 import { addLoadingEffect } from "@web/core/utils/ui";
@@ -23,36 +26,46 @@ export class AcceptVivaSignatureForm extends SignatureForm {
 
     setup() {
         super.setup();
-        // Reactive position: part of the existing useState object so
-        // re-renders (signature state, error state, modal re-show) restore
-        // the typed value instead of wiping it. The previous plain property
-        // made the input appear un-typeable after a validation error
-        // (user report 2026-08-18).
-        this.state.position = this.props.position || "";
         onMounted(() => {
             const modal_el = this.rootRef.el.closest('.modal');
             if (modal_el !== null) {
                 modal_el.addEventListener('shown.bs.modal', () => {
-                    this.state.position = this.props.position || "";
-                    this.state.error = false;
+                    this.resetForm();
                 });
             }
         });
     }
 
-    onPositionInput(ev) {
-        this.state.position = ev.target.value;
+    get positionInput() {
+        return this.rootRef.el.querySelector('.o_web_sign_position_group input');
+    }
+
+    resetForm() {
+        this.state.error = false;
+        this.state.success = false;
+        if (this.positionInput) {
+            this.positionInput.value = "";
+        }
+        // Clear the Full Name (reactive signature.name) + signature canvas.
+        this.signature.name = "";
+        if (this.signature.resetSignature) {
+            this.signature.resetSignature();
+        }
+    }
+
+    onReset() {
+        this.resetForm();
     }
 
     /**
      * Same as the stock SignatureForm.onClickSubmit, but includes the
-     * optional position in the RPC payload AND enforces mandatory
+     * mandatory position in the RPC payload AND enforces mandatory
      * Position + Full Name (user requirement 2026-08-18: the customer
      * must enter both — do not allow leaving them empty).
      */
     async onClickSubmit() {
         const name = (this.signature.name || "").trim();
-        const position = (this.state.position || "").trim();
+        const position = this.positionInput ? this.positionInput.value.trim() : "";
         if (!name) {
             this.state.error = "Full Name is required.";
             return;
