@@ -19,7 +19,7 @@
     <t t-name="vivafarm_report.AcceptVivaSignatureForm"
        t-inherit="portal.SignatureForm"
        t-inherit-mode="primary">
-        <xpath expr="//div[hasclass('o_web_sign_name_group')]" position="before">
+        <xpath expr="//NameAndSignature" position="before">
             <div class="o_web_sign_position_group mb-2">
                 <label class="col-form-label">Position</label>
                 <input
