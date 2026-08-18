@@ -206,7 +206,7 @@ msgs4 = env['mail.message'].search([
     ('res_id', '=', picking3.id),
 ], order='id desc', limit=5)
 dn_att = any(
-    ('Delivery Note - %s' % picking3.name) == att.name
+    ('Delivery Note - %s.pdf' % picking3.name) == att.name
     for m in msgs4 for att in m.attachment_ids
 )
 check('D4 email has DN PDF attachment', dn_att,
