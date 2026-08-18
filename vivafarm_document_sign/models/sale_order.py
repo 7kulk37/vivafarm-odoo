@@ -22,6 +22,8 @@ from ..services.signing_service import SigningService, sha256_hex
 
 import base64
 
+from psycopg2 import IntegrityError
+
 #: Fields that define the substance of an accepted sale order. If any of
 #: these change after the customer's acceptance is hashed, the evidence
 #: no longer matches the accepted contract.
@@ -79,23 +81,37 @@ class SaleOrder(models.Model):
         cert_info = service.backend.certificate_info()
 
         # 1. Pre-create the record (token + identity known before rendering)
-        signed = self.env['viva.signed.document'].create({
-            'document_number': self.name,
-            'document_type': 'sale_order',
-            'odoo_model': 'sale.order',
-            'odoo_record_id': self.id,
-            'sale_order_id': self.id,
-            'revision': 1,
-            'certificate_type': 'TEST' if self._is_test_cert(cert_info) else 'PRODUCTION',
-            'certificate_subject': cert_info['subject'],
-            'certificate_issuer': cert_info['issuer'],
-            'certificate_serial': cert_info['serial'],
-            'certificate_fingerprint': cert_info['fingerprint'],
-            'certificate_valid_from': self._to_odoo_datetime(cert_info['not_before']),
-            'certificate_valid_to': self._to_odoo_datetime(cert_info['not_after']),
-            'signer_user_id': self.env.user.id,
-            'signed_at': fields.Datetime.now(),
-        })
+        # DB-layer race: two concurrent sign attempts for the SAME order both
+        # pass `not so._is_signed()` (neither committed yet), then both
+        # create(). The unique(sale_order_id) constraint lets exactly ONE
+        # succeed; the loser raises IntegrityError. Converge instead of
+        # crashing: roll back to the savepoint and reuse the winner's record
+        # (its stored bytes are the accepted document — byte-identical to
+        # what this loser would have produced).
+        try:
+            with self.env.cr.savepoint():
+                signed = self.env['viva.signed.document'].create({
+                    'document_number': self.name,
+                    'document_type': 'sale_order',
+                    'odoo_model': 'sale.order',
+                    'odoo_record_id': self.id,
+                    'sale_order_id': self.id,
+                    'revision': 1,
+                    'certificate_type': 'TEST' if self._is_test_cert(cert_info) else 'PRODUCTION',
+                    'certificate_subject': cert_info['subject'],
+                    'certificate_issuer': cert_info['issuer'],
+                    'certificate_serial': cert_info['serial'],
+                    'certificate_fingerprint': cert_info['fingerprint'],
+                    'certificate_valid_from': self._to_odoo_datetime(cert_info['not_before']),
+                    'certificate_valid_to': self._to_odoo_datetime(cert_info['not_after']),
+                    'signer_user_id': self.env.user.id,
+                    'signed_at': fields.Datetime.now(),
+                })
+        except IntegrityError:
+            signed = self.env['viva.signed.document'].search(
+                [('sale_order_id', '=', self.id)], limit=1)
+            if not signed:
+                raise
 
         # 2. Render the STAMPED SO PDF (record exists -> hash block renders)
         pdf_bytes = self.env['ir.actions.report']._render_qweb_pdf(

@@ -82,11 +82,29 @@ class VivaSignedDocument(models.Model):
     signed_attachment_id = fields.Many2one('ir.attachment', string='Signed PDF',
                                            readonly=True, copy=False, ondelete='restrict')
 
-    _sql_constraints = [
-        ('token_unique', 'unique(verification_token)', 'Verification token must be unique.'),
-        ('move_unique', 'unique(move_id)', 'An invoice can only be signed once.'),
-        ('so_unique', 'unique(sale_order_id)', 'A sale order can only be signed once.'),
-    ]
+    # DB-layer guard (user request 2026-08-17, v19.0.1.0.4): the Odoo 19
+    # nightly DROPPED the _sql_constraints compat shim — the old
+    # `_sql_constraints = [('so_unique', 'unique(sale_order_id)', ...)]`
+    # silently never created any DB constraint (pg_constraint had only FKs),
+    # so a duplicate sign could create TWO signed documents for one order.
+    # models.Constraint is the Odoo 19 syntax and physically applies the
+    # UNIQUE index during registry setup. PostgreSQL then rejects a second
+    # signed document atomically — the strongest of the three guards
+    # (server idempotency + customer JS one-shot + this DB constraint).
+    # Naming convention: `_<name>` attribute -> constraint
+    # `viva_signed_document_<name>` (see table_objects.Constraint.full_name).
+    _so_unique = models.Constraint(
+        'UNIQUE (sale_order_id)',
+        'A sale order can only be signed once.',
+    )
+    _token_unique = models.Constraint(
+        'UNIQUE (verification_token)',
+        'Verification token must be unique.',
+    )
+    _move_unique = models.Constraint(
+        'UNIQUE (move_id)',
+        'An invoice can only be signed once.',
+    )
 
     @api.model_create_multi
     def create(self, vals_list):

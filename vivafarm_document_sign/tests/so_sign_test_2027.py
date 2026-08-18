@@ -15,6 +15,8 @@ Checks:
   S4  Lock: substance edit blocked at ORM level
   S5  QR + verification URL: opaque token, no record IDs, no hash in QR
   S6  Print serves the STORED signed PDF (ir_actions_report override)
+  S7  DB-layer guard: unique(sale_order_id) exists AND a duplicate sign
+      attempt converges to exactly ONE signed document (no double-sign)
 """
 import base64
 import hashlib
@@ -144,6 +146,40 @@ pdf_bytes = env['ir.actions.report']._render_qweb_pdf(
     'vivafarm_report.viva_quotation_so', [so2.id])[0]
 check('S6 print returns stored bytes', pdf_bytes == att_bytes,
       '(ir_actions_report override serves the signed attachment)')
+
+# ── S7 DB-layer guard: unique(sale_order_id) + duplicate-sign convergence ──
+# The 3rd guard (user request 2026-08-17): PostgreSQL must reject a second
+# signed document for the same sale order at the DB level, and the sign
+# flow must CONVERGE (reuse the winner's record) instead of crashing.
+print('--- S7 DB-layer guard (unique sale_order_id) ---')
+# 7a. The constraint physically exists in the DB (Odoo 19 nightly dropped
+#     the _sql_constraints shim — the unique constraints were MISSING from
+#     pg_constraint; verify with models.Constraint the constraint is real).
+from odoo.orm.table_objects import Constraint as _SQLConstraint
+cons = [obj for obj in env['viva.signed.document']._table_objects.values()
+        if isinstance(obj, _SQLConstraint)]
+check('S7 has models.Constraint for sale_order_id',
+      any('unique' in (d := c.get_definition(env.registry)).lower()
+          and 'sale_order_id' in d.lower() for c in cons),
+      '(constraints=%d)' % len(cons))
+
+# 7b. A duplicate sign attempt converges: same SO, second _hash_customer_accepted
+#     must NOT create a second record — it reuses the existing one.
+so3 = make_so(partner, product, pricelist)
+so3.write({
+    'signed_by': 'Test Customer',
+    'signed_on': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
+    'signature': 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+})
+so3.action_confirm()
+signed3 = env['viva.signed.document'].search([('sale_order_id', '=', so3.id)], limit=1)
+check('S7 first sign created record', bool(signed3))
+count_before = env['viva.signed.document'].search_count([('sale_order_id', '=', so3.id)])
+so3._hash_customer_accepted()  # duplicate sign attempt (race loser path)
+count_after = env['viva.signed.document'].search_count([('sale_order_id', '=', so3.id)])
+check('S7 duplicate sign did not create a second record',
+      count_after == count_before == 1,
+      '(before=%d after=%d)' % (count_before, count_after))
 
 print('')
 print('RESULT: %d passed, %d failed' % (PASS, FAIL))
