@@ -67,7 +67,12 @@ class VivaSignedDocument(models.Model):
     certificate_valid_to = fields.Datetime(string='Certificate Valid To', readonly=True, copy=False)
 
     # ── Signer + time ──
-    signer_user_id = fields.Many2one('res.users', string='Signed By', readonly=True)
+    signer_user_id = fields.Many2one('res.users', string='Signed By (Odoo User)', readonly=True)
+    signer_name = fields.Char(
+        string='Signer Name', readonly=True, copy=False,
+        help='The customer\'s typed name (from the portal signature form). '
+             'The portal routes are auth="public", so signer_user_id is the '
+             'public user (OdooBot) — the human identity lives here.')
     signed_at = fields.Datetime(string='Signed At', readonly=True, copy=False)
     revoked_at = fields.Datetime(string='Revoked At', readonly=True, copy=False)
     revocation_reason = fields.Char(string='Revocation Reason', readonly=True, copy=False)

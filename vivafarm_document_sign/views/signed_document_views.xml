@@ -62,6 +62,7 @@
                     </group>
                     <group string="Signer / Audit">
                         <group>
+                            <field name="signer_name"/>
                             <field name="signer_user_id"/>
                             <field name="signed_at"/>
                         </group>

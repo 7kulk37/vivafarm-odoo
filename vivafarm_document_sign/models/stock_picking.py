@@ -77,7 +77,7 @@ class StockPicking(models.Model):
         try:
             with self.env.cr.savepoint():
                 signed = self.env['viva.signed.document'].create({
-                    'document_number': 'Delivery Confirmation: %s' % self.name,
+                    'document_number': self.name,
                     'document_type': 'delivery_note',
                     'odoo_model': 'stock.picking',
                     'odoo_record_id': self.id,
@@ -92,6 +92,7 @@ class StockPicking(models.Model):
                     'certificate_valid_from': self._to_odoo_datetime(cert_info['not_before']),
                     'certificate_valid_to': self._to_odoo_datetime(cert_info['not_after']),
                     'signer_user_id': self.env.user.id,
+                    'signer_name': self.signed_by or '',
                     'signed_at': fields.Datetime.now(),
                 })
         except IntegrityError:
