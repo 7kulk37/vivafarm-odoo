@@ -3,135 +3,104 @@
     <!--
         VivaFarm Delivery Note (ใบส่งสินค้า) — custom report.
         Same approach as the Credit Note: wrapper → layout → content, all in
-        this module. Standard Viva header (compact branch), title in the body.
-        Functions as the delivery slip: customer + shipping addresses, line
-        items with ordered/delivered quantities (NO prices — this is not a
-        tax document), signature blocks. Single copy (not a tax document —
-        no triplicate requirement).
+        this module. Renders with the TAX-INVOICE layout frame (tall repeating
+        letterhead, paperformat_viva_invoice 107mm) like the newest
+        Quotation/SO — the header frame owns the title + customer/shipping
+        blocks + info bar, so the body starts with the line items.
+        NOT a tax document: line items carry qty only (Ordered/Delivered,
+        NO prices), no totals, no copy badge, no T&C. The acceptance note +
+        signature boxes prove goods receipt (ใบส่งสินค้า = evidence of
+        delivery, ป.พ.พ. มาตรา 456).
     -->
 
     <!-- ── Content: Viva Delivery Note Document ── -->
     <template id="viva_delivery_note_document"
               name="VivaFarm Delivery Note Document">
         <t t-call="vivafarm_report.external_layout_viva">
+            <t t-set="is_tax_invoice" t-value="True"/>
             <t t-set="o" t-value="o.with_context(lang=lang)"/>
 
             <style>
                 #delivery_note_signature_block { page-break-inside: avoid; }
+                /* Compact acceptance note so the signature section fits one page. */
+                #acceptance_note { margin: 12px 0 8px 0; font-size: 13px; line-height: 1.5; color: #333; text-align: center; }
             </style>
 
-            <div class="page">
-                <h3 t-att-style="'margin-top: 0; margin-bottom: 6px; text-align: left; color: %s;' % (o.company_id.primary_color or '#000000')">
-                    <strong style="font-size: 24px;">
-                        <t t-if="o.signed_document_id">
-                            <t t-if="lang == 'th_TH'">ใบยืนยันการจัดส่ง: </t>
-                            <t t-else="">Delivery Confirmation: </t>
-                        </t>
-                        <t t-else="">
-                            <t t-if="lang == 'th_TH'">ใบส่งสินค้า: </t>
-                            <t t-else="">Delivery Note: </t>
-                        </t>
-                        <span t-field="o.name"/>
+            <!-- Address/shipping data for the repeating header -->
+            <t t-set="address">
+                <div t-field="o.partner_id.name">Customer name</div>
+                <div t-if="o.partner_id.street or o.partner_id.street2">
+                    <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                </div>
+                <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                    <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
+                </div>
+                <div t-if="o.partner_id.vat">
+                    <t t-if="lang == 'th_TH'">เลขประจำตัวผู้เสียภาษี: </t>
+                    <t t-else="">Tax ID: </t>
+                    <span t-field="o.partner_id.vat"/><t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
+                </div>
+            </t>
+            <t t-set="information_block">
+                <div name="shipping_address_block">
+                    <strong class="d-block mt-1" style="font-size: 16px; font-weight: bold;">
+                        <t t-if="lang == 'th_TH'">ที่อยู่จัดส่ง</t>
+                        <t t-else="">Shipping Address</t>
                     </strong>
-                </h3>
-
-                <!-- Customer block (left) + Shipping address (right) -->
-                <div class="row" style="margin: 0 0 8px 0;">
-                    <div class="col-6" style="width: 50%; padding-right: 3px;">
-                        <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">ลูกค้า</t>
-                            <t t-else="">Customer</t>
-                        </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
-                            <div t-field="o.partner_id.name"/>
-                            <div t-if="o.partner_id.street or o.partner_id.street2">
-                                <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
-                            </div>
-                            <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
-                                <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
-                            </div>
-                            <div t-if="o.partner_id.vat">
-                                <t t-if="lang == 'th_TH'">เลขประจำตัวผู้เสียภาษี: </t>
-                                <t t-else="">Tax ID: </t>
-                                <span t-field="o.partner_id.vat"/>
-                                <t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
-                            </div>
-                        </div>
+                    <div t-field="o.partner_id.name">Branch name</div>
+                    <div t-if="o.partner_id.street or o.partner_id.street2">
+                        <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
                     </div>
-                    <div class="col-6" style="width: 50%; padding-left: 3px;">
-                        <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">ที่อยู่จัดส่ง</t>
-                            <t t-else="">Shipping Address</t>
-                        </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
-                            <t t-if="o.partner_id">
-                                <div t-field="o.partner_id.name"/>
-                                <div t-if="o.partner_id.street or o.partner_id.street2">
-                                    <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
-                                </div>
-                                <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
-                                    <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
-                                </div>
-                            </t>
-                            <t t-else="">
-                                <t t-if="lang == 'th_TH'">—</t>
-                                <t t-else="">—</t>
-                            </t>
-                        </div>
+                    <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                        <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
                     </div>
                 </div>
+            </t>
 
-                <!-- Info row: delivery date + source -->
-                <div class="row" style="margin: 0 0 8px 0;">
-                    <div class="col-4" style="width: 33%; padding-right: 3px;">
-                        <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">วันที่จัดส่ง</t>
-                            <t t-else="">Delivery Date</t>
-                        </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
-                            <t t-if="o.state == 'done'">
-                                <t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('date_done')"/></t>
-                                <t t-else=""><span t-field="o.date_done"/></t>
-                            </t>
-                            <t t-else="">
-                                <t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('scheduled_date')"/></t>
-                                <t t-else=""><span t-field="o.scheduled_date"/></t>
-                            </t>
-                        </div>
-                    </div>
-                    <div class="col-4" style="width: 33%; padding-left: 3px; padding-right: 3px;">
-                        <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">แหล่งที่มา</t>
-                            <t t-else="">Source</t>
-                        </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
-                            <span t-field="o.origin"/>
-                        </div>
-                    </div>
-                    <div class="col-4" style="width: 33%; padding-left: 3px;">
-                        <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">อ้างอิงลูกค้า</t>
-                            <t t-else="">Customer Reference</t>
-                        </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
-                            <span t-esc="o.move_ids.sale_line_id.order_id[:1].client_order_ref or o.origin"/>
-                        </div>
-                    </div>
-                </div>
+            <div class="page">
+                <!-- Title: rendered by the LAYOUT header frame (state-aware:
+                     Delivery Note until signed, Delivery Confirmation after
+                     the customer acknowledges receipt). -->
+                <t t-set="layout_document_title">
+                    <span t-if="o.signed_document_id">
+                        <t t-if="lang == 'th_TH'">ใบยืนยันการจัดส่ง: </t>
+                        <t t-else="">Delivery Confirmation: </t>
+                    </span>
+                    <span t-else="">
+                        <t t-if="lang == 'th_TH'">ใบส่งสินค้า: </t>
+                        <t t-else="">Delivery Note: </t>
+                    </span>
+                    <span t-field="o.name">WH/OUT/00000</span>
+                </t>
 
                 <!-- Line items table: qty only, NO prices (delivery note is
                      not a tax document). Ordered vs Delivered like the
                      standard delivery slip. Quantities show the unit
                      ("5 kg") — format_number drops trailing .0 like the
-                     standard slip. -->
+                     standard slip. Margin lives on a WRAPPER div, not the
+                     table (QtWebKit ignores table margin-top; padding-top
+                     does not collapse). -->
                 <t t-set="format_number" t-value="lambda x: int(x) if x == int(x) else x"/>
-                <table class="table table-borderless" style="margin-bottom: 6px;">
+                <div style="padding-top: 8px;">
+                <table class="table table-sm o_main_table table-borderless mb-2" style="table-layout: fixed;" name="dn_line_table">
                     <thead>
                         <tr>
-                            <th style="width: 5%;"><span><t t-if="lang == 'th_TH'">ลำดับ</t><t t-else="">NO.</t></span></th>
-                            <th style="width: 55%;"><span><t t-if="lang == 'th_TH'">สินค้า</t><t t-else="">Product</t></span></th>
-                            <th class="text-end" style="width: 20%;"><span><t t-if="lang == 'th_TH'">สั่ง</t><t t-else="">Ordered</t></span></th>
-                            <th class="text-end" style="width: 20%;"><span><t t-if="lang == 'th_TH'">ส่ง</t><t t-else="">Delivered</t></span></th>
+                            <th class="fw-bold text-center" style="width: 5%;">
+                                <t t-if="lang == 'th_TH'">ลำดับ</t>
+                                <t t-else="">NO.</t>
+                            </th>
+                            <th class="fw-bold text-start" style="width: 55%;">
+                                <t t-if="lang == 'th_TH'">สินค้า</t>
+                                <t t-else="">Product</t>
+                            </th>
+                            <th class="fw-bold text-end" style="width: 20%;">
+                                <t t-if="lang == 'th_TH'">สั่ง</t>
+                                <t t-else="">Ordered</t>
+                            </th>
+                            <th class="fw-bold text-end" style="width: 20%;">
+                                <t t-if="lang == 'th_TH'">ส่ง</t>
+                                <t t-else="">Delivered</t>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -139,7 +108,7 @@
                         <t t-foreach="o.move_ids.filtered(lambda x: x.product_uom_qty)" t-as="line">
                             <t t-set="line_no" t-value="line_no + 1"/>
                             <tr>
-                                <td><span t-esc="line_no"/></td>
+                                <td class="text-center"><span t-esc="line_no"/></td>
                                 <td>
                                     <span t-field="line.product_id.name"/>
                                     <t t-set="lots" t-value="line.move_line_ids.mapped('lot_id').filtered(lambda l: l.name)"/>
@@ -157,11 +126,12 @@
                         </t>
                     </tbody>
                 </table>
+                </div>
 
                 <!-- Acceptance note: goods-receipt language ONLY (checked +
                      accepted as shown). No payment/VAT/amount wording — the
                      tax invoice owns those. -->
-                <div style="margin: 12px 0 8px 0; font-size: 13px; line-height: 1.5; color: #333; text-align: center;">
+                <div id="acceptance_note">
                     <t t-if="lang == 'th_TH'">
                         ข้าพเจ้าได้ตรวจสอบสินค้าตามรายการในเอกสารฉบับนี้แล้ว และรับสินค้าไว้ถูกต้องครบถ้วนตามที่แสดงไว้
                     </t>
@@ -171,42 +141,54 @@
                 </div>
 
                 <!-- Signature blocks -->
-                <div id="delivery_note_signature_block" class="row" style="margin: 0; width: 100%;">
-                    <div class="col-6" style="width: 50%; padding-right: 3px;">
-                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
-                            <strong>
-                                <t t-if="lang == 'th_TH'">ผู้รับสินค้า</t>
-                                <t t-else="">Received by</t>
-                            </strong><br/>
-                            <div style="min-height: 50px; max-height: 50px;">
-                                <img t-if="o.signature and o.env.context.get('delivery_include_signature')"
-                                     t-att-src="image_data_uri(o.signature)"
-                                     style="max-height: 50px;"
-                                     alt="Customer Signature"/>
-                            </div>
-                            <div style="font-size: 14px; margin-top: 0;">
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span><t t-if="o.signature and o.env.context.get('delivery_include_signature') and o.signed_by"> <span style="white-space: nowrap; float: right;"><t t-esc="o.signed_by"/></span></t></div>
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span><t t-if="o.signature and o.env.context.get('delivery_include_signature') and o.signed_position"> <span style="white-space: nowrap; float: right;"><t t-esc="o.signed_position"/></span></t></div>
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span><t t-if="o.signature and o.env.context.get('delivery_include_signature') and o.signed_on"> <span style="white-space: nowrap; float: right;"><t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('signed_on')"/></t><t t-else=""><span t-field="o.signed_on" t-options="{&quot;date_only&quot;: &quot;true&quot;}"/></t></span></t></div>
-                            </div>
+                <div id="delivery_note_signature_block" class="row" style="margin: 0; width: 100%; page-break-inside: avoid;">
+                    <div style="page-break-inside: avoid; margin-top: 14px;">
+                        <div class="text-muted" style="font-size: 12px; font-weight: bold; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
+                            <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
+                            <t t-else="">Signatures below constitute acceptance in accordance with the Terms &amp; Conditions of this document.</t>
                         </div>
-                    </div>
-                    <div class="col-6" style="width: 50%; padding-left: 3px;">
-                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
-                            <strong>
-                                <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
-                                <t t-else="">Authorized Signatory</t>
-                            </strong><br/>
-                            <div style="min-height: 50px; max-height: 50px;">
-                                <img t-if="o.company_id.l10n_th_signature_image"
-                                     t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
-                                     style="max-height: 50px;"
-                                     alt="Authorized Signature"/>
+                        <div class="row" style="margin: 0; width: 100%;">
+                            <div class="col-6" style="width: 50%; padding-right: 3px;">
+                                <div style="page-break-inside: avoid;">
+                                    <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
+                                        <strong>
+                                            <t t-if="lang == 'th_TH'">ผู้รับสินค้า</t>
+                                            <t t-else="">Received by</t>
+                                        </strong><br/>
+                                        <div style="min-height: 50px; max-height: 50px;">
+                                            <img t-if="o.signature and o.env.context.get('delivery_include_signature')"
+                                                 t-att-src="image_data_uri(o.signature)"
+                                                 style="max-height: 50px;"
+                                                 alt="Customer Signature"/>
+                                        </div>
+                                        <div style="font-size: 14px; margin-top: 0;">
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span><t t-if="o.signature and o.env.context.get('delivery_include_signature') and o.signed_by"> <span style="white-space: nowrap; float: right;"><t t-esc="o.signed_by"/></span></t></div>
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span><t t-if="o.signature and o.env.context.get('delivery_include_signature') and o.signed_position"> <span style="white-space: nowrap; float: right;"><t t-esc="o.signed_position"/></span></t></div>
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span><t t-if="o.signature and o.env.context.get('delivery_include_signature') and o.signed_on"> <span style="white-space: nowrap; float: right;"><t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('signed_on')"/></t><t t-else=""><span t-field="o.signed_on" t-options="{&quot;date_only&quot;: &quot;true&quot;}"/></t></span></t></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div style="font-size: 14px; margin-top: 0;">
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
-                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                            <div class="col-6" style="width: 50%; padding-left: 3px;">
+                                <div style="page-break-inside: avoid;">
+                                    <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
+                                        <strong>
+                                            <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
+                                            <t t-else="">Authorized Signatory</t>
+                                        </strong><br/>
+                                        <div style="min-height: 50px; max-height: 50px;">
+                                            <img t-if="o.company_id.l10n_th_signature_image"
+                                                 t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
+                                                 style="max-height: 50px;"
+                                                 alt="Authorized Signature"/>
+                                        </div>
+                                        <div style="font-size: 14px; margin-top: 0;">
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span><t t-if="o.company_id.l10n_th_signatory_name"> <span style="white-space: nowrap; float: right;"><t t-esc="o.company_id.l10n_th_signatory_name"/></span></t></div>
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span><t t-if="o.company_id.l10n_th_signatory_position"> <span style="white-space: nowrap; float: right;"><t t-esc="o.company_id.l10n_th_signatory_position"/></span></t></div>
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span><t t-if="o.date_done"> <span style="white-space: nowrap; float: right;"><t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('date_done')"/></t><t t-else=""><span t-field="o.date_done" t-options="{&quot;date_only&quot;: &quot;true&quot;}"/></t></span></t></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -236,5 +218,6 @@
         <field name="print_report_name">'Delivery Note - %s' % (object.name)</field>
         <field name="binding_model_id" ref="stock.model_stock_picking"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
     </record>
 </odoo>
