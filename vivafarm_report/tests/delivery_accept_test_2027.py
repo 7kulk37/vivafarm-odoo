@@ -390,10 +390,10 @@ try:
 except Exception as e:
     check('D9 route rejects force-done', False, '(error: %s)' % e)
 
-# ── D10: signed document title is "Delivery Confirmation: <name>" ──
-print('--- D10 signed document title ---')
+# ── D10: signed document number = picking name; PDF title = Delivery Confirmation ──
+print('--- D10 signed document number + title ---')
 if signed5:
-    check('D10 title is Delivery Confirmation', signed5.document_number == 'Delivery Confirmation: %s' % picking5.name,
+    check('D10 document_number is picking name', signed5.document_number == picking5.name,
           '(got %s)' % signed5.document_number)
     html10 = env['ir.actions.report']._render_qweb_html(
         'vivafarm_report.viva_delivery_note', [picking5.id])[0]
