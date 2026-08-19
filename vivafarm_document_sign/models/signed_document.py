@@ -27,6 +27,7 @@ class VivaSignedDocument(models.Model):
         ('tax_invoice', 'Tax Invoice'),
         ('sale_order', 'Sale Order'),
         ('delivery_note', 'Delivery Note'),
+        ('invoice', 'Invoice (ใบแจ้งหนี้)'),
     ], string='Document Type', required=True, default='tax_invoice')
     document_number = fields.Char(string='Document Number', readonly=True, copy=False)
     odoo_model = fields.Char(string='Odoo Model', readonly=True, default='account.move')
