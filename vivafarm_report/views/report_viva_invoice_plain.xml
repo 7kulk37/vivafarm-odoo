@@ -24,16 +24,22 @@
              Invoice tri-label. Keeps the existing number span (o.name) →
              "Invoice INV/2026/00022". State branches preserved
              (ฉบับร่าง / ยกเลิก). -->
-        <xpath expr="//*[@name='invoice_title']" position="replace">
+        <xpath expr="//*[@name='invoice_title' and @t-if]" position="replace">
             <t t-if="lang == 'th_TH'" name="invoice_title">ใบแจ้งหนี้</t>
+        </xpath>
+        <xpath expr="//*[@name='invoice_title' and not(@t-if)]" position="replace">
             <t t-else="" name="invoice_title">INVOICE</t>
         </xpath>
-        <xpath expr="//*[@name='draft_invoice_title']" position="replace">
+        <xpath expr="//*[@name='draft_invoice_title' and @t-if]" position="replace">
             <t t-if="lang == 'th_TH'" name="draft_invoice_title">ใบแจ้งหนี้ (ฉบับร่าง)</t>
+        </xpath>
+        <xpath expr="//*[@name='draft_invoice_title' and not(@t-if)]" position="replace">
             <t t-else="" name="draft_invoice_title">Draft INVOICE</t>
         </xpath>
-        <xpath expr="//*[@name='cancelled_invoice_title']" position="replace">
+        <xpath expr="//*[@name='cancelled_invoice_title' and @t-if]" position="replace">
             <t t-if="lang == 'th_TH'" name="cancelled_invoice_title">ยกเลิกใบแจ้งหนี้</t>
+        </xpath>
+        <xpath expr="//*[@name='cancelled_invoice_title' and not(@t-if)]" position="replace">
             <t t-else="" name="cancelled_invoice_title">Cancelled Invoice</t>
         </xpath>
     </template>
