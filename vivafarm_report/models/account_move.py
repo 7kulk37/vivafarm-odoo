@@ -53,6 +53,19 @@ class AccountMove(models.Model):
     reissue_count = fields.Integer(
         compute='_compute_reissue_count', string='Times Re-issued')
 
+    # ── Customer acknowledgment (portal "Accept & Sign Invoice", Option C) ──
+    # Mirrors sale.order / stock.picking: the customer's typed name,
+    # position, timestamp and drawn signature are written by the portal
+    # route, then the invoice PDF is hashed + stored by vivafarm_document_sign.
+    # The acknowledgment is EVIDENCE-ONLY (lawyer sign-off 2026-08-19): it
+    # never gates payment; refusal = chatter note + no state change.
+    signed_by = fields.Char(string='Acknowledged By')
+    signed_on = fields.Datetime(string='Acknowledged On')
+    signed_position = fields.Char(string='Acknowledged Position')
+    signature = fields.Image(
+        'Signature', help='Customer drawn signature (portal acknowledgment).',
+        copy=False, attachment=True)
+
     @api.depends('reissue_root_id')
     def _compute_reissue_count(self):
         for move in self:
