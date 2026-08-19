@@ -261,7 +261,10 @@
                             <t t-if="lang == 'th_TH'"><strong>วันที่จัดส่ง</strong></t>
                             <t t-else=""><strong>Delivery Date</strong></t>
                             <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('date_done' if o.state == 'done' else 'scheduled_date')"></div></t>
-                            <t t-else=""><div t-field="o.date_done if o.state == 'done' else o.scheduled_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div></t>
+                            <t t-else="">
+                                <div t-if="o.state == 'done'" t-field="o.date_done" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div>
+                                <div t-else="" t-field="o.scheduled_date" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div>
+                            </t>
                         </td>
                         <td style="width: 33.33%; padding-right: 3px; vertical-align: top; border: none;" name="dn_source">
                             <t t-if="lang == 'th_TH'"><strong>แหล่งที่มา</strong></t>
