@@ -96,8 +96,13 @@ class VivaSignedDocument(models.Model):
     # (server idempotency + customer JS one-shot + this DB constraint).
     # Naming convention: `_<name>` attribute -> constraint
     # `viva_signed_document_<name>` (see table_objects.Constraint.full_name).
+    # Sale-order uniqueness must only bind for actual sale_order documents —
+    # the delivery_note signed record ALSO carries sale_order_id as the
+    # record-level chain link, and would otherwise collide with the SO's own
+    # signed record (verified 2026-08-18: DN sign raised
+    # "A sale order can only be signed once.").
     _so_unique = models.Constraint(
-        'UNIQUE (sale_order_id)',
+        'UNIQUE (sale_order_id) WHERE document_type = \'sale_order\'',
         'A sale order can only be signed once.',
     )
     _token_unique = models.Constraint(
