@@ -101,10 +101,8 @@ class VivaSignedDocument(models.Model):
     # record-level chain link, and would otherwise collide with the SO's own
     # signed record (verified 2026-08-18: DN sign raised
     # "A sale order can only be signed once.").
-    _so_unique = models.Constraint(
-        'UNIQUE (sale_order_id) WHERE document_type = \'sale_order\'',
-        'A sale order can only be signed once.',
-    )
+    # A UNIQUE constraint cannot be partial, so the guard is a partial
+    # unique index created in _auto_init (see below).
     _token_unique = models.Constraint(
         'UNIQUE (verification_token)',
         'Verification token must be unique.',
@@ -117,6 +115,16 @@ class VivaSignedDocument(models.Model):
         'UNIQUE (picking_id)',
         'A delivery note can only be signed once.',
     )
+
+    def _auto_init(self):
+        res = super()._auto_init()
+        self.env.cr.execute("""
+            DROP INDEX IF EXISTS viva_signed_document_so_unique;
+            CREATE UNIQUE INDEX IF NOT EXISTS viva_signed_document_so_unique_partial
+                ON viva_signed_document (sale_order_id)
+                WHERE document_type = 'sale_order'
+        """)
+        return res
 
     @api.model_create_multi
     def create(self, vals_list):
