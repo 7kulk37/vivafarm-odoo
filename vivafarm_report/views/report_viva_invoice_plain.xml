@@ -1,62 +1,579 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        VivaFarm Invoice (ใบแจ้งหนี้) — created from the Tax Invoice baseline.
-        Copies the full Tax Invoice document (layout, info bar, line items,
-        totals, signatures, 3-copy triplicate) and changes ONLY the title
-        label to "Invoice" / "ใบแจ้งหนี้" (format "Invoice INV/2026/00022").
-        The Tax Invoice baseline (report_viva_invoice.xml) is NOT touched —
-        it stays the frozen 190,978 B reference.
-
-        Design decisions (2026-08-19, user):
-        - Baseline: Tax Invoice (3-copy triplicate kept).
-        - "Signature stamp" issue deferred — no sign-stamp inherit here for
-          now; the single flow is the digital sign in the customer portal.
-        - Layout will be aligned to the newest Quotation/SO layout in a
-          follow-up slice (not part of this baseline copy).
+        VivaFarm Invoice — fully self-contained report.
+        No inherit_id on Odoo baseline templates.
+        Wrapper → Layout → Content, all in this module.
     -->
 
-    <!-- ── Content: Viva Invoice (ใบแจ้งหนี้) Document ── -->
+    <!-- ── Content: Viva Invoice Document ── -->
     <template id="viva_invoice_plain_document"
-              name="VivaFarm Invoice (ใบแจ้งหนี้) Document"
-              inherit_id="vivafarm_report.viva_invoice_document">
-        <!-- Title label: "Invoice" / "ใบแจ้งหนี้" instead of the Tax
-             Invoice tri-label. Keeps the existing number span (o.name) →
-             "Invoice INV/2026/00022". State branches preserved
-             (ฉบับร่าง / ยกเลิก). -->
-        <xpath expr="//*[@name='invoice_title' and @t-if]" position="replace">
-            <t t-if="lang == 'th_TH'" name="invoice_title">ใบแจ้งหนี้</t>
-        </xpath>
-        <xpath expr="//*[@name='invoice_title' and not(@t-if)]" position="replace">
-            <t t-else="" name="invoice_title">INVOICE</t>
-        </xpath>
-        <xpath expr="//*[@name='draft_invoice_title' and @t-if]" position="replace">
-            <t t-if="lang == 'th_TH'" name="draft_invoice_title">ใบแจ้งหนี้ (ฉบับร่าง)</t>
-        </xpath>
-        <xpath expr="//*[@name='draft_invoice_title' and not(@t-if)]" position="replace">
-            <t t-else="" name="draft_invoice_title">Draft INVOICE</t>
-        </xpath>
-        <xpath expr="//*[@name='cancelled_invoice_title' and @t-if]" position="replace">
-            <t t-if="lang == 'th_TH'" name="cancelled_invoice_title">ยกเลิกใบแจ้งหนี้</t>
-        </xpath>
-        <xpath expr="//*[@name='cancelled_invoice_title' and not(@t-if)]" position="replace">
-            <t t-else="" name="cancelled_invoice_title">Cancelled Invoice</t>
-        </xpath>
+              name="VivaFarm Invoice (ใบแจ้งหนี้) Document">
+        <t t-call="vivafarm_report.external_layout_viva">
+            <t t-set="is_tax_invoice" t-value="True"/>
+            <t t-set="o" t-value="o.with_context(lang=lang)" />
+            <t t-set="forced_vat" t-value="o.fiscal_position_id.foreign_vat"/>
+            <style>
+                /* Payment terms note is stored as HTML paragraph — keep the inner paragraph
+                   inline so the "Payment terms: 30 Days" line stays a single line. */
+                #payment_terms_note_id > p { display: inline; margin-bottom: 0 !important; }
+                /* Compact T&amp;C so the signature section fits on one page (TH + EN).
+                   Stored narration uses inline font-size:10px — override with !important. */
+                #terms_note h4 { margin-top: 4px !important; margin-bottom: 2px !important; font-size: 12px !important; font-weight: bold !important; }
+                #terms_note ol { font-size: 12px !important; line-height: 1.2 !important; margin-bottom: 1px !important; padding-left: 17px !important; }
+                #terms_note li { font-size: 12px !important; line-height: 1.2 !important; margin-bottom: 0 !important; }
+            </style>
+            <!-- Address/shipping data for the repeating header (rendered in external_layout_viva) -->
+            <t t-if="o.partner_shipping_id and (o.partner_shipping_id != o.partner_id)">
+                <t t-set="information_block" groups="account.group_delivery_invoice_address">
+                    <div name="shipping_address_block">
+                        <strong class="d-block mt-1" style="font-size: 16px; font-weight: bold;">
+                        <t t-if="lang == 'th_TH'">ที่อยู่จัดส่ง</t>
+                        <t t-else="">Shipping Address</t>
+                    </strong>
+                        <div t-field="o.partner_shipping_id.name">Branch name</div>
+                        <div t-if="o.partner_shipping_id.street or o.partner_shipping_id.street2">
+                            <span t-field="o.partner_shipping_id.street"/><t t-if="o.partner_shipping_id.street and o.partner_shipping_id.street2">, </t><span t-field="o.partner_shipping_id.street2"/>
+                        </div>
+                        <div t-if="o.partner_shipping_id.city or o.partner_shipping_id.state_id or o.partner_shipping_id.zip or o.partner_shipping_id.country_id">
+                            <span t-field="o.partner_shipping_id.city"/><t t-if="o.partner_shipping_id.city and (o.partner_shipping_id.state_id or o.partner_shipping_id.zip)">, </t><span t-esc="o.partner_shipping_id._get_state_display(o.partner_shipping_id.state_id)"/><t t-if="o.partner_shipping_id.state_id and o.partner_shipping_id.zip"> </t><span t-field="o.partner_shipping_id.zip"/><t t-if="(o.partner_shipping_id.city or o.partner_shipping_id.state_id or o.partner_shipping_id.zip) and o.partner_shipping_id.country_id">, </t><span t-field="o.partner_shipping_id.country_id"/>
+                        </div>
+                    </div>
+                </t>
+                <t t-set="address">
+                    <div t-field="o.partner_id.name">Customer name</div>
+                    <div t-if="o.partner_id.street or o.partner_id.street2">
+                        <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                    </div>
+                    <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                        <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
+                    </div>
+                    <div t-if="o.partner_id.vat" id="partner_vat_address_not_same_as_shipping">
+                        <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                        <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/><t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
+                    </div>
+                </t>
+            </t>
+            <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">
+                <t t-set="address">
+                    <div t-field="o.partner_id.name">Customer name</div>
+                    <div t-if="o.partner_id.street or o.partner_id.street2">
+                        <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                    </div>
+                    <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                        <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
+                    </div>
+                    <div t-if="o.partner_id.vat" id="partner_vat_address_same_as_shipping">
+                        <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                        <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/><t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <t t-set="address">
+                    <div t-field="o.partner_id.name">Customer name</div>
+                    <div t-if="o.partner_id.street or o.partner_id.street2">
+                        <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                    </div>
+                    <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                        <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
+                    </div>
+                    <div t-if="o.partner_id.vat" id="partner_vat_no_shipping">
+                        <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                        <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/><t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
+                    </div>
+                </t>
+            </t>
+            <div class="clearfix invoice_main">
+                <div class="page mb-4">
+                    <t t-set="layout_document_title">
+                        <t t-if="not proforma">
+                            <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">
+                                <t t-if="lang == 'th_TH'" name="invoice_title">ใบแจ้งหนี้</t>
+                                <t t-else="" name="invoice_title">INVOICE</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_invoice' and o.state == 'draft'">
+                                <t t-if="lang == 'th_TH'" name="draft_invoice_title">ใบแจ้งหนี้ (ฉบับร่าง)</t>
+                                <t t-else="" name="draft_invoice_title">Draft INVOICE</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_invoice' and o.state == 'cancel'">
+                                <t t-if="lang == 'th_TH'" name="cancelled_invoice_title">ยกเลิก</t>
+                                <t t-else="" name="cancelled_invoice_title">Cancelled Invoice</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_refund' and o.state == 'posted'">
+                                <t t-if="lang == 'th_TH'" name="credit_note_title">ใบลดหนี้</t>
+                                <t t-else="" name="credit_note_title">Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_refund' and o.state == 'draft'">
+                                <t t-if="lang == 'th_TH'" name="draft_credit_note_title">ใบลดหนี้ (ฉบับร่าง)</t>
+                                <t t-else="" name="draft_credit_note_title">Draft Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_refund' and o.state == 'cancel'">
+                                <t t-if="lang == 'th_TH'" name="cancelled_credit_note_title">ยกเลิกใบลดหนี้</t>
+                                <t t-else="" name="cancelled_credit_note_title">Cancelled Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'in_refund' and not o.journal_id.is_self_billing">
+                                <t t-if="lang == 'th_TH'" name="vendor_credit_note_title">ใบลดหนี้จากผู้ขาย</t>
+                                <t t-else="" name="vendor_credit_note_title">Vendor Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'in_refund' and o.journal_id.is_self_billing">
+                                <t t-if="lang == 'th_TH'" name="self_billing_credit_note_title">ใบลดหนี้ (Self Billing)</t>
+                                <t t-else="" name="self_billing_credit_note_title">Self Billing Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'in_invoice' and not o.journal_id.is_self_billing">
+                                <t t-if="lang == 'th_TH'" name="vendor_bill_title">ใบแจ้งหนี้จากผู้ขาย</t>
+                                <t t-else="" name="vendor_bill_title">Vendor Bill</t>
+                            </span>
+                            <span t-elif="o.move_type == 'in_invoice' and o.journal_id.is_self_billing">
+                                <t t-if="lang == 'th_TH'" name="self_billing_invoice_title">Self Billing</t>
+                                <t t-else="" name="self_billing_invoice_title">Self Billing</t>
+                            </span>
+                        </t>
+                        <t t-else="">
+                            <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">
+                                <t t-if="lang == 'th_TH'" name="proforma_invoice_title">ใบแจ้งหนี้ (Proforma)</t>
+                                <t t-else="" name="proforma_invoice_title">Proforma Invoice</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_invoice' and o.state == 'draft'">
+                                <t t-if="lang == 'th_TH'" name="draft_proforma_invoice_title">ใบแจ้งหนี้ (Proforma ฉบับร่าง)</t>
+                                <t t-else="" name="draft_proforma_invoice_title">Draft Proforma Invoice</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_invoice' and o.state == 'cancel'">
+                                <t t-if="lang == 'th_TH'" name="cancelled_proforma_invoice_title">ยกเลิก Proforma</t>
+                                <t t-else="" name="cancelled_proforma_invoice_title">Cancelled Proforma Invoice</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_refund' and o.state == 'posted'">
+                                <t t-if="lang == 'th_TH'" name="proforma_credit_note_title">Proforma ใบลดหนี้</t>
+                                <t t-else="" name="proforma_credit_note_title">Proforma Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_refund' and o.state == 'draft'">
+                                <t t-if="lang == 'th_TH'" name="draft_proforma_credit_note_title">Proforma ใบลดหนี้ (ฉบับร่าง)</t>
+                                <t t-else="" name="draft_proforma_credit_note_title">Draft Proforma Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'out_refund' and o.state == 'cancel'">
+                                <t t-if="lang == 'th_TH'" name="cancelled_proforma_credit_note_title">ยกเลิก Proforma ใบลดหนี้</t>
+                                <t t-else="" name="cancelled_proforma_credit_note_title">Cancelled Proforma Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'in_refund'">
+                                <t t-if="lang == 'th_TH'" name="proforma_vendor_credit_note_title">Proforma ใบลดหนี้จากผู้ขาย</t>
+                                <t t-else="" name="proforma_vendor_credit_note_title">Proforma Vendor Credit Note</t>
+                            </span>
+                            <span t-elif="o.move_type == 'in_invoice'">
+                                <t t-if="lang == 'th_TH'" name="proforma_vendor_bill_title">Proforma ใบแจ้งหนี้จากผู้ขาย</t>
+                                <t t-else="" name="proforma_vendor_bill_title">Proforma Vendor Bill</t>
+                            </span>
+                        </t>
+                        <span t-if="o.name and o.name != '/'"> <span t-field="o.name">INV/2026/0001</span></span>
+                    </t>
+                    <div class="oe_structure"></div>
+
+                    <t t-set="lines_to_report" t-value="o._get_move_lines_to_report()"/>
+                    <t t-set="display_taxes" t-value="any(l.tax_ids for l in o.invoice_line_ids)"/>
+                    <div class="oe_structure"></div>
+                    <t t-set="has_long_desc" t-value="any(line.name and line.name.count('\n') > 30 for line in o.invoice_line_ids if line.name)"/>
+                    <table class="o_has_total_table table o_main_table table-borderless mb-0" name="invoice_line_table">
+                        <thead>
+                            <tr>
+                                <th name="th_no" class="fw-bold text-center" style="width: 5%;"><span><t t-if="lang == 'th_TH'">ลำดับ</t><t t-else="">NO.</t></span></th>
+                                <th name="th_description" class="fw-bold text-start"><span>Description</span></th>
+                                <th name="th_quantity" class="fw-bold text-end"><span>Quantity</span></th>
+                                <th name="th_priceunit" t-attf-class="fw-bold text-end text-nowrap {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Unit Price</span></th>
+                                <th name="th_taxes" t-if="display_taxes" t-attf-class="fw-bold text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}"><span>Taxes</span></th>
+                                <th name="th_subtotal" class="fw-bold text-end">
+                                    <span>Amount</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="invoice_tbody">
+                            <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
+                            <t t-set="current_section" t-value="None"/>
+                            <t t-set="current_subsection" t-value="None"/>
+                            <t t-set="line_no" t-value="0"/>
+
+                            <t t-foreach="lines_to_report" t-as="line">
+                                <t t-set="is_note" t-value="line.display_type == 'line_note'"/>
+                                <t t-set="is_section" t-value="line.display_type == 'line_section'"/>
+                                <t t-set="is_subsection" t-value="line.display_type == 'line_subsection'"/>
+                                <t t-set="is_product" t-value="line.display_type == 'product'"/>
+                                <t t-if="is_product">
+                                    <t t-set="line_no" t-value="line_no + 1"/>
+                                </t>
+
+                                <t t-if="is_section">
+                                    <t t-set="current_section" t-value="line"/>
+                                    <t t-set="current_subsection" t-value="None"/>
+                                    <t t-set="line_padding" t-value="0"/>
+                                </t>
+                                <t t-elif="is_subsection">
+                                    <t t-set="current_subsection" t-value="line"/>
+                                    <t t-set="line_padding" t-value="3"/>
+                                </t>
+                                <t t-else="">
+                                    <t t-set="line_padding"
+                                       t-value="4 if current_subsection else (3 if current_section else 0)"
+                                    />
+                                </t>
+                                <t t-set="padding_class" t-value="line_padding and ('px-' + str(line_padding)) or ''"/>
+                                <t t-set="hide_details" t-value="line.collapse_composition"/>
+                                <t t-set="hide_prices" t-value="line.collapse_prices"/>
+
+                                <t t-if="not hide_details and not hide_prices">
+                                    <t t-set="line_colspan" t-value="4 + (1 if display_taxes and not line.tax_ids else 0)"/>
+                                    <t t-if="is_product" name="account_invoice_line_accountable">
+                                        <!-- Split long product names into chunks of <=13 lines so no single
+                                             table row spans a page boundary. wkhtmltopdf 0.12.6.1 renders
+                                             tfoot at the TOP of the first page (overlapping the row) and
+                                             skips intermediate pages when one row spans pages; with
+                                             bounded rows the tfoot repeats correctly at the end of the
+                                             table on every non-final sheet. Measured in the real Odoo
+                                             pipeline (web.minimal_layout wrapper + report_assets_pdf CSS
+                                             loaded via <base href>): 14 lines still triggers the bug;
+                                             13 is the largest verified-safe size. -->
+                                        <t t-set="name_lines" t-value="(line.name or '').split('\n')"/>
+                                        <t t-set="name_chunks" t-value="[name_lines[i:i+13] for i in range(0, len(name_lines), 13)]"/>
+                                        <t t-foreach="name_chunks" t-as="chunk">
+                                            <t t-if="chunk_index == 0">
+                                                <tr>
+                                                    <td name="td_no" class="text-center">
+                                                        <span t-out="line_no">1</span>
+                                                    </td>
+                                                    <td name="account_invoice_line_name" t-att-class="padding_class">
+                                                        <span dir="auto"><t t-foreach="chunk" t-as="nl"><t t-esc="nl"/><t t-if="not nl_last"><br/></t></t></span>
+                                                    </td>
+                                                    <td name="td_quantity" class="o_td_quantity text-end">
+                                                        <span t-field="line.quantity" class="text-nowrap">1.00</span>
+                                                        <span t-field="line.product_uom_id" groups="uom.group_uom">units</span>
+                                                        <span t-if="line.product_uom_id != line.product_id.uom_id" groups="uom.group_uom" class="text-muted small">
+                                                            <br/>
+                                                            <t t-set="product_uom_qty" t-value="line.product_uom_id._compute_quantity(line.quantity, line.product_id.uom_id)"/>
+                                                            <span t-out="product_uom_qty" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}"/> <span t-field="line.product_id.uom_id"/>
+                                                        </span>
+                                                    </td>
+                                                    <td name="td_price_unit" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                        <span t-if="not hide_prices" class="text-nowrap" t-field="line.price_unit">100.00</span>
+                                                    </td>
+                                                    <t t-set="taxes" t-value="', '.join(tax.tax_label for tax in line.tax_ids if tax.tax_label)"/>
+                                                    <td name="td_taxes" t-if="display_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }} {{ 'text-nowrap' if len(taxes) &lt; 10 else '' }}">
+                                                        <span t-if="not hide_prices" t-out="taxes" id="line_tax_ids">Tax 7%</span>
+                                                    </td>
+                                                    <td name="td_subtotal" class="text-end o_price_total">
+                                                        <span t-if="not hide_prices and o.company_price_include == 'tax_excluded'" class="text-nowrap" t-field="line.price_subtotal">100.00</span>
+                                                        <span t-if="not hide_prices and o.company_price_include == 'tax_included'" class="text-nowrap" t-field="line.price_total">107.00</span>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                            <t t-else="">
+                                                <tr>
+                                                    <td t-att-colspan="5 + (1 if display_taxes else 0)" t-att-class="padding_class">
+                                                        <span dir="auto"><t t-foreach="chunk" t-as="nl"><t t-esc="nl"/><t t-if="not nl_last"><br/></t></t></span>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <tr t-att-class="
+                                            'fw-bolder o_line_section' if is_section else
+                                            'fw-bold o_line_subsection' if is_subsection else
+                                            'fst-italic o_line_note' if is_note
+                                            else ''">
+                                            <td name="account_invoice_line_name" t-att-colspan="line_colspan" t-att-class="padding_class">
+                                                <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}" dir="auto">Note</span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </t>
+                        </tbody>
+                        <tfoot t-if="o._is_multipage()">
+                            <tr>
+                                <td colspan="6" class="text-end fst-italic"
+                                    style="padding-top: 6pt; padding-bottom: 2pt; border-top: 1px solid #ccc;">
+                                    <t t-if="lang == 'th_TH'">โปรดดูหน้าถัดไป...</t>
+                                    <t t-else="">Continued on next page...</t>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div class="overflow-hidden" t-att-style="'page-break-before: always; page-break-inside: avoid;' if o._is_multipage() else ''">
+                        <t t-set="payment_term_details" t-value="o.payment_term_details"/>
+                        <div id="right-elements" t-attf-class="#{'col-5' if report_type == 'pdf' else 'col-12 col-md-5'} ms-5 d-inline-block float-end" t-att-style="'border-top: 2px solid %s; margin-top: 12pt;' % (o.company_id.primary_color or '#000000')">
+                            <div id="total" class="clearfix row">
+                                <div class="ms-auto">
+                                    <table class="o_total_table table table-borderless avoid-page-break-inside">
+                                        <t t-set="tt_rows" t-value="o._get_tax_invoice_totals()"/>
+                                        <t t-set="currency" t-value="o.currency_id"/>
+                                        <tr>
+                                            <td>
+                                                <t t-if="lang == 'th_TH'">รวมเงิน</t>
+                                                <t t-else="">Total Amount</t>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="tt_rows['gross_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                            </td>
+                                        </tr>
+                                        <t t-foreach="tt_rows['vat_rows']" t-as="vrow">
+                                            <tr>
+                                                <td>
+                                                    <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม <t t-out="vrow['rate_label']"/></t>
+                                                    <t t-else="">VAT <t t-out="vrow['rate_label']"/></t>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-out="vrow['amount']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-foreach="tt_rows['exempt_rows']" t-as="erow">
+                                            <tr style="white-space: nowrap;">
+                                                <td>
+                                                    <t t-if="lang == 'th_TH'">ภาษีมูลค่าเพิ่ม: ( <t t-out="erow['label']"/> )</t>
+                                                    <t t-else="">VAT: ( <t t-out="erow['label']"/> )</t>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-options='{"widget": "monetary", "display_currency": currency}' t-out="0.0"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <tr class="o_total">
+                                            <td><strong>
+                                                <t t-if="lang == 'th_TH'">จำนวนรวมทั้งสิ้น</t>
+                                                <t t-else="">Grand Total</t>
+                                            </strong></td>
+                                            <td class="text-end">
+                                                <strong t-out="tt_rows['grand_total']" t-options='{"widget": "monetary", "display_currency": currency}'/>
+                                            </td>
+                                        </tr>
+                                        <t t-if="print_with_payments">
+                                            <t t-if="o.payment_state != 'invoicing_legacy'">
+                                                <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
+                                                <t t-foreach="payments_vals" t-as="payment_vals">
+                                                    <tr t-if="payment_vals['is_exchange'] == 0">
+                                                        <td>
+                                                            <i class="oe_form_field text-end oe_payment_label">
+                                                                <t t-if="payment_vals['is_refund']">
+                                                                    <t t-if="lang == 'th_TH'">กลับรายการเมื่อ </t>
+                                                                    <t t-else="">Reversed on </t>
+                                                                </t>
+                                                                <t t-else="">
+                                                                    <t t-if="lang == 'th_TH'">ชำระเมื่อ </t>
+                                                                    <t t-else="">Paid on </t>
+                                                                </t>
+                                                                <t t-out="payment_vals['date']" t-options='{"widget": "date"}'>2026-09-19</t>
+                                                            </i>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <span t-out="payment_vals['amount']" t-options='{"widget": "monetary", "display_currency": o.currency_id}'>100.00</span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                                <t t-if="len(payments_vals) > 0">
+                                                    <tr class="fw-bold">
+                                                        <td>
+                                                            <t t-if="lang == 'th_TH'">ยอดค้างชำระ</t>
+                                                            <t t-else="">Amount Due</t>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <span t-field="o.amount_residual">0.00</span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                        </t>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="mb-2" t-att-style="'border-bottom: 2px solid %s;' % (o.company_id.primary_color or '#000000')">
+                                <p class="text-end lh-sm" t-if="o.company_id.display_invoice_amount_total_words">
+                                    Total amount in words: <br/>
+                                    <span class="text-muted lh-sm" style="font-size: 0.875em;">(<span t-field="o.amount_total_words">One hundred Baht</span>)</span>
+                                </p>
+                            </div>
+                            <t t-if="o.tax_totals and o.tax_totals.get('display_in_company_currency')">
+                                <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                <t t-call="account.document_tax_totals_company_currency_template"/>
+                            </t>
+                            <t t-else="">
+                                <div class="oe_structure"/>
+                            </t>
+                        </div>
+                        <div class="mb-3 row" style="margin-top: 32pt; margin-left: 20pt;">
+                            <div class="col-4">
+                                <t t-set="show_qr" t-value="o.display_qr_code and o.amount_residual"/>
+                                <div t-if="not show_qr" name="qr_code_placeholder" class="oe_structure"></div>
+                                <div id="qrcode" class="d-flex flex-column align-items-center mb-2 avoid-page-break-inside" t-else="">
+                                    <div class="qrcode" id="qrcode_image">
+                                        <t t-set="qr_code_url" t-value="o._generate_qr_code(silent_errors=True)"/>
+                                        <p t-if="qr_code_url" class="position-relative mb-0">
+                                            <img t-att-src="qr_code_url"/>
+                                            <img src="/account/static/src/img/Odoo_logo_O.svg"
+                                                 id="qrcode_odoo_logo"
+                                                 class="top-50 start-50 position-absolute bg-white border border-3 rounded-circle"
+                                            />
+                                        </p>
+                                    </div>
+                                    <div class="text-muted lh-sm fst-italic" id="qrcode_info" t-if="qr_code_url" style="margin-top: 8pt;">
+                                        <p class="mb-0" style="font-size: 0.65em;">Promptpay QR Code</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-8" style="padding-left: 15pt;">
+                            <span id="payment_terms_note_id"
+                                  t-if="o.invoice_payment_term_id.note"
+                                  t-field="o.invoice_payment_term_id.note"
+                                  name="payment_term">Payment within 30 calendar day</span>
+                            <t t-if="o.move_type in ('out_invoice', 'in_refund') and o.payment_reference">
+                                <p name="payment_communication" class="mb-0">
+                                    Payment Communication:<br/>
+                                    <span class="fw-bold" t-field="o.payment_reference">INV/2026/0001</span>
+                                    <t t-if="o.partner_bank_id">
+                                        <br/>Wire transfer on this:<br/>
+                                        <span class="fw-bold">
+                                            <t t-if="o.partner_bank_id.bank_id">
+                                                <t t-out="o.partner_bank_id.acc_number">204-3-30805-2</t> (<t t-out="o.partner_bank_id.bank_id.name">Kasikorn Bank</t>)
+                                            </t>
+                                            <t t-else="">
+                                                <t t-out="o.partner_bank_id.acc_number">204-3-30805-2</t>
+                                            </t>
+                                        </span>
+                                    </t>
+                                </p>
+                            </t>
+                            <t t-if="o.invoice_payment_term_id.display_on_invoice and payment_term_details">
+                                <div t-if='o.show_payment_term_details' id="total_payment_term_details_table" class="row">
+                                    <div t-attf-class="#{'col-10' if report_type != 'html' else 'col-sm-10 col-md-9'}">
+                                        <t t-if="o._is_eligible_for_early_payment_discount(o.currency_id,o.invoice_date)">
+                                            <table class="d-none"><tbody><tr><td/></tr></tbody></table>
+                                            <div id="early_payment_discount">
+                                                <span t-options='{"widget": "monetary", "display_currency": o.currency_id}'
+                                                      t-out="o.invoice_payment_term_id._get_amount_due_after_discount(o.amount_total, o.amount_tax)">100.00</span> due if paid before
+                                                <span t-out="o.invoice_payment_term_id._get_last_discount_date_formatted(o.invoice_date)">2026-10-01</span>
+                                            </div>
+                                        </t>
+                                        <t t-if="len(payment_term_details) > 1" t-foreach="payment_term_details" t-as="term">
+                                            <div>
+                                                <span t-out="term_index + 1">1</span> - Installment of
+                                                <t t-options='{"widget": "monetary", "display_currency": o.currency_id}' t-out="term.get('amount')" class="text-end">100.00</t>
+                                                <span> due on </span>
+                                                <t t-out="term.get('date')" class="text-start">2026-10-01</t>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </t>
+                            </div>
+                        </div>
+                        <div id="payment_term" class="clearfix mt-3">
+                            <div class="justify-text">
+                                <p t-if="not is_html_empty(o.fiscal_position_id.note)" name="note" class="mb-2">
+                                    <span t-field="o.fiscal_position_id.note"/>
+                                </p>
+                            </div>
+                            <div class="justify-text">
+                                <p t-if="not is_html_empty(o.taxes_legal_notes)" name="taxes_legal_notes" class="mb-2">
+                                    <span t-field="o.taxes_legal_notes"/>
+                                </p>
+                            </div>
+                            <t t-set="show_link_qr" t-value="o.display_link_qr_code and o.amount_residual"/>
+                            <div t-if="show_link_qr" id="payment_link_qrcode" class="d-flex mb-3 avoid-page-break-inside">
+                                <t t-set="portal_qr_code" t-value="o._generate_portal_payment_qr()"/>
+                                <div class="qrcode me-3 position-relative" id="qrcode_image">
+                                    <a t-att-href="o._get_portal_payment_link()" target="_blank" class="top-0 start-0 position-absolute w-100 h-100 z-1" />
+                                    <p class="position-relative mb-0">
+                                        <img t-att-src="portal_qr_code"/>
+                                        <img src="/account/static/src/img/Odoo_logo_O.svg"
+                                             id="qrcode_odoo_logo"
+                                             class="top-50 start-50 position-absolute bg-white border border-3 rounded-circle"
+                                        />
+                                    </p>
+                                </div>
+                                <div class="d-inline lh-sm" id="qrcode_info" t-if="portal_qr_code">
+                                    <p class="fw-bold mb-0">PAY IN A FLASH!</p>
+                                    <p class="text-muted fst-italic">Scan the QR code<br/>or click to pay online</p>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top: 2px; clear: both;">
+                                <div class="col-12" style="width: 100%;">
+                                    <div class="text-muted" id="terms_note" t-attf-style="width: 100%; text-align:justify;text-justify:inter-word;" t-if="not is_html_empty(o.narration)" name="comment">
+                                        <span t-field="o.narration"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" style="margin-top: 5px; clear: both;">
+                                <div class="col-12" style="width: 100%;">
+                                    <!-- ── Signature blocks (VivaFarm specific) ── -->
+                                    <div style="page-break-inside: avoid;">
+                                        <div class="text-muted" style="font-size: 12px; font-weight: bold; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
+                                            <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
+                                            <t t-else="">Signatures below constitute acceptance in accordance with the Terms &amp; Conditions of this document.</t>
+                                        </div>
+                                        <div class="row" style="margin: 0; width: 100%;">
+                                        <div class="col-6" style="width: 50%; padding-right: 3px;">
+                                        <div style="page-break-inside: avoid;">
+                                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
+                                            <strong>
+                                                <t t-if="lang == 'th_TH'">ลูกค้า/ผู้รับสินค้า</t>
+                                                <t t-else="">Received by Customer</t>
+                                            </strong><br/>
+                                            <div style="min-height: 50px; max-height: 50px;"></div>
+                                            <div style="font-size: 14px; margin-top: 0;">
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                                            </div>
+                                        </div>
+                                        </div>
+                                        </div>
+                                        <div class="col-6" style="width: 50%; padding-left: 3px;">
+                                        <div style="page-break-inside: avoid;">
+                                        <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
+                                            <strong>
+                                                <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
+                                                <t t-else="">Authorized Signatory</t>
+                                            </strong><br/>
+                                            <div style="min-height: 50px; max-height: 50px;">
+                                                <img t-if="o.company_id.l10n_th_signature_image"
+                                                     t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
+                                                     style="max-height: 50px;"
+                                                     alt="Authorized Signature"/>
+                                            </div>
+                                            <div style="font-size: 14px; margin-top: 0;">
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span></div>
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
+                                                <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
+                                            </div>
+                                        </div>
+                                        </div>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+        </t>
     </template>
 
-    <!-- ── Wrapper: Viva Invoice (ใบแจ้งหนี้) ── -->
+    <!-- ── Wrapper: Viva Invoice ── -->
     <template id="viva_invoice_plain"
               name="Invoice (ใบแจ้งหนี้)">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-set="lang" t-value="o.partner_id.lang"/>
-                <!-- Same 3-copy triplicate as the Tax Invoice for posted
-                     customer invoices (user decision 2026-08-19). -->
+                <!-- Proforma previews (portal Preview / Send-proforma, proforma flag
+                     set by account's ir_actions_report._get_rendering_context) render a
+                     SINGLE copy without the copy badge, like the default Invoice PDF.
+                     Real posted tax invoices keep the 3-copy triplicate. -->
                 <t t-set="copies"
                    t-value="proforma and [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}] or o._get_tax_invoice_copies()"/>
                 <t t-foreach="copies" t-as="copy">
                     <t t-set="copy_kind" t-value="copy['key']"/>
-                    <t t-call="vivafarm_report.viva_invoice_plain_document" t-lang="lang">
+                    <!-- print_with_payments must be set INSIDE the t-call body:
+                         t-call gives the callee a fresh context, so a variable set
+                         in the caller scope never reaches viva_invoice_document.
+                         Same pattern as account.report_invoice_with_payments. -->
+                    <t t-call="vivafarm_report.viva_invoice_document" t-lang="lang">
                         <t t-set="print_with_payments" t-value="True"/>
                     </t>
                 </t>
