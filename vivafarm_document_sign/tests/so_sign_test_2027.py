@@ -152,16 +152,18 @@ check('S6 print returns stored bytes', pdf_bytes == att_bytes,
 # signed document for the same sale order at the DB level, and the sign
 # flow must CONVERGE (reuse the winner's record) instead of crashing.
 print('--- S7 DB-layer guard (unique sale_order_id) ---')
-# 7a. The constraint physically exists in the DB (Odoo 19 nightly dropped
-#     the _sql_constraints shim — the unique constraints were MISSING from
-#     pg_constraint; verify with models.Constraint the constraint is real).
-from odoo.orm.table_objects import Constraint as _SQLConstraint
-cons = [obj for obj in env['viva.signed.document']._table_objects.values()
-        if isinstance(obj, _SQLConstraint)]
-check('S7 has models.Constraint for sale_order_id',
-      any('unique' in (d := c.get_definition(env.registry)).lower()
-          and 'sale_order_id' in d.lower() for c in cons),
-      '(constraints=%d)' % len(cons))
+# 7a. The guard physically exists. It is a PARTIAL UNIQUE INDEX (not a
+#     UNIQUE constraint — a constraint cannot be partial; the delivery_note
+#     signed record carries sale_order_id as a chain link and would collide
+#     with the SO's own record under a full UNIQUE). The partial index binds
+#     only WHERE document_type = 'sale_order'. Verify it exists in pg_indexes.
+env.cr.execute("""SELECT indexname FROM pg_indexes
+                  WHERE tablename = 'viva_signed_document'
+                    AND indexname LIKE '%so_unique%'""")
+idx_names = [r[0] for r in env.cr.fetchall()]
+check('S7 partial unique index on sale_order_id exists',
+      any('partial' in n for n in idx_names),
+      '(indexes=%s)' % idx_names)
 
 # 7b. A duplicate sign attempt converges: same SO, second _hash_customer_accepted
 #     must NOT create a second record — it reuses the existing one.
