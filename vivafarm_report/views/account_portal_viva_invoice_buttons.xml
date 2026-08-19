@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VivaFarm invoice portal buttons: "View Viva Invoice" + "Accept & Sign
+        Invoice" on the portal invoice page (account.portal_invoice_page).
+
+        The standard page renders the DEFAULT report in the iframe and offers
+        a Download button. This inheritance adds:
+          - "View Viva Invoice" → /my/invoices/<id>/viva_pdf (the custom
+            vivafarm_report.viva_invoice_plain; once acknowledged, the
+            ir_actions_report override serves the STORED signed bytes).
+          - "Accept & Sign Invoice" (posted, unsigned invoices only) → modal
+            with the existing Viva signature form → /my/invoices/<id>/accept_viva.
+
+        The acknowledgment is EVIDENCE-ONLY (lawyer sign-off 2026-08-19):
+        it never gates payment; refusal = chatter note + no state change.
+        Same parallel-button pattern as the SO/DN Accept & Sign (bug 2):
+        stock/account portal code is untouched.
+    -->
+    <template id="account_portal_viva_invoice_message"
+              name="VivaFarm Invoice Sign Success Message"
+              inherit_id="account.portal_invoice_page">
+        <xpath expr="//div[hasclass('o_portal_invoice_sidebar')]" position="inside">
+            <div t-if="message == 'invoice_sign_ok'" class="alert alert-success alert-dismissible d-print-none" role="status">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <strong>Thank You!</strong><br/>
+                Your invoice has been acknowledged. The signed invoice is available below.
+            </div>
+        </xpath>
+    </template>
+
+    <template id="account_portal_viva_invoice_buttons"
+              name="VivaFarm Invoice Portal Buttons"
+              inherit_id="account.portal_invoice_page">
+        <!-- Buttons next to the Download button in the sidebar -->
+        <xpath expr="//div[hasclass('o_download_pdf')]" position="after">
+            <div class="d-flex flex-column gap-2" name="viva_invoice_actions">
+                <a
+                    class="btn btn-light o_print_btn"
+                    t-att-href="'/my/invoices/%s/viva_pdf?%s' % (invoice.id, keep_query())"
+                    target="_blank"
+                >
+                    <i class="fa fa-print me-1"/>View Viva Invoice
+                </a>
+                <a
+                    t-if="invoice.state == 'posted' and not invoice.signature"
+                    role="button"
+                    class="btn btn-primary"
+                    t-att-data-bs-target="'#modalaccept_viva_invoice_%s' % invoice.id"
+                    data-bs-toggle="modal"
+                    href="#"
+                    t-att-id="'accept_viva_invoice_button_%s' % invoice.id"
+                >
+                    <i class="fa fa-check me-1"/>Accept &amp; Sign Invoice
+                </a>
+            </div>
+        </xpath>
+
+        <!-- Signature modal -->
+        <xpath expr="//div[hasclass('o_portal_invoice_sidebar')]" position="inside">
+            <div role="dialog" class="modal fade"
+                 t-att-id="'modalaccept_viva_invoice_%s' % invoice.id"
+                 name="account_modal_sign_viva_invoice">
+                <div class="modal-dialog">
+                    <form
+                        t-att-id="'accept_viva_invoice_%s' % invoice.id"
+                        method="POST"
+                        t-att-data-invoice-id="invoice.id"
+                        t-att-data-token="invoice.access_token"
+                        class="js_accept_json modal-content js_website_submit_form"
+                    >
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <header class="modal-header">
+                            <h4 class="modal-title">Accept &amp; Sign Invoice</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                        </header>
+                        <main class="modal-body" id="sign-dialog-viva-invoice">
+                            <span>
+                                By signing, you acknowledge that you have received this invoice
+                                <b t-esc="invoice.name"/> and agree to the amount
+                                <b t-field="invoice.amount_total"/>.
+                            </span>
+                            <t t-set="call_url" t-value="'/my/invoices/%s/accept_viva?access_token=%s' % (invoice.id, invoice.access_token)"/>
+                            <t
+                                t-set="default_name"
+                                t-value="invoice.partner_id.name or invoice.partner_id.commercial_partner_id.name"
+                            />
+                            <t t-set="signature_form_props" t-value="{
+                                'callUrl': call_url,
+                                'defaultName': default_name,
+                                'mode': mode,
+                                'sendLabel': 'Accept &amp; Sign',
+                                'signatureRatio': signature_ratio,
+                                'signatureType': signature_type,
+                                'fontColor': font_color
+                            }"/>
+                            <owl-component name="vivafarm_report.accept_viva_signature_form"
+                                           t-att-props="json.dumps(signature_form_props)"/>
+                        </main>
+                    </form>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

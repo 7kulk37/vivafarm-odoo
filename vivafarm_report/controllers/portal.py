@@ -276,3 +276,125 @@ class VivaSalePortal(CustomerPortal):
             so._portal_ensure_token()
             return so.get_portal_url(query_string='&message=delivery_sign_ok')
         return '/my'
+
+    def _invoice_check_access(self, invoice_id, access_token=None):
+        """Access check for an invoice via its portal token.
+
+        Mirrors account/controllers/portal.py: an invoice is reachable
+        through the customer's portal when the caller has the invoice's
+        access_token (or read rights on the invoice itself).
+        """
+        invoice = request.env['account.move'].browse([invoice_id])
+        invoice_sudo = invoice.sudo()
+        try:
+            invoice.check_access('read')
+        except AccessError:
+            if not access_token or access_token != invoice_sudo.access_token:
+                raise
+        return invoice_sudo
+
+    @http.route(['/my/invoices/<int:invoice_id>/viva_pdf'], type='http',
+                auth="public", website=True)
+    def portal_invoice_viva_pdf(self, invoice_id, access_token=None, download=False, **kw):
+        """View the custom Viva Invoice (ใบแจ้งหนี้) PDF.
+
+        Standard portal invoice download renders the DEFAULT report
+        (account.account_invoices or the partner's invoice_template_pdf_report_id).
+        This route renders the custom vivafarm_report.viva_invoice_plain —
+        and once the customer has acknowledged it, the ir_actions_report
+        override serves the STORED signed bytes (hash block included).
+        """
+        try:
+            invoice_sudo = self._invoice_check_access(invoice_id, access_token=access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+        report = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
+            'vivafarm_report.viva_invoice_plain', [invoice_sudo.id])[0]
+        pdfhttpheaders = [
+            ('Content-Type', 'application/pdf'),
+            ('Content-Length', len(report)),
+        ]
+        if download:
+            pdfhttpheaders.append((
+                'Content-Disposition',
+                'attachment; filename=%s.pdf' % invoice_sudo.name.replace('/', '_'),
+            ))
+        return request.make_response(report, headers=pdfhttpheaders)
+
+    @http.route(['/my/invoices/<int:invoice_id>/accept_viva'], type='jsonrpc',
+                auth="public", website=True)
+    def portal_invoice_accept_viva(self, invoice_id, access_token=None, name=None,
+                                   signature=None, position=None):
+        """Customer acknowledges an invoice (ใบแจ้งหนี้) — EVIDENCE-ONLY.
+
+        Lawyer sign-off (2026-08-19): the acknowledgment is optional and
+        never gates payment. This route writes the customer's drawn
+        signature + name + position on the invoice, then hashes + stores
+        the signed invoice PDF (vivafarm_document_sign). Refusal is NOT a
+        state — the invoice stays posted/not_paid; the seller records the
+        dispute in the chatter.
+
+        Same 3-layer guard design as /accept_viva:
+          1. Server idempotency — a repeat POST on an already-signed
+             invoice is a benign success (force_refresh + sign_ok).
+          2. Customer-side JS one-shot lock (accept_viva_guard.js).
+          3. DB UNIQUE(move_id) constraint + IntegrityError convergence
+             in _hash_invoice_accepted.
+        """
+        access_token = access_token or request.httprequest.args.get('access_token')
+        try:
+            invoice_sudo = self._invoice_check_access(invoice_id, access_token=access_token)
+        except (AccessError, MissingError):
+            return {'error': 'Invalid invoice.'}
+
+        # Idempotency: already signed -> benign success.
+        if invoice_sudo._is_signed():
+            return {
+                'force_refresh': True,
+                'redirect_url': invoice_sudo.get_portal_url(
+                    query_string='&message=invoice_sign_ok'),
+            }
+
+        if invoice_sudo.state != 'posted':
+            return {'error': 'The invoice is not in a state requiring acknowledgment.'}
+        if not signature:
+            return {'error': 'Signature is missing.'}
+
+        try:
+            invoice_sudo.write({
+                'signed_by': name,
+                'signed_position': position or False,
+                'signed_on': fields.Datetime.now(),
+                'signature': signature,
+            })
+            # flush now to make signature data available to PDF render request
+            request.env.cr.flush()
+        except (TypeError, binascii.Error):
+            return {'error': 'Invalid signature data.'}
+
+        # Hash the acknowledged invoice (customer signature baked in).
+        invoice_sudo.with_context(invoice_include_signature=True)._hash_invoice_accepted()
+
+        # Render the Viva report — the override serves the STORED signed bytes.
+        pdf = request.env['ir.actions.report'].sudo().with_context(
+            invoice_include_signature=True)._render_qweb_pdf(
+                'vivafarm_report.viva_invoice_plain', [invoice_sudo.id])[0]
+
+        # Post the signed PDF in the chatter.
+        invoice_sudo.message_post(
+            attachments=[('%s.pdf' % invoice_sudo.name, pdf)],
+            author_id=(
+                invoice_sudo.partner_id.id
+                if request.env.user._is_public()
+                else request.env.user.partner_id.id
+            ),
+            body='Invoice acknowledged by %s' % name,
+            message_type='comment',
+            subtype_xmlid='mail.mt_comment',
+        )
+
+        return {
+            'force_refresh': True,
+            'redirect_url': invoice_sudo.get_portal_url(
+                query_string='&message=invoice_sign_ok'),
+        }
