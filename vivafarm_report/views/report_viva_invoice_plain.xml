@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VivaFarm Invoice (ใบแจ้งหนี้) — created from the Tax Invoice baseline.
+        Copies the full Tax Invoice document (layout, info bar, line items,
+        totals, signatures, 3-copy triplicate) and changes ONLY the title
+        label to "Invoice" / "ใบแจ้งหนี้" (format "Invoice INV/2026/00022").
+        The Tax Invoice baseline (report_viva_invoice.xml) is NOT touched —
+        it stays the frozen 190,978 B reference.
+
+        Design decisions (2026-08-19, user):
+        - Baseline: Tax Invoice (3-copy triplicate kept).
+        - "Signature stamp" issue deferred — no sign-stamp inherit here for
+          now; the single flow is the digital sign in the customer portal.
+        - Layout will be aligned to the newest Quotation/SO layout in a
+          follow-up slice (not part of this baseline copy).
+    -->
+
+    <!-- ── Content: Viva Invoice (ใบแจ้งหนี้) Document ── -->
+    <template id="viva_invoice_plain_document"
+              name="VivaFarm Invoice (ใบแจ้งหนี้) Document"
+              inherit_id="vivafarm_report.viva_invoice_document">
+        <!-- Title label: "Invoice" / "ใบแจ้งหนี้" instead of the Tax
+             Invoice tri-label. Keeps the existing number span (o.name) →
+             "Invoice INV/2026/00022". State branches preserved
+             (ฉบับร่าง / ยกเลิก). -->
+        <xpath expr="//span[@name='invoice_title']" position="replace">
+            <t t-if="lang == 'th_TH'" name="invoice_title">ใบแจ้งหนี้</t>
+            <t t-else="" name="invoice_title">INVOICE</t>
+        </xpath>
+        <xpath expr="//span[@name='draft_invoice_title']" position="replace">
+            <t t-if="lang == 'th_TH'" name="draft_invoice_title">ใบแจ้งหนี้ (ฉบับร่าง)</t>
+            <t t-else="" name="draft_invoice_title">Draft INVOICE</t>
+        </xpath>
+        <xpath expr="//span[@name='cancelled_invoice_title']" position="replace">
+            <t t-if="lang == 'th_TH'" name="cancelled_invoice_title">ยกเลิกใบแจ้งหนี้</t>
+            <t t-else="" name="cancelled_invoice_title">Cancelled Invoice</t>
+        </xpath>
+    </template>
+
+    <!-- ── Wrapper: Viva Invoice (ใบแจ้งหนี้) ── -->
+    <template id="viva_invoice_plain"
+              name="Invoice (ใบแจ้งหนี้)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="lang" t-value="o.partner_id.lang"/>
+                <!-- Same 3-copy triplicate as the Tax Invoice for posted
+                     customer invoices (user decision 2026-08-19). -->
+                <t t-set="copies"
+                   t-value="proforma and [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}] or o._get_tax_invoice_copies()"/>
+                <t t-foreach="copies" t-as="copy">
+                    <t t-set="copy_kind" t-value="copy['key']"/>
+                    <t t-call="vivafarm_report.viva_invoice_plain_document" t-lang="lang">
+                        <t t-set="print_with_payments" t-value="True"/>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- ── Report action ── -->
+    <record id="report_viva_invoice_plain" model="ir.actions.report">
+        <field name="name">Invoice (ใบแจ้งหนี้)</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.viva_invoice_plain</field>
+        <field name="report_file">vivafarm_report.viva_invoice_plain</field>
+        <field name="print_report_name">'Invoice - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+        <field name="is_invoice_report" eval="True"/>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
+    </record>
+</odoo>
