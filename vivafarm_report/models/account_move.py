@@ -73,6 +73,29 @@ class AccountMove(models.Model):
         root = self.reissue_root_id or self
         return self.search([('reissue_root_id', '=', root.id)])
 
+    def action_send_invoice_viva(self):
+        """Open the standard Send wizard with the Viva Invoice (ใบแจ้งหนี้) PDF.
+
+        Mirrors action_send_and_print (same wizard, same is_move_sent
+        marking, same email template) but forces the custom commercial
+        invoice report via the viva_invoice_report context flag. The
+        commercial invoice is NOT the tax invoice — the email template
+        stays standard (no title change, no penalty language).
+        """
+        self.env['account.move.send']._check_move_constraints(self)
+        return {
+            'name': _("Send INV"),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'account.move.send.wizard' if len(self) == 1 else 'account.move.send.batch.wizard',
+            'target': 'new',
+            'context': {
+                'active_model': 'account.move',
+                'active_ids': self.ids,
+                'viva_invoice_report': True,
+            },
+        }
+
     def _is_multipage(self):
         """Whether this tax invoice spans more than one sheet per copy.
 

@@ -14,6 +14,17 @@
                         class="oe_highlight"
                         invisible="state != 'posted' or move_type not in ('out_invoice', 'out_refund')"/>
             </button>
+            <!-- Send INV (ใบแจ้งหนี้): mirrors the standard Send button
+                 (same display_send_button visibility) but opens the send
+                 wizard with the Viva commercial Invoice report forced via
+                 context. The commercial invoice is NOT the tax invoice. -->
+            <button name="action_invoice_sent" id="account_invoice_send_btn"
+                    position="before">
+                <button name="action_send_invoice_viva"
+                        type="object"
+                        string="Send INV"
+                        invisible="not display_send_button or move_type not in ('out_invoice',)"/>
+            </button>
             <!-- Replaces Invoice (ป.86/2542 ข้อ 25): set on the re-issued
                  invoice to print the replacement note on the tax invoice. -->
             <field name="payment_reference" position="after">
