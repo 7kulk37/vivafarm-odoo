@@ -44,6 +44,7 @@ class VivaVerificationController(http.Controller):
             'certificate_type': signed.certificate_type,
             'pdf_sha256': signed.pdf_sha256,
             'odoo_record_locked': True,  # signed => lock enforced at ORM level
+            'linked': self._get_linked_document(signed),
         }
 
         # Signature verification (independent of upload — always shown)
@@ -62,6 +63,36 @@ class VivaVerificationController(http.Controller):
 
         signed._log_event('VERIFIED')
         return request.render('vivafarm_document_sign.verification_page', result)
+
+    def _get_linked_document(self, signed):
+        """Find the linked signed document for the record-level chain.
+
+        Record-level linkage only (user decision 2026-08-18) — no crypto
+        chain. Rules:
+          - Delivery Confirmation (delivery_note) -> its parent Sale Order
+            (the SO's own signed doc, if the SO was portal-accepted).
+          - Sale Order -> the signed Delivery Confirmation(s) for it.
+          - Otherwise / no link -> empty dict (the template renders '-').
+        """
+        Model = self.env['viva.signed.document'].sudo()
+        linked = None
+        if signed.document_type == 'delivery_note' and signed.sale_order_id:
+            linked = Model.search([
+                ('sale_order_id', '=', signed.sale_order_id.id),
+                ('document_type', '=', 'sale_order'),
+            ], limit=1)
+        elif signed.document_type == 'sale_order' and signed.sale_order_id:
+            linked = Model.search([
+                ('sale_order_id', '=', signed.sale_order_id.id),
+                ('document_type', '=', 'delivery_note'),
+            ], limit=1)
+        if not linked:
+            return {}
+        return {
+            'document_number': linked.document_number,
+            'verification_code': linked.verification_code,
+            'url': '/v/%s' % linked.verification_token,
+        }
 
     @staticmethod
     def _verify_signature(signed):

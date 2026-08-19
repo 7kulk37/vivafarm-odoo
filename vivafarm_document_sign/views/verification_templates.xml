@@ -67,6 +67,15 @@
                         </dd></div>
                     </t>
 
+                    <div class="row"><dt>Linked Document</dt><dd>
+                        <t t-if="linked">
+                            <t t-esc="linked['document_number']"/>
+                            <span class="hash-line" t-esc="' · ' + linked['verification_code']"/>
+                            · <a t-att-href="linked['url']">Verify</a>
+                        </t>
+                        <t t-else="">-</t>
+                    </dd></div>
+
                     <div class="upload">
                         <p>Upload your copy of the PDF to confirm it is the original signed document:</p>
                         <form method="post" enctype="multipart/form-data">
