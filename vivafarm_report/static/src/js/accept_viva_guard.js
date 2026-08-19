@@ -51,6 +51,22 @@
         }
     }
 
+    // The stock SignatureForm renders its OWN nested <form> (no id) inside
+    // the Viva form element — closest('form') from the submit button lands
+    // on that anonymous inner form, so isVivaForm() never matched and the
+    // page-lifetime lock silently never engaged for the SO form (user
+    // report 2026-08-19: "no loading effect and it can be spam click").
+    // Walk UP the DOM to the first ancestor whose id is a Viva form id.
+    function findVivaForm(el) {
+        while (el && el.nodeType === 1) {
+            if (isVivaForm(el)) {
+                return el;
+            }
+            el = el.parentNode;
+        }
+        return null;
+    }
+
     // Capture phase: runs before the OWL component's own click handler, so
     // the flag is set before the first RPC fires and every later click on
     // the submit button is blocked.
@@ -62,8 +78,8 @@
         // A submit button inside a Viva form.
         var formEl = target.closest('.o_portal_sign_submit');
         if (formEl) {
-            var form = formEl.closest('form');
-            if (form && isVivaForm(form)) {
+            var form = findVivaForm(formEl);
+            if (form) {
                 if (form.dataset.vivaSubmitted === '1') {
                     ev.preventDefault();
                     ev.stopPropagation();

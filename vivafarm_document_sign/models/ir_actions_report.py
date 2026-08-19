@@ -36,6 +36,12 @@ class IrActionsReport(models.Model):
         ):
             signed = self.env['viva.signed.document'].sudo().search([
                 ('sale_order_id', '=', res_ids[0]),
+                # The delivery_note signed record ALSO carries sale_order_id
+                # as the chain link — without this filter, "View Quotation /
+                # Sale Order" would serve the signed Delivery Confirmation
+                # PDF instead of the signed Sale Order (user report
+                # 2026-08-19).
+                ('document_type', '=', 'sale_order'),
                 ('state', 'in', ('signed', 'revoked')),
                 ('signed_attachment_id', '!=', False),
             ], limit=1)

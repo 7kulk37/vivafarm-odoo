@@ -84,7 +84,12 @@ export class AcceptVivaSignatureForm extends SignatureForm {
             this.state.error = "Signature is required.";
             return;
         }
-        const button = document.querySelector('.o_portal_sign_submit')
+        // Scope the button lookup to THIS component's root. The stock page
+        // has multiple .o_portal_sign_submit buttons (the standard accept
+        // modal's is hidden); document.querySelector returned the FIRST one,
+        // so the loading effect never appeared on the Viva button (user
+        // report 2026-08-19: "no loading effect + spam clickable").
+        const button = this.rootRef.el.querySelector('.o_portal_sign_submit')
         const icon = button.removeChild(button.firstChild)
         const restoreBtnLoading = addLoadingEffect(button);
 
