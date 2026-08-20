@@ -20,7 +20,12 @@
     <template id="account_portal_viva_invoice_message"
               name="VivaFarm Invoice Sign Success Message"
               inherit_id="account.portal_invoice_page">
-        <xpath expr="//div[hasclass('o_portal_invoice_sidebar')]" position="inside">
+        <!-- Place the success alert at the TOP of the page content, above the
+             invoice iframe. The outer .o_portal_invoice_sidebar is the ROW
+             wrapper (sidebar + content), so position=inside on it appends the
+             alert at the very END — below Communication history (user report
+             2026-08-20). Insert before the iframe container instead. -->
+        <xpath expr="//div[hasclass('o_portal_html_view')]" position="before">
             <div t-if="message == 'invoice_sign_ok'" class="alert alert-success alert-dismissible d-print-none" role="status">
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 <strong>Thank You!</strong><br/>

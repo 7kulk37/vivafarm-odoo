@@ -431,6 +431,19 @@ class VivaSalePortal(CustomerPortal):
             subtype_xmlid='mail.mt_comment',
         )
 
+        # Send the customer's copy of the signed invoice (mirrors the SO
+        # confirmation email: report = viva_invoice_plain -> the stored
+        # signed PDF is attached).
+        tpl = request.env.ref(
+            'vivafarm_report.viva_email_template_invoice_acknowledgment',
+            raise_if_not_found=False)
+        if tpl:
+            invoice_sudo.with_context(force_send=True).message_post_with_source(
+                tpl,
+                email_layout_xmlid='mail.mail_notification_layout_with_responsible_signature',
+                subtype_xmlid='mail.mt_comment',
+            )
+
         return {
             'force_refresh': True,
             'redirect_url': invoice_sudo.get_portal_url(
