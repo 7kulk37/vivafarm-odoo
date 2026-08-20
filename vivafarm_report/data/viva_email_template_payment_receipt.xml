@@ -31,9 +31,6 @@
         The payment receipt is attached to this email.
         <br/><br/>
         Do not hesitate to contact us if you have any questions.
-        <t t-if="not is_html_empty(object.user_id.signature)">
-            <div>--<br/><t t-out="object.user_id.signature or ''">Seller</t></div>
-        </t>
     </p>
 </div>
         </field>
