@@ -66,6 +66,22 @@ class StockPicking(models.Model):
         day_month = format_date(self.env, value, lang_code='th_TH', date_format='dd/MMM')
         return '%s/%s' % (day_month, value.year + 543)
 
+    def _get_viva_datetime_display(self, field_name):
+        """Datetime in the report sign-section style: '2026-08-20 23:23:51'
+        (Bangkok local, Asia/Bangkok UTC+7).
+
+        `signed_on` / `viva_sent_at` are stored UTC; the report must show the
+        local wall-clock time the customer sees, not the UTC value.
+        """
+        self.ensure_one()
+        value = self[field_name]
+        if not value:
+            return ''
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+        utc = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return utc.astimezone(ZoneInfo('Asia/Bangkok')).strftime('%Y-%m-%d %H:%M:%S')
+
     def action_ship_and_send_dn(self):
         """"Ship & Send DN" — mark the delivery In Transit and email the DN.
 

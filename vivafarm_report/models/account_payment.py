@@ -18,6 +18,22 @@ class AccountPayment(models.Model):
         day_month = format_date(self.env, value, lang_code='th_TH', date_format='dd/MM')
         return '%s/%s' % (day_month, (value.year + 543) % 100)
 
+    def _get_viva_datetime_display(self, field_name):
+        """Datetime in the report sign-section style: '2026-08-20 23:23:51'
+        (Bangkok local, Asia/Bangkok UTC+7).
+
+        `create_date` is stored UTC; the receipt must show the local
+        wall-clock time the customer paid, not the UTC value.
+        """
+        self.ensure_one()
+        value = self[field_name]
+        if not value:
+            return ''
+        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+        utc = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return utc.astimezone(ZoneInfo('Asia/Bangkok')).strftime('%Y-%m-%d %H:%M:%S')
+
     def _get_payment_receipt_copies(self):
         """Copies to print for a payment receipt (Thai practice: 3 copies).
 
