@@ -321,9 +321,12 @@ class VivaSalePortal(CustomerPortal):
                 report_env = report_env.with_context(invoice_include_signature=True)
             # Single-copy preview (not the stacked 3-copy triplicate) — the
             # portal iframe should look like a printed page, not a long stack.
-            report_env = report_env.with_context(viva_portal_preview=True)
+            # Passed as a DATA flag (like `proforma`) because the copies
+            # t-set reads template data vars, and env context does not reach
+            # the wrapper's `proforma or ...` expression reliably.
             report = report_env._render_qweb_html(
-                'vivafarm_report.viva_invoice_plain', [invoice_sudo.id])[0]
+                'vivafarm_report.viva_invoice_plain', [invoice_sudo.id],
+                data={'viva_single_copy': True, 'report_type': 'html'})[0]
             headers = [('Content-Type', 'text/html; charset=utf-8'),
                        ('Content-Length', len(report))]
             return request.make_response(report, headers=headers)
