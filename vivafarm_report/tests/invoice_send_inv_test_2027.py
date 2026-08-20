@@ -84,6 +84,7 @@ try:
     check('T6 button string Send INV', 'Send INV' in arch)
     check('T6 button calls action_send_invoice_viva', 'action_send_invoice_viva' in arch)
     check('T6 mirrors display_send_button', 'display_send_button' in arch)
+    check('T6 highlighted', 'class="oe_highlight"' in arch)
 except Exception as e:
     check('T6 Send INV button view exists', False, str(e)[:120])
 

@@ -58,6 +58,8 @@ try:
     check('P5 template exists', True)
     check('P5b has Accept & Sign Invoice', 'Accept &amp; Sign Invoice' in arch or 'Accept & Sign Invoice' in arch)
     check('P5c has viva_pdf link', 'viva_pdf' in arch)
+    check('P5d has View Invoice (no Viva)', 'View Invoice' in arch and 'View Viva Invoice' not in arch)
+    check('P5e iframe points to viva_pdf html', "report_type=html" in arch and "viva_pdf" in arch)
     check('P6 has accept_viva callUrl', 'accept_viva' in arch)
     check('P6b has signature form component', 'accept_viva_signature_form' in arch)
 except Exception as e:
