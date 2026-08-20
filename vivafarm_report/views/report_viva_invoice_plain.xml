@@ -579,9 +579,9 @@
                     <t t-set="copy_kind" t-value="copy['key']"/>
                     <!-- print_with_payments must be set INSIDE the t-call body:
                          t-call gives the callee a fresh context, so a variable set
-                         in the caller scope never reaches viva_invoice_document.
+                         in the caller scope never reaches viva_invoice_plain_document.
                          Same pattern as account.report_invoice_with_payments. -->
-                    <t t-call="vivafarm_report.viva_invoice_document" t-lang="lang">
+                    <t t-call="vivafarm_report.viva_invoice_plain_document" t-lang="lang">
                         <t t-set="print_with_payments" t-value="True"/>
                     </t>
                 </t>
