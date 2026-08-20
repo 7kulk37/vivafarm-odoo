@@ -42,6 +42,15 @@ class AccountPayment(models.Model):
         hash matches the exact emailed bytes.
         """
         self.ensure_one()
+        # Idempotency guard: if a receipt record already exists (webhook
+        # retry / cron race could call _create_payment twice), do NOT
+        # create a duplicate or re-render — return the existing record.
+        existing = self.env['viva.signed.document'].search([
+            ('payment_id', '=', self.id),
+            ('document_type', '=', 'payment_receipt'),
+        ], limit=1)
+        if existing:
+            return existing
         # 1. Pre-create the record (token known before rendering)
         signed = self.env['viva.signed.document'].create({
             'document_number': self.name,
