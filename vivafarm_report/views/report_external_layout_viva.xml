@@ -305,7 +305,7 @@
                         <td style="width: 33.33%; padding-left: 3px; vertical-align: top; border: none;" name="pay_ref">
                             <t t-if="lang == 'th_TH'"><strong>เลขที่อ้างอิง</strong></t>
                             <t t-else=""><strong>Reference</strong></t>
-                            <div t-esc="o.ref or o.memo or ''"/>
+                            <div t-esc="o.memo or ''"/>
                         </td>
                     </tr>
                 </table>
