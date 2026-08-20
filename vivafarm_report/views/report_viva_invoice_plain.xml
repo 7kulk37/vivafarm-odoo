@@ -570,12 +570,11 @@
                      set by account's ir_actions_report._get_rendering_context) render a
                      SINGLE copy without the copy badge, like the default Invoice PDF.
                      Real posted tax invoices keep the 3-copy triplicate.
-                     The portal iframe (report_type=html) also renders a SINGLE copy
-                     (viva_single_copy data flag set by the route) so the on-page
-                     preview is not a stacked 3-copy long page (user report
-                     2026-08-19). -->
+                     The portal iframe preview (report_type=html) ALWAYS renders a
+                     SINGLE copy — it is an on-page preview, not a printed stack
+                     (user report 2026-08-19). PDF keeps the 3-copy triplicate. -->
                 <t t-set="copies"
-                   t-value="(proforma or viva_single_copy) and [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}] or o._get_tax_invoice_copies()"/>
+                   t-value="(proforma or report_type == 'html') and [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}] or o._get_tax_invoice_copies()"/>
                 <t t-foreach="copies" t-as="copy">
                     <t t-set="copy_kind" t-value="copy['key']"/>
                     <!-- print_with_payments must be set INSIDE the t-call body:
