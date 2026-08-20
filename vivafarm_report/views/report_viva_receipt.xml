@@ -12,11 +12,29 @@
     <template id="viva_payment_receipt_document"
               name="VivaFarm Payment Receipt Document">
         <t t-call="vivafarm_report.external_layout_viva">
+            <t t-set="is_tax_invoice" t-value="True"/>
             <t t-set="is_payment_receipt" t-value="True"/>
             <t t-set="o" t-value="o.with_context(lang=lang)"/>
             <t t-set="values" t-value="o._get_payment_receipt_report_values()"/>
             <t t-set="invoices" t-value="o.reconciled_invoice_ids or o.reconciled_bill_ids"/>
             <t t-set="otherCurrency" t-value="any(inv.currency_id != par[2].currency_id for inv in invoices for par in inv._get_reconciled_invoices_partials()[0])"/>
+
+            <!-- Customer block for the repeating header frame -->
+            <t t-set="address">
+                <div t-field="o.partner_id.name">Customer name</div>
+                <div t-if="o.partner_id.street or o.partner_id.street2">
+                    <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
+                </div>
+                <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
+                    <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
+                </div>
+                <div t-if="o.partner_id.vat">
+                    <t t-if="lang == 'th_TH'">เลขประจำตัวผู้เสียภาษี: </t>
+                    <t t-else="">Tax ID: </t>
+                    <span t-field="o.partner_id.vat"/>
+                    <t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
+                </div>
+            </t>
 
             <style>
                 /* Compact so the receipt fits one page per copy. */
@@ -25,61 +43,18 @@
             </style>
 
             <div class="page">
-                <h3 t-att-style="'margin-top: 0; margin-bottom: 6px; text-align: left; color: %s;' % (o.company_id.primary_color or '#000000')">
-                    <strong style="font-size: 24px;">
+                <!-- Title: rendered by the LAYOUT header frame (tax-invoice
+                     branch) so it sits at the same y as the SO/invoice titles -->
+                <t t-set="layout_document_title">
+                    <span>
                         <t t-if="lang == 'th_TH'">ใบเสร็จรับเงิน: </t>
                         <t t-else="">Payment Receipt: </t>
-                        <span t-field="o.name"/>
-                    </strong>
-                </h3>
+                        <span t-field="o.name">PBNK1/2026/00025</span>
+                    </span>
+                </t>
 
-                <!-- Customer block -->
-                <div class="row" style="margin: 0 0 8px 0;">
-                    <div class="col-6" style="width: 50%; padding-right: 3px;">
-                        <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">ลูกค้า</t>
-                            <t t-else="">Customer</t>
-                        </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
-                            <div t-field="o.partner_id.name"/>
-                            <div t-if="o.partner_id.street or o.partner_id.street2">
-                                <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
-                            </div>
-                            <div t-if="o.partner_id.city or o.partner_id.state_id or o.partner_id.zip or o.partner_id.country_id">
-                                <span t-field="o.partner_id.city"/><t t-if="o.partner_id.city and (o.partner_id.state_id or o.partner_id.zip)">, </t><span t-esc="o.partner_id._get_state_display(o.partner_id.state_id)"/><t t-if="o.partner_id.state_id and o.partner_id.zip"> </t><span t-field="o.partner_id.zip"/><t t-if="(o.partner_id.city or o.partner_id.state_id or o.partner_id.zip) and o.partner_id.country_id">, </t><span t-field="o.partner_id.country_id"/>
-                            </div>
-                            <div t-if="o.partner_id.vat">
-                                <t t-if="lang == 'th_TH'">เลขประจำตัวผู้เสียภาษี: </t>
-                                <t t-else="">Tax ID: </t>
-                                <span t-field="o.partner_id.vat"/>
-                                <t t-if="o.partner_id.l10n_th_branch_name"> · <span t-esc="o.partner_id.l10n_th_branch_name"/></t>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6" style="width: 50%; padding-left: 3px;">
-                        <strong style="font-size: 15px;">
-                            <t t-if="lang == 'th_TH'">ชำระโดย</t>
-                            <t t-else="">Paid By</t>
-                        </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
-                            <div t-if="o.payment_method_line_id">
-                                <t t-if="lang == 'th_TH'">วิธีชำระเงิน: </t>
-                                <t t-else="">Payment Method: </t>
-                                <span t-field="o.payment_method_line_id.name"/>
-                            </div>
-                            <div t-if="o.amount">
-                                <t t-if="lang == 'th_TH'">จำนวนเงิน: </t>
-                                <t t-else="">Amount: </t>
-                                <span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/>
-                            </div>
-                            <div t-if="o.memo">
-                                <t t-if="lang == 'th_TH'">อ้างอิง: </t>
-                                <t t-else="">Memo: </t>
-                                <span t-field="o.memo"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Customer block (was in body; now header frame shows it.
+                     The header branch renders address + info bar already. -->
 
                 <!-- Payment table: invoice refs + amounts (template B.3 columns) -->
                 <table name="invoices"
@@ -153,9 +128,16 @@
                     </div>
                 </div>
 
-                <!-- Signature blocks -->
-                <div id="receipt_signature_block" class="row" style="margin: 0; width: 100%;">
+                <!-- Signature: TWO boxes (matches SO/invoice) -->
+                <div id="receipt_signature_block" class="row" style="margin: 0; width: 100%; page-break-inside: avoid;">
+                    <div style="page-break-inside: avoid; margin-top: 14px;">
+                        <div class="text-muted" style="font-size: 12px; font-weight: bold; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
+                            <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
+                            <t t-else="">Signatures below constitute acceptance in accordance with the Terms &amp; Conditions of this document.</t>
+                        </div>
+                        <div class="row" style="margin: 0; width: 100%;">
                     <div class="col-6" style="width: 50%; padding-right: 3px;">
+                        <div style="page-break-inside: avoid;">
                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
                             <strong>
                                 <t t-if="lang == 'th_TH'">ผู้ชำระ/ลูกค้า</t>
@@ -168,8 +150,10 @@
                                 <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
                             </div>
                         </div>
+                        </div>
                     </div>
                     <div class="col-6" style="width: 50%; padding-left: 3px;">
+                        <div style="page-break-inside: avoid;">
                         <div style="border: 1px solid #ccc; border-radius: 8px; padding: 1px; text-align: center;">
                             <strong>
                                 <t t-if="lang == 'th_TH'">ผู้มีอำนาจลงนาม</t>
@@ -186,6 +170,9 @@
                                 <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span></div>
                                 <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span></div>
                             </div>
+                        </div>
+                        </div>
+                    </div>
                         </div>
                     </div>
                 </div>
@@ -217,5 +204,6 @@
         <field name="report_file">vivafarm_report.viva_payment_receipt</field>
         <field name="binding_model_id" ref="model_account_payment"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="vivafarm_report.paperformat_viva_invoice"/>
     </record>
 </odoo>

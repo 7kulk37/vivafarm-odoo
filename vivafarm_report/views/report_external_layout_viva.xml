@@ -279,6 +279,37 @@
                     </tr>
                 </table>
             </div></t>
+            <!-- Info section (Payment Receipt): same contract as the
+                 quotation/SO and delivery-note bars — the receipt document
+                 sets is_tax_invoice=True and renders through this branch, so
+                 its info bar lives in the header frame (no dead space).
+                 Gated on account.payment so all other renders stay
+                 byte-identical. Single 3-column row (Receipt Date / Payment
+                 Method / Reference). -->
+            <t t-if="o and o._name == 'account.payment'"><div
+                id="informations" class="row mb-2 mx-0"
+                t-att-style="'background-color: %s; border-radius: 8px; padding: 8px 10px 6px; margin-top: 0; page-break-inside: avoid; line-height: 1.2;' % (o.company_id._get_light_tint(o.company_id.secondary_color))">
+                <table style="width: 100%; table-layout: fixed; border: none; border-collapse: separate; border-spacing: 0;">
+                    <tr>
+                        <td style="width: 33.33%; padding-right: 3px; vertical-align: top; border: none;" name="pay_date">
+                            <t t-if="lang == 'th_TH'"><strong>วันที่รับชำระ</strong></t>
+                            <t t-else=""><strong>Receipt Date</strong></t>
+                            <t t-if="lang == 'th_TH'"><div t-out="o._get_thai_date_display('date')"></div></t>
+                            <t t-else=""><div t-field="o.date" t-options="{&quot;date_only&quot;: &quot;true&quot;}"></div></t>
+                        </td>
+                        <td style="width: 33.33%; padding-right: 3px; vertical-align: top; border: none;" name="pay_method">
+                            <t t-if="lang == 'th_TH'"><strong>วิธีชำระเงิน</strong></t>
+                            <t t-else=""><strong>Payment Method</strong></t>
+                            <div t-if="o.payment_method_line_id" t-field="o.payment_method_line_id.name"/>
+                        </td>
+                        <td style="width: 33.33%; padding-left: 3px; vertical-align: top; border: none;" name="pay_ref">
+                            <t t-if="lang == 'th_TH'"><strong>เลขที่อ้างอิง</strong></t>
+                            <t t-else=""><strong>Reference</strong></t>
+                            <div t-esc="o.ref or o.memo or ''"/>
+                        </td>
+                    </tr>
+                </table>
+            </div></t>
         </div>
         </t>
 
