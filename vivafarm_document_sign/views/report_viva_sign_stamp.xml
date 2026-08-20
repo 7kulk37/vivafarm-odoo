@@ -53,16 +53,17 @@
         </xpath>
     </template>
 
-    <!-- Hash block on the Viva Invoice (ใบแจ้งหนี้) — BEFORE the signature
-         section (same placement as the tax invoice stamp: wkhtmltopdf clips
-         content at the very bottom of the page). Shown ONLY when the
-         invoice has a signed document (customer acknowledged the amount via
-         portal). The block proves the exact bytes the customer acknowledged
-         as the amount due (EVIDENCE-ONLY — never gates payment). -->
+    <!-- Hash block on the Viva Invoice (ใบแจ้งหนี้) — BELOW the signature
+         block (same placement as the newest SO layout: hash block renders
+         after the signatures, like viva_quotation_so_document_sign_stamp).
+         Shown ONLY when the invoice has a signed document (customer
+         acknowledged the amount via portal). The block proves the exact
+         bytes the customer acknowledged as the amount due (EVIDENCE-ONLY —
+         never gates payment). -->
     <template id="viva_invoice_plain_document_sign_stamp"
               name="Viva Invoice (ใบแจ้งหนี้) Signed Stamp"
               inherit_id="vivafarm_report.viva_invoice_plain_document">
-        <xpath expr="//div[div[contains(., 'Signatures below constitute') or contains(., 'การลงลายมือชื่อในช่องต่อไปนี้')]]" position="before">
+        <xpath expr="//div[div[contains(., 'Signatures below constitute') or contains(., 'การลงลายมือชื่อในช่องต่อไปนี้')]]" position="after">
             <div t-if="o.signed_document_id" class="row mt-2" style="page-break-inside: avoid;">
                 <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px;">
                     <!-- Background on an INNER wrapper div (not the bordered

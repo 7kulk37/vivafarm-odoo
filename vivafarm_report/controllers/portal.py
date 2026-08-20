@@ -319,6 +319,9 @@ class VivaSalePortal(CustomerPortal):
             # the on-page preview (mirrors the PDF's invoice_include_signature).
             if invoice_sudo.signature:
                 report_env = report_env.with_context(invoice_include_signature=True)
+            # Single-copy preview (not the stacked 3-copy triplicate) — the
+            # portal iframe should look like a printed page, not a long stack.
+            report_env = report_env.with_context(viva_portal_preview=True)
             report = report_env._render_qweb_html(
                 'vivafarm_report.viva_invoice_plain', [invoice_sudo.id])[0]
             headers = [('Content-Type', 'text/html; charset=utf-8'),
