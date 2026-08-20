@@ -287,16 +287,22 @@ class PaymentTransaction(models.Model):
         rescued = 0
         for tx in txs:
             try:
-                charge = tx._omise_request('GET', f"charges/{tx.provider_reference}")
-            except ValidationError:
-                continue  # keep it pending; the charge may still be in flight
-            if charge.get('status') == 'successful' and charge.get('paid'):
-                tx._process('omise', {'reference': tx.reference, 'omise_charge': charge})
-                if not tx.is_post_processed:
-                    tx._post_process()
+                # Wrap each charge in its own savepoint: a failure on one
+                # transaction (e.g. psycopg2.SerializationFailure on the
+                # matching-number update when a user reconciles concurrently)
+                # must not kill the whole cron run.
+                with self.env.cr.savepoint():
+                    charge = tx._omise_request('GET', f"charges/{tx.provider_reference}")
+                    if charge.get('status') == 'successful' and charge.get('paid'):
+                        tx._process('omise', {'reference': tx.reference, 'omise_charge': charge})
+                        if not tx.is_post_processed:
+                            tx._post_process()
+                        rescued += 1
+                        _logger.info("Rescued pending Omise charge %s (tx %s)", tx.provider_reference, tx.reference)
                 self.env.cr.commit()
-                rescued += 1
-                _logger.info("Rescued pending Omise charge %s (tx %s)", tx.provider_reference, tx.reference)
+            except Exception as e:
+                self.env.cr.rollback()
+                _logger.warning("Omise rescue failed for tx %s: %s", tx.reference, e)
         return rescued
 
     def _apply_updates(self, payment_data):

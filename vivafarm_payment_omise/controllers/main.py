@@ -34,7 +34,14 @@ class OmiseController(http.Controller):
         signature = request.httprequest.headers.get('Omise-Signature', '')
         timestamp = request.httprequest.headers.get('Omise-Signature-Timestamp', '')
         if not self._verify_webhook_signature(signature, timestamp, raw_body):
-            _logger.warning("Omise webhook signature verification failed")
+            # Diagnostic: log shapes only (no secrets, no full body). If the
+            # stored secret is correct yet verification fails, Omise is
+            # signing with a DIFFERENT webhook secret — most commonly the
+            # test-mode vs live-mode dashboard secret mismatch.
+            _logger.warning(
+                "Omise webhook signature verification failed: sig_len=%d sig_head=%s ts=%s "
+                "body_len=%d",
+                len(signature), signature[:8], timestamp, len(raw_body))
             raise Forbidden()
 
         self._process_webhook_event(event)
