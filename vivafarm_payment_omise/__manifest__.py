@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Omise Payment Provider',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.3',
     'category': 'Accounting/Payment',
     'summary': 'Omise payment provider for card and PromptPay (Thailand)',
     'description': """
@@ -19,6 +19,7 @@ Test mode supported with Omise test keys.
     'data': [
         'data/payment_provider_data.xml',
         'data/ir_cron.xml',
+        'views/payment_provider_views.xml',
         'views/omise_templates.xml',
     ],
     'assets': {

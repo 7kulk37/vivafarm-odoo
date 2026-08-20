@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Expose the Omise credentials (publishable / secret / webhook signing
+         secret) on the payment provider form's Credentials page. Without this
+         xpath the fields exist on the model but are invisible in the UI. -->
+    <record id="view_payment_provider_omise_form" model="ir.ui.view">
+        <field name="name">payment.provider.omise.form</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='provider_credentials']" position="inside">
+                <field name="omise_publishable_key"
+                       attrs="{'invisible': [('code', '!=', 'omise')]}"/>
+                <field name="omise_secret_key"
+                       attrs="{'invisible': [('code', '!=', 'omise')]}"/>
+                <field name="omise_webhook_secret"
+                       attrs="{'invisible': [('code', '!=', 'omise')]}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
