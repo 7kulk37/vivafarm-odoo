@@ -5,13 +5,12 @@
          2 minutes — PromptPay payments are asynchronous and the webhook is the
          only signal, so a lost webhook must be caught quickly. -->
     <record id="cron_resolve_pending_charges" model="ir.cron">
-        <field name="name">Omise: Resolve pending charges</field>
+        <field name="cron_name">Omise: Resolve pending charges</field>
         <field name="model_id" ref="model_payment_transaction"/>
         <field name="state">code</field>
         <field name="code">model._cron_resolve_pending_charges()</field>
         <field name="interval_number">2</field>
         <field name="interval_type">minutes</field>
-        <field name="numbercall">-1</field>
         <field name="active">True</field>
     </record>
 </odoo>
