@@ -62,7 +62,9 @@ patch(PaymentForm.prototype, {
 
         try {
             if (paymentMethodCode === 'promptpay') {
-                // PromptPay: create the source + charge, then show the QR inline.
+                // PromptPay: create the source + charge, then go to the status
+                // page — the custom omise_state_header shows the QR there.
+                // (User instruction 2026-08-20: no inline QR in the PAY popup.)
                 const result = await this.waitFor(rpc('/payment/omise/promptpay', {
                     'reference': processingValues.reference,
                 }));
@@ -71,7 +73,7 @@ patch(PaymentForm.prototype, {
                     this._enableButton();
                     return;
                 }
-                this._omiseShowQr(result.qr_url);
+                window.location = '/payment/status';
             } else {
                 // Card: create a token via Omise.js, then charge it.
                 const token = await this._omiseCreateToken(processingValues);
@@ -99,38 +101,6 @@ patch(PaymentForm.prototype, {
                 return Promise.reject(error);
             }
         }
-    },
-
-    /**
-     * Display the PromptPay QR code in the inline form area.
-     *
-     * @private
-     * @param {string} qrUrl - The URL of the QR code image.
-     * @return {void}
-     */
-    _omiseShowQr(qrUrl) {
-        // Target the inline form of the SELECTED option (not the first in the DOM).
-        const checkedRadio = this.el.querySelector('input[type="radio"]:checked');
-        const option = checkedRadio?.closest('[name="o_payment_option"]');
-        const inlineForm = option?.querySelector('[name="o_payment_inline_form"]');
-        if (!inlineForm || !qrUrl) {
-            return;
-        }
-        inlineForm.innerHTML = `
-            <div class="o_qr_code_card card bg-info flex-shrink-0 mt-3">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center pb-3">
-                    <img class="mb-2 border border-dark rounded"
-                         src="${qrUrl}"
-                         alt="PromptPay QR code"
-                         style="max-width: 240px;"
-                    />
-                    <small class="text-center text-wrap lh-sm">
-                        Scan this QR code with your banking app to complete the payment
-                    </small>
-                </div>
-            </div>
-        `;
-        inlineForm.classList.remove('d-none');
     },
 
     /**
