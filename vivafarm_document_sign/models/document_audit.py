@@ -18,6 +18,7 @@ class VivaDocumentAudit(models.Model):
     event = fields.Selection([
         ('CREATED', 'Created'),
         ('SIGNED', 'Signed'),
+        ('HASHED', 'Hashed'),
         ('VERIFIED', 'Verified'),
         ('REVOKED', 'Revoked'),
     ], string='Event', required=True)
