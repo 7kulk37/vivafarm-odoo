@@ -574,7 +574,7 @@
                      (viva_portal_preview context flag) so the on-page preview is not
                      a stacked 3-copy long page (user report 2026-08-19). -->
                 <t t-set="copies"
-                   t-value="(proforma or viva_portal_preview) and [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}] or o._get_tax_invoice_copies()"/>
+                   t-value="(proforma or o.env.context.get('viva_portal_preview')) and [{'key': False, 'th_marker': '', 'en_marker': '', 'th_recipient': '', 'en_recipient': ''}] or o._get_tax_invoice_copies()"/>
                 <t t-foreach="copies" t-as="copy">
                     <t t-set="copy_kind" t-value="copy['key']"/>
                     <!-- print_with_payments must be set INSIDE the t-call body:
