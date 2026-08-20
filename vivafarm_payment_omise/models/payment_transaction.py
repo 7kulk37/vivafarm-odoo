@@ -201,6 +201,23 @@ class PaymentTransaction(models.Model):
                 and self.invoice_ids
                 and payment):
             self._send_payment_receipt_email(payment)
+            # Portal-visible payment message: the stock "payment related to
+            # transaction ... has been posted" Note uses the internal subtype
+            # (mail.mt_note), which the portal's _get_search_domain_share()
+            # hides from customers. Post a real comment (mail.mt_comment is
+            # portal-visible) so the customer sees payment confirmation in
+            # Communication history (user instruction 2026-08-20).
+            for invoice in self.invoice_ids:
+                invoice.message_post(
+                    body=_(
+                        "Payment received for %(inv)s via %(provider)s: %(pay)s",
+                        inv=invoice.name,
+                        provider=self.provider_id.name or 'Online Payment',
+                        pay=payment.name,
+                    ),
+                    subtype_xmlid='mail.mt_comment',
+                    author_id=self.partner_id.id or self.env.user.partner_id.id,
+                )
         return payment
 
     def _send_payment_receipt_email(self, payment):
