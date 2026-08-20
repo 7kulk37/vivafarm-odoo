@@ -43,7 +43,8 @@
                         <t t-else=""><span class="badge badge-warn" t-esc="state"/></t>
                     </dd></div>
                     <div class="row"><dt>Signature</dt><dd>
-                        <t t-if="signature_valid"><span class="badge badge-ok">VALID</span></t>
+                        <t t-if="is_hash_only"><span class="badge badge-ok">HASH RECORD (SELLER-SIDE)</span></t>
+                        <t t-elif="signature_valid"><span class="badge badge-ok">VALID</span></t>
                         <t t-else=""><span class="badge badge-fail">INVALID</span></t>
                     </dd></div>
                     <div class="row"><dt>Signed By</dt><dd t-esc="signer"/></div>
@@ -68,11 +69,19 @@
                         </dd></div>
                     </t>
 
-                    <div class="row"><dt>Linked Document</dt><dd>
-                        <t t-if="linked">
-                            <t t-esc="linked['document_number']"/>
-                            <span class="hash-line" t-esc="' · ' + linked['verification_code']"/>
-                            · <a t-att-href="linked['url']">Verify</a>
+                    <div class="row"><dt>Previous Linked Document</dt><dd>
+                        <t t-if="previous_linked">
+                            <t t-esc="previous_linked['document_number']"/>
+                            <span class="hash-line" t-esc="' · ' + previous_linked['verification_code']"/>
+                            · <a t-att-href="previous_linked['url']">Verify</a>
+                        </t>
+                        <t t-else="">-</t>
+                    </dd></div>
+                    <div class="row"><dt>Next Linked Document</dt><dd>
+                        <t t-if="next_linked">
+                            <t t-esc="next_linked['document_number']"/>
+                            <span class="hash-line" t-esc="' · ' + next_linked['verification_code']"/>
+                            · <a t-att-href="next_linked['url']">Verify</a>
                         </t>
                         <t t-else="">-</t>
                     </dd></div>

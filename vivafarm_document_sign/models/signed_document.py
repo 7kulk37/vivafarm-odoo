@@ -28,6 +28,7 @@ class VivaSignedDocument(models.Model):
         ('sale_order', 'Sale Order'),
         ('delivery_note', 'Delivery Note'),
         ('invoice', 'Invoice (ใบแจ้งหนี้)'),
+        ('payment_receipt', 'Payment Receipt'),
     ], string='Document Type', required=True, default='tax_invoice')
     document_number = fields.Char(string='Document Number', readonly=True, copy=False)
     odoo_model = fields.Char(string='Odoo Model', readonly=True, default='account.move')
@@ -36,6 +37,8 @@ class VivaSignedDocument(models.Model):
     sale_order_id = fields.Many2one('sale.order', string='Sale Order',
                                     ondelete='restrict', index=True)
     picking_id = fields.Many2one('stock.picking', string='Delivery Note',
+                                 ondelete='restrict', index=True)
+    payment_id = fields.Many2one('account.payment', string='Payment',
                                  ondelete='restrict', index=True)
 
     # ── Revision chain (tamper-evident: Rev N hashes back to Rev N-1) ──

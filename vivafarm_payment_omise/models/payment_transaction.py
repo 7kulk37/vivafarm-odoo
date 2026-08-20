@@ -200,6 +200,11 @@ class PaymentTransaction(models.Model):
                 and self.operation == 'online_direct'
                 and self.invoice_ids
                 and payment):
+            # Seller-side hash of the receipt PDF FIRST: pre-creates the
+            # viva.signed.document so the emailed receipt renders WITH the
+            # hash block, then stores the hash of the exact emailed bytes.
+            # Hash only — no RSA signature (user decision 2026-08-20).
+            payment._hash_payment_receipt()
             self._send_payment_receipt_email(payment)
             # Portal-visible payment message: the stock "payment related to
             # transaction ... has been posted" Note uses the internal subtype

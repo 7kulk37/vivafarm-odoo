@@ -75,4 +75,15 @@ class IrActionsReport(models.Model):
             ], limit=1)
             if signed:
                 return base64.b64decode(signed.signed_attachment_id.datas), 'pdf'
+        if (
+            report and report.report_name == 'vivafarm_report.viva_payment_receipt'
+            and isinstance(res_ids, (list, tuple)) and len(res_ids) == 1
+        ):
+            signed = self.env['viva.signed.document'].sudo().search([
+                ('payment_id', '=', res_ids[0]),
+                ('document_type', '=', 'payment_receipt'),
+                ('signed_attachment_id', '!=', False),
+            ], limit=1)
+            if signed:
+                return base64.b64decode(signed.signed_attachment_id.datas), 'pdf'
         return super()._render_qweb_pdf(report_ref, res_ids, data)

@@ -45,11 +45,19 @@ class VivaVerificationController(http.Controller):
             'certificate_type': signed.certificate_type,
             'pdf_sha256': signed.pdf_sha256,
             'odoo_record_locked': True,  # signed => lock enforced at ORM level
-            'linked': self._get_linked_document(signed),
+            'previous_linked': self._get_previous_linked_document(signed),
+            'next_linked': self._get_next_linked_document(signed),
         }
 
-        # Signature verification (independent of upload — always shown)
-        result['signature_valid'] = self._verify_signature(signed)
+        # Signature verification (independent of upload — always shown).
+        # Hash-only documents (payment_receipt) have NO signature — the
+        # page shows "HASH RECORD (seller-side)" instead of a signature badge.
+        if signed.document_type == 'payment_receipt':
+            result['is_hash_only'] = True
+            result['signature_valid'] = None
+        else:
+            result['is_hash_only'] = False
+            result['signature_valid'] = self._verify_signature(signed)
 
         # Upload-compare (the real hash proof)
         uploaded = kwargs.get('uploaded_file')
@@ -65,35 +73,100 @@ class VivaVerificationController(http.Controller):
         signed._log_event('VERIFIED')
         return request.render('vivafarm_document_sign.verification_page', result)
 
-    def _get_linked_document(self, signed):
-        """Find the linked signed document for the record-level chain.
+    def _link_dict(self, signed):
+        if not signed:
+            return {}
+        return {
+            'document_number': signed.document_number,
+            'verification_code': signed.verification_code,
+            'url': '/v/%s' % signed.verification_token,
+        }
 
-        Record-level linkage only (user decision 2026-08-18) — no crypto
-        chain. Rules:
-          - Delivery Confirmation (delivery_note) -> its parent Sale Order
-            (the SO's own signed doc, if the SO was portal-accepted).
-          - Sale Order -> the signed Delivery Confirmation(s) for it.
-          - Otherwise / no link -> empty dict (the template renders '-').
+    def _get_previous_linked_document(self, signed):
+        """Find the PREVIOUS signed document in the record-level flow.
+
+        Record-level linkage only (user decision 2026-08-20) — no crypto
+        chain. Rules (walk backwards):
+          - Delivery Note -> its parent Sale Order (SO signed doc).
+          - Invoice (ใบแจ้งหนี้) -> the signed Delivery Note for that SO
+            (fallback: the signed SO itself).
+          - Payment Receipt -> the signed Invoice behind the payment's
+            reconciled invoice(s).
+          - Otherwise / no link -> empty dict (template renders '-').
         """
         Model = self.env['viva.signed.document'].sudo()
-        linked = None
         if signed.document_type == 'delivery_note' and signed.sale_order_id:
-            linked = Model.search([
+            prev = Model.search([
                 ('sale_order_id', '=', signed.sale_order_id.id),
                 ('document_type', '=', 'sale_order'),
             ], limit=1)
-        elif signed.document_type == 'sale_order' and signed.sale_order_id:
-            linked = Model.search([
+        elif signed.document_type == 'invoice' and signed.move_id:
+            so = signed.move_id.line_ids.mapped('sale_line_ids.order_id')[:1]
+            prev = None
+            if so:
+                prev = Model.search([
+                    ('sale_order_id', '=', so.id),
+                    ('document_type', '=', 'delivery_note'),
+                ], limit=1)
+                if not prev:
+                    prev = Model.search([
+                        ('sale_order_id', '=', so.id),
+                        ('document_type', '=', 'sale_order'),
+                    ], limit=1)
+        elif signed.document_type == 'payment_receipt' and signed.payment_id:
+            inv = signed.payment_id.reconciled_invoice_ids[:1]
+            prev = None
+            if inv:
+                prev = Model.search([
+                    ('move_id', '=', inv.id),
+                    ('document_type', '=', 'invoice'),
+                ], limit=1)
+        else:
+            prev = None
+        return self._link_dict(prev)
+
+    def _get_next_linked_document(self, signed):
+        """Find the NEXT signed document in the record-level flow.
+
+        Rules (walk forwards):
+          - Sale Order -> the signed Delivery Note for it (fallback:
+            the signed Invoice(s) for that SO).
+          - Delivery Note -> the signed Invoice for that SO.
+          - Invoice -> the signed Payment Receipt for its payment(s).
+          - Otherwise / no link -> empty dict (template renders '-').
+        """
+        Model = self.env['viva.signed.document'].sudo()
+        if signed.document_type == 'sale_order' and signed.sale_order_id:
+            nxt = Model.search([
                 ('sale_order_id', '=', signed.sale_order_id.id),
                 ('document_type', '=', 'delivery_note'),
             ], limit=1)
-        if not linked:
-            return {}
-        return {
-            'document_number': linked.document_number,
-            'verification_code': linked.verification_code,
-            'url': '/v/%s' % linked.verification_token,
-        }
+            if not nxt:
+                invs = signed.sale_order_id.invoice_ids
+                if invs:
+                    nxt = Model.search([
+                        ('move_id', 'in', invs.ids),
+                        ('document_type', '=', 'invoice'),
+                    ], limit=1)
+        elif signed.document_type == 'delivery_note' and signed.sale_order_id:
+            invs = signed.sale_order_id.invoice_ids
+            nxt = None
+            if invs:
+                nxt = Model.search([
+                    ('move_id', 'in', invs.ids),
+                    ('document_type', '=', 'invoice'),
+                ], limit=1)
+        elif signed.document_type == 'invoice' and signed.move_id:
+            pays = signed.move_id.payment_ids
+            nxt = None
+            if pays:
+                nxt = Model.search([
+                    ('payment_id', 'in', pays.ids),
+                    ('document_type', '=', 'payment_receipt'),
+                ], limit=1)
+        else:
+            nxt = None
+        return self._link_dict(nxt)
 
     @staticmethod
     def _verify_signature(signed):
