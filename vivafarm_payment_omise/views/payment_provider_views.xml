@@ -9,12 +9,18 @@
         <field name="inherit_id" ref="payment.payment_provider_form"/>
         <field name="arch" type="xml">
             <xpath expr="//group[@name='provider_credentials']" position="inside">
+                <label for="omise_publishable_key"
+                       invisible="code != 'omise'"/>
                 <field name="omise_publishable_key"
                        invisible="code != 'omise'"/>
+                <label for="omise_secret_key"
+                       invisible="code != 'omise'"/>
                 <field name="omise_secret_key"
+                       invisible="code != 'omise'" password="True"/>
+                <label for="omise_webhook_secret"
                        invisible="code != 'omise'"/>
                 <field name="omise_webhook_secret"
-                       invisible="code != 'omise'"/>
+                       invisible="code != 'omise'" password="True"/>
             </xpath>
         </field>
     </record>

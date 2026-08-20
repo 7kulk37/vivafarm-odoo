@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Omise Payment Provider',
-    'version': '19.0.1.0.3',
+    'version': '19.0.1.0.4',
     'category': 'Accounting/Payment',
     'summary': 'Omise payment provider for card and PromptPay (Thailand)',
     'description': """
