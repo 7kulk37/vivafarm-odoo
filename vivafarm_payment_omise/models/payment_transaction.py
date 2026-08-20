@@ -261,6 +261,44 @@ class PaymentTransaction(models.Model):
         if not tx.is_post_processed:
             tx._post_process()
 
+    def _cron_resolve_pending_charges(self):
+        """ Safety net for Omise payments whose `charge.complete` webhook was
+        rejected/lost (signature mismatch, transient delivery failure, …).
+
+        PromptPay has NO return-route fallback (the customer pays in their
+        bank app, they never come back to Odoo), so a missing webhook leaves
+        the transaction 'pending' forever and the standard post-process cron
+        never rescues it (it only touches already-done transactions).
+
+        This cron polls every pending online-direct charge on Omise and
+        completes it when the charge is actually successful (the documented
+        "event verification" fallback). No security loss: the charge status is
+        fetched with the secret API key; the customer only ever gets marked
+        paid when Omise says so.
+
+        :return: int rescued count
+        """
+        txs = self.search([
+            ('provider_code', '=', 'omise'),
+            ('operation', '=', 'online_direct'),
+            ('state', '=', 'pending'),
+            ('provider_reference', '!=', False),
+        ])
+        rescued = 0
+        for tx in txs:
+            try:
+                charge = tx._omise_request('GET', f"charges/{tx.provider_reference}")
+            except ValidationError:
+                continue  # keep it pending; the charge may still be in flight
+            if charge.get('status') == 'successful' and charge.get('paid'):
+                tx._process('omise', {'reference': tx.reference, 'omise_charge': charge})
+                if not tx.is_post_processed:
+                    tx._post_process()
+                self.env.cr.commit()
+                rescued += 1
+                _logger.info("Rescued pending Omise charge %s (tx %s)", tx.provider_reference, tx.reference)
+        return rescued
+
     def _apply_updates(self, payment_data):
         """ Override of `payment` to update the transaction based on the Omise charge. """
         super()._apply_updates(payment_data)
