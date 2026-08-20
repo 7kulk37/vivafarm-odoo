@@ -25,8 +25,27 @@ from odoo.exceptions import AccessError, MissingError
 from odoo.http import request
 
 from odoo.addons.sale.controllers.portal import CustomerPortal
+from odoo.addons.account.controllers.portal import PortalAccount
 
 import binascii
+
+
+class VivaInvoicePortal(PortalAccount):
+    """Forward the `message` query param on the invoice portal page.
+
+    The stock account controller (portal_my_invoice_detail →
+    _get_page_view_values) only forwards error/warning/success/pid/hash —
+    it DROPS `message`. The Accept & Sign Invoice route redirects back with
+    `&message=invoice_sign_ok` so the customer sees the green confirmation
+    alert (vivafarm_report.account_portal_viva_invoice_message). Without
+    this override the alert never renders on the invoice page. (The SO page
+    works because the sale controller forwards `message` explicitly.)
+    """
+    def _invoice_get_page_view_values(self, invoice, access_token, **kwargs):
+        values = super()._invoice_get_page_view_values(invoice, access_token, **kwargs)
+        if kwargs.get('message'):
+            values['message'] = kwargs['message']
+        return values
 
 
 class VivaSalePortal(CustomerPortal):
