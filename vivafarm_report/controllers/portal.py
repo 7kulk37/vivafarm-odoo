@@ -138,14 +138,18 @@ class VivaSalePortal(CustomerPortal):
 
         # Send the VIVA confirmation email (report = viva_quotation_so -> the
         # stored signed PDF is attached). NOT the standard template 21.
+        # template.send_mail() creates a real mail.mail — unlike
+        # message_post_with_source which posts to chatter only (user report
+        # 2026-08-20: SO email also never arrived).
         tpl = request.env.ref(
             'vivafarm_report.viva_email_template_order_confirmation',
             raise_if_not_found=False)
         if tpl:
-            order_sudo.with_context(force_send=True).message_post_with_source(
-                tpl,
+            tpl.sudo().send_mail(
+                order_sudo.id,
+                force_send=True,
+                raise_exception=False,
                 email_layout_xmlid='mail.mail_notification_layout_with_responsible_signature',
-                subtype_xmlid='mail.mt_comment',
             )
 
         return {
@@ -433,15 +437,19 @@ class VivaSalePortal(CustomerPortal):
 
         # Send the customer's copy of the signed invoice (mirrors the SO
         # confirmation email: report = viva_invoice_plain -> the stored
-        # signed PDF is attached).
+        # signed PDF is attached). template.send_mail() creates a real
+        # mail.mail (recipient_ids + signed PDF attachment) — unlike
+        # message_post_with_source which posts to chatter only and never
+        # generates an outgoing email (user report 2026-08-20).
         tpl = request.env.ref(
             'vivafarm_report.viva_email_template_invoice_acknowledgment',
             raise_if_not_found=False)
         if tpl:
-            invoice_sudo.with_context(force_send=True).message_post_with_source(
-                tpl,
+            tpl.sudo().send_mail(
+                invoice_sudo.id,
+                force_send=True,
+                raise_exception=False,
                 email_layout_xmlid='mail.mail_notification_layout_with_responsible_signature',
-                subtype_xmlid='mail.mt_comment',
             )
 
         return {
