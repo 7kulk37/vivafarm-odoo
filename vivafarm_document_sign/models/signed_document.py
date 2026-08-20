@@ -74,6 +74,9 @@ class VivaSignedDocument(models.Model):
         help='The customer\'s typed name (from the portal signature form). '
              'The portal routes are auth="public", so signer_user_id is the '
              'public user (OdooBot) — the human identity lives here.')
+    signer_position = fields.Char(
+        string='Signer Position', readonly=True, copy=False,
+        help='The customer\'s typed position (from the portal signature form).')
     signed_at = fields.Datetime(string='Signed At', readonly=True, copy=False)
     revoked_at = fields.Datetime(string='Revoked At', readonly=True, copy=False)
     revocation_reason = fields.Char(string='Revocation Reason', readonly=True, copy=False)

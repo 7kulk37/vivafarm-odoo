@@ -56,6 +56,14 @@
                     <i class="fa fa-print me-1"/>View Invoice
                 </a>
                 <a
+                    t-if="invoice.payment_state in ('paid', 'in_payment') and invoice._get_reconciled_payments()"
+                    class="btn btn-light o_print_btn"
+                    t-att-href="'/my/invoices/%s/receipt_pdf?%s' % (invoice.id, keep_query())"
+                    target="_blank"
+                >
+                    <i class="fa fa-receipt me-1"/>View receipt
+                </a>
+                <a
                     t-if="invoice.state == 'posted' and not invoice.signature"
                     role="button"
                     class="btn btn-primary"

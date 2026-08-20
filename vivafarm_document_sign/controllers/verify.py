@@ -39,6 +39,7 @@ class VivaVerificationController(http.Controller):
             'state': signed.state,
             'signed_at': signed.signed_at,
             'signer': signed.signer_name or (signed.signer_user_id.name if signed.signer_user_id else ''),
+            'signer_position': signed.signer_position or '',
             'certificate_subject': signed.certificate_subject,
             'certificate_issuer': signed.certificate_issuer,
             'certificate_type': signed.certificate_type,

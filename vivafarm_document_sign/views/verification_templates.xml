@@ -47,6 +47,7 @@
                         <t t-else=""><span class="badge badge-fail">INVALID</span></t>
                     </dd></div>
                     <div class="row"><dt>Signed By</dt><dd t-esc="signer"/></div>
+                    <div class="row"><dt>Position</dt><dd t-esc="signer_position"/></div>
                     <div class="row"><dt>Signed At</dt><dd t-esc="signed_at"/></div>
                     <div class="row"><dt>Certificate</dt><dd t-esc="certificate_subject"/></div>
                     <div class="row"><dt>Certificate Type</dt><dd>

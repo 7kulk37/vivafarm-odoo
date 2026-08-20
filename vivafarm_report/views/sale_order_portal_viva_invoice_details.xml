@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- "View details" button in the SO portal "Last Invoices" section.
+         The stock template links the invoice NAME to i.get_portal_url() (the
+         portal invoice page). This adds a small button next to the name that
+         opens the SAME portal invoice page (user instruction 2026-08-20). -->
+    <template id="sale_order_portal_viva_invoice_details"
+              name="VivaFarm Sale Order Portal Invoice Details Button"
+              inherit_id="sale.sale_order_portal_content">
+        <xpath expr="//div[@id='sale_invoices']//a[@t-att-href='report_url']" position="after">
+            <a class="btn btn-sm btn-light ms-2"
+               t-att-href="report_url"
+               role="button"
+               title="View details">
+                <i class="fa fa-eye me-1"/>View details
+            </a>
+        </xpath>
+    </template>
+</odoo>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- "Accept & Sign Delivery" confirmation email — sent by the portal route
+         /my/picking/<id>/accept_viva (VivaSalePortal.portal_picking_accept_viva)
+         AFTER _hash_delivery_accepted has stored the signed bytes, so the
+         report serves the STORED SIGNED delivery note PDF (hash block
+         included, byte-identical to the acknowledged doc).
+
+         User instruction 2026-08-20: the customer now receives a
+         confirmation email for the signed Delivery Order (previously
+         chatter-only). -->
+    <record id="viva_email_template_delivery_acknowledgment" model="mail.template">
+        <field name="name">Delivery: Acknowledged (Viva)</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="subject">Delivery order confirmation (Ref {{ object.name or 'n/a' }})</field>
+        <field name="email_from">{{ (object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="partner_to" eval="False"/>
+        <field name="use_default_to" eval="True"/>
+        <field name="description">Sent when a customer acknowledges &amp; signs a delivery note via the portal — carries the Viva signed Delivery Order PDF</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name or ''">Customer</t>,
+        <br/><br/>
+        Thank you for confirming receipt of your delivery
+        <span style="font-weight: bold;" t-out="object.name or ''">WH/OUT/00000</span>.
+        <br/><br/>
+        The signed delivery order is attached to this email.
+        <br/><br/>
+        Do not hesitate to contact us if you have any questions.
+    </p>
+</div>
+        </field>
+        <field name="report_template_ids" eval="[(4, ref('vivafarm_report.action_report_viva_delivery_note'))]"/>
+        <field name="auto_delete" eval="True"/>
+    </record>
+</odoo>

@@ -282,6 +282,21 @@ class VivaSalePortal(CustomerPortal):
             subtype_xmlid='mail.mt_comment',
         )
 
+        # Send the customer the signed Delivery Order confirmation email
+        # (user instruction 2026-08-20: confirmation email for Delivery
+        # order). template.send_mail() creates a real mail.mail with the
+        # STORED signed PDF attached.
+        tpl = request.env.ref(
+            'vivafarm_report.viva_email_template_delivery_acknowledgment',
+            raise_if_not_found=False)
+        if tpl:
+            tpl.sudo().send_mail(
+                picking_sudo.id,
+                force_send=True,
+                raise_exception=False,
+                email_layout_xmlid='mail.mail_notification_layout_with_responsible_signature',
+            )
+
         return {
             'force_refresh': True,
             'redirect_url': self._delivery_redirect_url(picking_sudo),
@@ -360,6 +375,37 @@ class VivaSalePortal(CustomerPortal):
             pdfhttpheaders.append((
                 'Content-Disposition',
                 'attachment; filename=%s.pdf' % invoice_sudo.name.replace('/', '_'),
+            ))
+        return request.make_response(report, headers=pdfhttpheaders)
+
+    @http.route(['/my/invoices/<int:invoice_id>/receipt_pdf'], type='http',
+                auth="public", website=True)
+    def portal_invoice_receipt_pdf(self, invoice_id, access_token=None, download=False,
+                                   **kw):
+        """View the Viva Payment Receipt for a paid invoice.
+
+        Serves the SAME receipt PDF that was emailed to the customer after
+        the gateway payment (vivafarm_report.viva_payment_receipt on the
+        reconciled payment) — user instruction 2026-08-20: the portal
+        "View receipt" button opens the same file that was sent by email.
+        """
+        try:
+            invoice_sudo = self._invoice_check_access(invoice_id, access_token=access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+        payment = invoice_sudo._get_reconciled_payments()[:1]
+        if not payment:
+            return request.redirect('/my')
+        report = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
+            'vivafarm_report.viva_payment_receipt', [payment.id])[0]
+        pdfhttpheaders = [
+            ('Content-Type', 'application/pdf'),
+            ('Content-Length', len(report)),
+        ]
+        if download:
+            pdfhttpheaders.append((
+                'Content-Disposition',
+                'attachment; filename=%s.pdf' % payment.name.replace('/', '_'),
             ))
         return request.make_response(report, headers=pdfhttpheaders)
 

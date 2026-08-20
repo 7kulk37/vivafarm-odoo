@@ -93,6 +93,7 @@ class StockPicking(models.Model):
                     'certificate_valid_to': self._to_odoo_datetime(cert_info['not_after']),
                     'signer_user_id': self.env.user.id,
                     'signer_name': self.signed_by or '',
+                    'signer_position': self.signed_position or '',
                     'signed_at': fields.Datetime.now(),
                 })
         except IntegrityError:

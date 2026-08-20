@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Report Enhancements',
-    "version": "19.0.1.0.154",
+    "version": "19.0.1.0.155",
     'category': 'Accounting/Localizations',
     'summary': 'Thai invoice compliance: signature image, branch info, tax breakdown on invoice report',
     'description': """
@@ -32,11 +32,13 @@
         'data/viva_email_template_ship_delivery.xml',
         'data/viva_email_template_invoice_acknowledgment.xml',
         'data/viva_email_template_payment_receipt.xml',
+        'data/viva_email_template_delivery_acknowledgment.xml',
         'views/stock_picking_ship_dn_button.xml',
         'views/sale_order_sent_quotation_button.xml',
         'views/sale_order_portal_button.xml',
         'views/sale_order_portal_accept_viva_button.xml',
         'views/sale_order_portal_viva_delivery_buttons.xml',
+        'views/sale_order_portal_viva_invoice_details.xml',
         'views/account_portal_viva_invoice_buttons.xml',
         'views/report_viva_wht_certificate.xml',
         'views/report_asset_override.xml',

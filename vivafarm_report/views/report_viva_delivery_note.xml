@@ -63,8 +63,8 @@
                      the customer acknowledges receipt). -->
                 <t t-set="layout_document_title">
                     <span t-if="o.signed_document_id">
-                        <t t-if="lang == 'th_TH'">ใบยืนยันการจัดส่ง: </t>
-                        <t t-else="">Delivery Confirmation: </t>
+                        <t t-if="lang == 'th_TH'">ใบส่งสินค้า: </t>
+                        <t t-else="">Delivery Order: </t>
                     </span>
                     <span t-else="">
                         <t t-if="lang == 'th_TH'">ใบส่งสินค้า: </t>
@@ -145,7 +145,7 @@
                     <div style="page-break-inside: avoid; margin-top: 14px;">
                         <div class="text-muted" style="font-size: 12px; font-weight: bold; margin-top: 0; margin-bottom: 1px; text-align: center; width: 100%;">
                             <t t-if="lang == 'th_TH'">การลงลายมือชื่อในช่องต่อไปนี้ ให้เป็นไปตามข้อกำหนดและเงื่อนไขของเอกสารฉบับนี้</t>
-                            <t t-else="">Signatures below constitute acceptance in accordance with the Terms &amp; Conditions of this document.</t>
+                            <t t-else="">Signatures below constitute acceptance in accordance with the Terms &amp; Conditions.</t>
                         </div>
                         <div class="row" style="margin: 0; width: 100%;">
                             <div class="col-6" style="width: 50%; padding-right: 3px;">
@@ -183,9 +183,9 @@
                                                  alt="Authorized Signature"/>
                                         </div>
                                         <div style="font-size: 14px; margin-top: 0;">
-                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span><t t-if="o.company_id.l10n_th_signatory_name"> <span style="white-space: nowrap; float: right;"><t t-esc="o.company_id.l10n_th_signatory_name"/></span></t></div>
-                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span><t t-if="o.company_id.l10n_th_signatory_position"> <span style="white-space: nowrap; float: right;"><t t-esc="o.company_id.l10n_th_signatory_position"/></span></t></div>
-                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span><t t-if="o.date_done"> <span style="white-space: nowrap; float: right;"><t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('date_done')"/></t><t t-else=""><span t-field="o.date_done" t-options="{&quot;date_only&quot;: &quot;true&quot;}"/></t></span></t></div>
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ชื่อ-นามสกุล</t><t t-else="">Name</t></span><t t-if="o.viva_sent_at and o.company_id.l10n_th_signatory_name"> <span style="white-space: nowrap; float: right;"><t t-esc="o.company_id.l10n_th_signatory_name"/></span></t></div>
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">ตำแหน่ง</t><t t-else="">Position</t></span><t t-if="o.viva_sent_at and o.company_id.l10n_th_signatory_position"> <span style="white-space: nowrap; float: right;"><t t-esc="o.company_id.l10n_th_signatory_position"/></span></t></div>
+                                            <div style="border-bottom: 1px solid #ccc; margin: 0 4px; padding: 0; text-align: left;"><span style="white-space: nowrap;"><t t-if="lang == 'th_TH'">วันที่</t><t t-else="">Date</t></span><t t-if="o.viva_sent_at"> <span style="white-space: nowrap; float: right;"><t t-esc="o.viva_sent_at.strftime('%Y-%m-%d %H:%M:%S')"/></span></t></div>
                                         </div>
                                     </div>
                                 </div>

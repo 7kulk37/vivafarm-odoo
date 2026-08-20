@@ -9,6 +9,12 @@ class StockPicking(models.Model):
     signed_on = fields.Datetime(string='Received On')
     signed_position = fields.Char(string='Received Position')
 
+    #: When the delivery note was emailed to the customer (Ship & Send DN).
+    #: The Authorized Signatory box stamps Name / Position / Date ONLY when
+    #: this is set — a direct print leaves the box blank (user instruction
+    #: 2026-08-20).
+    viva_sent_at = fields.Datetime(string='Sent At (Viva)', copy=False)
+
     in_transit = fields.Boolean(
         string='In Transit',
         copy=False,
@@ -81,7 +87,7 @@ class StockPicking(models.Model):
             if not picking.partner_id:
                 raise UserError(_('The delivery %s has no customer address.'
                                   % picking.name))
-        self.write({'in_transit': True})
+        self.write({'in_transit': True, 'viva_sent_at': fields.Datetime.now()})
         tpl = self.env.ref(
             'vivafarm_report.viva_email_template_ship_delivery',
             raise_if_not_found=False)

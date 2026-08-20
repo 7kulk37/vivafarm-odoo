@@ -62,6 +62,12 @@ class AccountMove(models.Model):
     signed_by = fields.Char(string='Acknowledged By')
     signed_on = fields.Datetime(string='Acknowledged On')
     signed_position = fields.Char(string='Acknowledged Position')
+
+    #: When the invoice was sent to the customer (Send INV / standard Send
+    #: wizard). The Authorized Signatory box on the report stamps Name /
+    #: Position / Date ONLY when this is set — a direct print (no send)
+    #: leaves the box blank (user instruction 2026-08-20).
+    viva_sent_at = fields.Datetime(string='Sent At (Viva)', copy=False)
     signature = fields.Image(
         'Signature', help='Customer drawn signature (portal acknowledgment).',
         copy=False, attachment=True)

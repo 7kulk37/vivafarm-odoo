@@ -9,6 +9,12 @@ class SaleOrder(models.Model):
         help='Position of the person who accepted and signed the quotation on the portal.',
     )
 
+    #: When the quotation was emailed to the customer (Sent Quotation wizard,
+    #: mark_so_as_sent). The Authorized Signatory box stamps Name / Position /
+    #: Date ONLY when this is set — a direct print leaves the box blank
+    #: (user instruction 2026-08-20).
+    viva_sent_at = fields.Datetime(string='Sent At (Viva)', copy=False)
+
     def _get_thai_date_display(self, field_name):
         """Date in Thai tax-invoice style: '03/ส.ค./2569' (Buddhist Era year = CE + 543).
 
@@ -22,6 +28,19 @@ class SaleOrder(models.Model):
         from odoo.tools.misc import format_date
         day_month = format_date(self.env, value, lang_code='th_TH', date_format='dd/MMM')
         return '%s/%s' % (day_month, value.year + 543)
+
+    def message_post(self, **kwargs):
+        """Stamp viva_sent_at when the Sent Quotation wizard marks the SO sent.
+
+        The Authorized Signatory box on the report shows Name / Position /
+        Date ONLY when the document was actually emailed to the customer
+        (user instruction 2026-08-20) — a direct print stays blank.
+        """
+        if self.env.context.get('mark_so_as_sent'):
+            self.filtered(lambda o: o.state == 'draft').write({
+                'viva_sent_at': fields.Datetime.now(),
+            })
+        return super().message_post(**kwargs)
 
     def action_sent_quotation(self):
         """Same as action_quotation_send but attaches the Viva custom report.
