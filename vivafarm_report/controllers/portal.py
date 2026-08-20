@@ -295,19 +295,35 @@ class VivaSalePortal(CustomerPortal):
 
     @http.route(['/my/invoices/<int:invoice_id>/viva_pdf'], type='http',
                 auth="public", website=True)
-    def portal_invoice_viva_pdf(self, invoice_id, access_token=None, download=False, **kw):
-        """View the custom Viva Invoice (ใบแจ้งหนี้) PDF.
+    def portal_invoice_viva_pdf(self, invoice_id, access_token=None, download=False,
+                                report_type='pdf', **kw):
+        """View the custom Viva Invoice (ใบแจ้งหนี้) PDF (or HTML preview).
 
-        Standard portal invoice download renders the DEFAULT report
+        Standard portal invoice iframe/download renders the DEFAULT report
         (account.account_invoices or the partner's invoice_template_pdf_report_id).
         This route renders the custom vivafarm_report.viva_invoice_plain —
         and once the customer has acknowledged it, the ir_actions_report
         override serves the STORED signed bytes (hash block included).
+
+        `report_type='html'` is used by the portal iframe (above the
+        Communication history) so the on-page preview shows the same Viva
+        Invoice — with the customer signature baked in after acknowledgment.
         """
         try:
             invoice_sudo = self._invoice_check_access(invoice_id, access_token=access_token)
         except (AccessError, MissingError):
             return request.redirect('/my')
+        if report_type == 'html':
+            report_env = request.env['ir.actions.report'].sudo()
+            # After acknowledgment, bake the customer's drawn signature into
+            # the on-page preview (mirrors the PDF's invoice_include_signature).
+            if invoice_sudo.signature:
+                report_env = report_env.with_context(invoice_include_signature=True)
+            report = report_env._render_qweb_html(
+                'vivafarm_report.viva_invoice_plain', [invoice_sudo.id])[0]
+            headers = [('Content-Type', 'text/html; charset=utf-8'),
+                       ('Content-Length', len(report))]
+            return request.make_response(report, headers=headers)
         report = request.env['ir.actions.report'].sudo()._render_qweb_pdf(
             'vivafarm_report.viva_invoice_plain', [invoice_sudo.id])[0]
         pdfhttpheaders = [

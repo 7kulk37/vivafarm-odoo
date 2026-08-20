@@ -22,6 +22,7 @@
                 <button name="action_send_invoice_viva"
                         type="object"
                         string="Send INV"
+                        class="oe_highlight"
                         invisible="not display_send_button or move_type not in ('out_invoice',)"/>
             </xpath>
             <!-- Replaces Invoice (ป.86/2542 ข้อ 25): set on the re-issued

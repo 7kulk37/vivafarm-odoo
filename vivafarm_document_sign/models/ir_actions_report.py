@@ -25,6 +25,11 @@ class IrActionsReport(models.Model):
         ):
             signed = self.env['viva.signed.document'].sudo().search([
                 ('move_id', '=', res_ids[0]),
+                # The portal-acknowledged plain Invoice (ใบแจ้งหนี้) ALSO
+                # carries move_id — without this filter, the TAX invoice
+                # report would serve the plain-invoice signed bytes (and
+                # the reverse). Each report serves only its own type.
+                ('document_type', '=', 'tax_invoice'),
                 ('state', 'in', ('signed', 'revoked')),
                 ('signed_attachment_id', '!=', False),
             ], limit=1)

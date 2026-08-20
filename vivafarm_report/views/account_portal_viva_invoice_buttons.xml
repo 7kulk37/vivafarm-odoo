@@ -32,6 +32,14 @@
     <template id="account_portal_viva_invoice_buttons"
               name="VivaFarm Invoice Portal Buttons"
               inherit_id="account.portal_invoice_page">
+        <!-- The standard iframe preview (above Communication history) renders
+             the DEFAULT report (account.account_invoices / partner template).
+             Point it at OUR viva_pdf route so the preview shows the Viva
+             Invoice — with the customer signature baked in after
+             acknowledgment (report_type='html' branch of the route). -->
+        <xpath expr="//iframe[@id='invoice_html']" position="attributes">
+            <attribute name="t-att-src">'/my/invoices/%s/viva_pdf?report_type=html&amp;access_token=%s' % (invoice.id, invoice.access_token)</attribute>
+        </xpath>
         <!-- Buttons next to the Download button in the sidebar -->
         <xpath expr="//div[hasclass('o_download_pdf')]" position="after">
             <div class="d-flex flex-column gap-2" name="viva_invoice_actions">
@@ -40,7 +48,7 @@
                     t-att-href="'/my/invoices/%s/viva_pdf?%s' % (invoice.id, keep_query())"
                     target="_blank"
                 >
-                    <i class="fa fa-print me-1"/>View Viva Invoice
+                    <i class="fa fa-print me-1"/>View Invoice
                 </a>
                 <a
                     t-if="invoice.state == 'posted' and not invoice.signature"
