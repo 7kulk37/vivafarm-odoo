@@ -10,11 +10,11 @@
         <field name="arch" type="xml">
             <xpath expr="//group[@name='provider_credentials']" position="inside">
                 <field name="omise_publishable_key"
-                       attrs="{'invisible': [('code', '!=', 'omise')]}"/>
+                       invisible="code != 'omise'"/>
                 <field name="omise_secret_key"
-                       attrs="{'invisible': [('code', '!=', 'omise')]}"/>
+                       invisible="code != 'omise'"/>
                 <field name="omise_webhook_secret"
-                       attrs="{'invisible': [('code', '!=', 'omise')]}"/>
+                       invisible="code != 'omise'"/>
             </xpath>
         </field>
     </record>
