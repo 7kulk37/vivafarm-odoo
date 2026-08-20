@@ -183,6 +183,40 @@ class PaymentTransaction(models.Model):
 
     # === PROCESSING METHODS === #
 
+    def _create_payment(self, **extra_create_values):
+        """Create the payment, then auto-send the Viva receipt for portal
+        gateway payments (user instruction 2026-08-20).
+
+        Scope: Omise card / PromptPay portal payments ONLY (operation
+        'online_direct' with invoices). Wire transfer / evidence upload /
+        manual reconcile flows never reach this branch — they require seller
+        validation and are out of scope for the automatic receipt.
+
+        Note: super()._create_payment posts the payment AND reconciles the
+        invoices, so reconciled_invoice_ids is populated before we email.
+        """
+        payment = super()._create_payment(**extra_create_values)
+        if (self.provider_code == 'omise'
+                and self.operation == 'online_direct'
+                and self.invoice_ids
+                and payment):
+            self._send_payment_receipt_email(payment)
+        return payment
+
+    def _send_payment_receipt_email(self, payment):
+        """Send the customer's receipt email (template.send_mail → real
+        mail.mail with the Viva receipt PDF attached)."""
+        tpl = self.env.ref(
+            'vivafarm_report.viva_email_template_payment_receipt',
+            raise_if_not_found=False)
+        if tpl:
+            tpl.sudo().send_mail(
+                payment.id,
+                force_send=True,
+                raise_exception=False,
+                email_layout_xmlid='mail.mail_notification_layout_with_responsible_signature',
+            )
+
     def _omise_process_webhook_event(self, event):
         """ Process a webhook event received from Omise (model-level, testable).
 
