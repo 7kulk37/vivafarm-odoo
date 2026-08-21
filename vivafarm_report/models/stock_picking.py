@@ -109,7 +109,9 @@ class StockPicking(models.Model):
             raise_if_not_found=False)
         for picking in self:
             if tpl:
-                picking.with_context(force_send=True).message_post_with_source(
+                picking.with_context(
+                    force_send=True, viva_show_stamp=True,
+                ).message_post_with_source(
                     tpl,
                     email_layout_xmlid='mail.mail_notification_layout_with_responsible_signature',
                     subtype_xmlid='mail.mt_comment',

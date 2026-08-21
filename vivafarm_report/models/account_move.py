@@ -112,6 +112,7 @@ class AccountMove(models.Model):
                 'active_model': 'account.move',
                 'active_ids': self.ids,
                 'viva_invoice_report': True,
+                'viva_show_stamp': True,
             },
         }
 

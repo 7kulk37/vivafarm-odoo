@@ -53,7 +53,9 @@ class MailComposeMessage(models.TransientModel):
                 )
                 if report:
                     for order in orders:
-                        pdf = report.with_context(debug=False)._render_qweb_pdf(
+                        pdf = report.with_context(
+                            debug=False, viva_show_stamp=True,
+                        )._render_qweb_pdf(
                             report.report_name, order.ids,
                         )[0]
                         att = self.attachment_ids.filtered(

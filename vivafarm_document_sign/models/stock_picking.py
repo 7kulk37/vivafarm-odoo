@@ -105,7 +105,9 @@ class StockPicking(models.Model):
         # 2. Render the STAMPED delivery note (record exists -> hash block
         # renders; the receiver signature is baked in via the context flag
         # used by the route when it writes the acknowledgment).
-        pdf_bytes = self.env['ir.actions.report']._render_qweb_pdf(
+        pdf_bytes = self.env['ir.actions.report'].with_context(
+            viva_show_stamp=True,
+        )._render_qweb_pdf(
             'vivafarm_report.viva_delivery_note', [self.id])[0]
         pdf_hash = sha256_hex(pdf_bytes)
 

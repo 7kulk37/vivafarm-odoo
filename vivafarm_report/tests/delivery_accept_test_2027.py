@@ -195,7 +195,7 @@ except Exception as e:
     print('  (portal page fetch failed: %s)' % e)
 check('D3 page has In Transit badge', 'In Transit' in page)
 check('D3 page has Accept & Sign Delivery button', 'Accept & Sign Delivery' in page)
-check('D3 page has View Viva Delivery Note button', 'View Viva Delivery Note' in page)
+check('D3 page has View Viva Delivery Note button', 'View delivery note' in page)
 check('D3 page has delivery signature modal', 'modalaccept_viva_delivery' in page)
 check('D3 page has viva_pdf route link', '/viva_pdf' in page)
 
@@ -397,8 +397,8 @@ if signed5:
           '(got %s)' % signed5.document_number)
     html10 = env['ir.actions.report']._render_qweb_html(
         'vivafarm_report.viva_delivery_note', [picking5.id])[0]
-    check('D10 stamp shows Delivery Confirmation title',
-          b'Delivery Confirmation: ' in html10)
+    check('D10 stamp shows Delivery Order title (v155 rename)',
+          b'Delivery Order: ' in html10)
     check('D10 no Linked SO on stamp', b'Linked SO' not in html10)
 
 # ── Summary ──

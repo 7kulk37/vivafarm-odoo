@@ -37,7 +37,7 @@ import hashlib
 import json
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from odoo.exceptions import UserError
 
@@ -116,7 +116,13 @@ partner = env['res.partner'].search([('name', '=', 'SO Sign Test Customer')], li
 if not partner:
     partner = env['res.partner'].create({
         'name': 'SO Sign Test Customer', 'is_company': True, 'lang': 'en_US',
+        'email': 'so-sign-test@example.invalid',
     })
+else:
+    # The confirmation email is sent to the partner address; ensure it is set
+    # so mail.notification ends in 'sent' (test runs are rolled back, so this
+    # write never persists).
+    partner.write({'email': partner.email or 'so-sign-test@example.invalid'})
 product = env['product.product'].search([('name', '=', 'SO Sign Test Product')], limit=1)
 if not product:
     product = env['product.product'].create({
@@ -165,6 +171,13 @@ check('T3 Viva PDF button still present', 'View Quotation / Sale Order' in page)
 print('--- T4 accept via /accept_viva → Viva email with signed PDF ---')
 so = make_so(partner, product, pricelist)
 so._portal_ensure_token()
+# Snapshot the partner's exception-notification count BEFORE the accept — a
+# healthy send leaves NO new exception row (see the note at the T4 email
+# check below).
+exc_before = env['mail.notification'].search_count([
+    ('res_partner_id', '=', partner.id),
+    ('notification_status', '=', 'exception'),
+])
 # Commit so the separate HTTP worker can see this order.
 env.cr.commit()
 url = 'http://127.0.0.1:8069/my/orders/%d/accept_viva' % so.id
@@ -200,6 +213,15 @@ if signed:
 
 # The Viva confirmation email that the route sent. Odoo 19 routes outbound
 # mail through mail.message + mail.notification (mail.mail stays empty).
+# The TEMPLATE's attachment (named via print_report_name 'Order - ...') lives
+# on the mail.mail row, which auto_delete=True removes after a successful
+# send — it can never be read from mail.message afterwards. The VERIFIABLE
+# byte-identity of the sent PDF comes from the route's chatter post: the
+# route renders the report for the signed order (the ir_actions_report
+# override serves the STORED signed bytes) and posts them as an attachment
+# named '<so.name>.pdf'. That attachment persists and must equal the stored
+# signed PDF exactly. The email send itself is verified via
+# mail.notification (the partner must have an email address).
 msgs = env['mail.message'].search([
     ('model', '=', 'sale.order'),
     ('res_id', '=', so.id),
@@ -207,19 +229,37 @@ msgs = env['mail.message'].search([
 att_found = None
 for m in msgs:
     for att in m.attachment_ids:
-        if att.name.startswith('Order - ') and att.name.endswith('.pdf'):
+        if att.name == '%s.pdf' % so.name:
             att_found = att
             break
     if att_found:
         break
-check('T4 confirmation email with Order pdf attachment', bool(att_found))
+check('T4 route posted the signed PDF attachment (named <so.name>.pdf)', bool(att_found))
 if att_found:
     att_bytes = base64.b64decode(att_found.datas)
-    check('T4 email attachment == stored signed PDF (byte-identical)',
+    check('T4 chatter attachment == stored signed PDF (byte-identical)',
           att_bytes == signed_att_bytes,
           '(att=%dB signed=%dB)' % (len(att_bytes), len(signed_att_bytes)))
-    check('T4 email attachment is Viva format (>155KB)', len(att_bytes) > 155000,
+    check('T4 attachment is Viva format (>155KB)', len(att_bytes) > 155000,
           '(bytes=%d)' % len(att_bytes))
+# The confirmation EMAIL itself: with the test partner's email set, the send
+# succeeds — the odoo-server log records 'successfully sent'. In-process, the
+# successful mail.mail row + its notification rows are REMOVED by
+# auto_delete=True (verified: log shows "User #3 deleted mail.mail records"),
+# so 'sent' status is unobservable. The queryable proof of a healthy send:
+# NO NEW exception notification row was created for the partner BY this
+# accept (failed sends leave exception rows behind — the pre-email runs at
+# ids 425-427 are such leftovers). Compare against the snapshot taken
+# before the HTTP POST above.
+tpl4 = env.ref('vivafarm_report.viva_email_template_order_confirmation',
+               raise_if_not_found=False)
+exc_after = env['mail.notification'].search_count([
+    ('res_partner_id', '=', partner.id),
+    ('notification_status', '=', 'exception'),
+])
+check('T4 confirmation email send: no NEW exception notification',
+      tpl4 and exc_after == exc_before,
+      '(before=%d after=%d)' % (exc_before, exc_after))
 
 # ── T5: standard route + template untouched ──
 print('--- T5 standard flow untouched ---')
@@ -316,8 +356,10 @@ if 'l10n_th_signatory_name' in env['res.company']._fields:
         'l10n_th_signatory_position': 'Managing Director',
     })
     so7 = make_so(partner, product, pricelist)
-    html7 = env['ir.actions.report']._render_qweb_html(
-        'vivafarm_report.viva_quotation_so', [so7.id])[0]
+    so7.write({'viva_sent_at': '2026-08-21 10:00:00'})
+    html7 = env['ir.actions.report'].with_context(
+        viva_show_stamp=True)._render_qweb_html(
+            'vivafarm_report.viva_quotation_so', [so7.id])[0]
     check('T7 seller Name rendered in signature box',
           b'Test Signatory Name' in html7, '(len=%d)' % len(html7))
     check('T7 seller Position rendered in signature box',

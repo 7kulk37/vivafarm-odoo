@@ -116,7 +116,9 @@ class SaleOrder(models.Model):
                 raise
 
         # 2. Render the STAMPED SO PDF (record exists -> hash block renders)
-        pdf_bytes = self.env['ir.actions.report']._render_qweb_pdf(
+        pdf_bytes = self.env['ir.actions.report'].with_context(
+            viva_show_stamp=True,
+        )._render_qweb_pdf(
             'vivafarm_report.viva_quotation_so', [self.id])[0]
         pdf_hash = sha256_hex(pdf_bytes)
 

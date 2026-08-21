@@ -63,7 +63,9 @@ class AccountPayment(models.Model):
             'signed_at': fields.Datetime.now(),
         })
         # 2. Render the STAMPED receipt (record exists -> hash block renders)
-        pdf_bytes = self.env['ir.actions.report']._render_qweb_pdf(
+        pdf_bytes = self.env['ir.actions.report'].with_context(
+            viva_show_stamp=True,
+        )._render_qweb_pdf(
             'vivafarm_report.viva_payment_receipt', [self.id])[0]
         pdf_hash = sha256_hex(pdf_bytes)
         # 3. NO signature — hash only (user decision 2026-08-20)

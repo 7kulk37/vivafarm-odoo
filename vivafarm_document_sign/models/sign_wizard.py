@@ -92,7 +92,9 @@ class VivaSignWizard(models.TransientModel):
     def _render_invoice_pdf(self):
         """Render the tax invoice PDF (the exact bytes that get hashed)."""
         self.ensure_one()
-        pdf_bytes = self.env['ir.actions.report']._render_qweb_pdf(
+        pdf_bytes = self.env['ir.actions.report'].with_context(
+            viva_show_stamp=True,
+        )._render_qweb_pdf(
             'vivafarm_report.viva_invoice', self.move_id.ids)[0]
         return pdf_bytes
 
