@@ -177,7 +177,7 @@
                                             <t t-else="">Authorized Signatory</t>
                                         </strong><br/>
                                         <div style="min-height: 50px; max-height: 50px;">
-                                            <img t-if="o.company_id.l10n_th_signature_image"
+                                            <img t-if="o.viva_sent_at and o.company_id.l10n_th_signature_image"
                                                  t-att-src="'data:image/png;base64,%s' % o.company_id.l10n_th_signature_image.decode()"
                                                  style="max-height: 50px;"
                                                  alt="Authorized Signature"/>
