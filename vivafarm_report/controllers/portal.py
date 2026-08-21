@@ -552,6 +552,10 @@ class VivaSalePortal(CustomerPortal):
         filename = upload.filename or 'upload'
         mimetype = upload.content_type or 'application/octet-stream'
         data = upload.read()
+        if not data:
+            # A zero-byte file is not a signed document — reject like a
+            # missing file (edge test E7, 2026-08-21).
+            return self._manual_redirect(record, doc_key, '&message=upload_no_file')
         if mimetype not in self._MANUAL_ALLOWED_MIMETYPES:
             return self._manual_redirect(record, doc_key, '&message=upload_bad_type')
         if len(data) > self._MANUAL_MAX_SIZE:

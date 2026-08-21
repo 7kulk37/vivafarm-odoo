@@ -289,8 +289,12 @@ class VivaSignedDocument(models.Model):
                 raise
 
         pdf_hash = sha256_hex(data)
+        # Draft invoices have name=False in Odoo 19 until posted — never
+        # crash on a non-string document_number (edge test E15 caught the
+        # 500: 'bool' object has no attribute 'replace').
+        safe_doc_number = str(document_number or 'doc_%s' % record_id)
         attachment = self.env['ir.attachment'].create({
-            'name': '%s_%s' % (document_number.replace('/', '_'), filename or 'upload'),
+            'name': '%s_%s' % (safe_doc_number.replace('/', '_'), filename or 'upload'),
             'datas': base64.b64encode(data),
             'res_model': 'viva.signed.document',
             'res_id': signed.id,

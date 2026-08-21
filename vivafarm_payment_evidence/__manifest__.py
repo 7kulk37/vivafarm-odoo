@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Payment Evidence',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'category': 'Accounting/Payments',
     'summary': 'Customer uploads payment evidence on the Wire Transfer pay page',
     'description': """
