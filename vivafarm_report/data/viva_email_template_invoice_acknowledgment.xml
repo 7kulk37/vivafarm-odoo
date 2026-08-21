@@ -41,4 +41,41 @@
         <field name="report_template_ids" eval="[(4, ref('vivafarm_report.report_viva_invoice_plain'))]"/>
         <field name="auto_delete" eval="True"/>
     </record>
+
+    <!-- "Accept & Sign Tax Invoice" confirmation email — the MINIMAL-FLOW
+         variant (2026-08-21). A minimal-flow customer's invoice report field
+         is the Tax invoice (ใบกำกับภาษี) 3 copied report; the route sends
+         THIS template so the STORED SIGNED TAX INVOICE PDF is attached
+         (the plain variant would re-render a fresh unsigned plain invoice —
+         the override's viva_invoice_plain branch searches document_type
+         'invoice', which a tax-invoice record has no match for). -->
+    <record id="viva_email_template_invoice_acknowledgment_tax" model="mail.template">
+        <field name="name">Tax Invoice: Acknowledged (Viva)</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="subject">Invoice acknowledgement confirmation (Ref {{ object.name or 'n/a' }})</field>
+        <field name="email_from">{{ (object.invoice_user_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="partner_to" eval="False"/>
+        <field name="use_default_to" eval="True"/>
+        <field name="description">Sent when a customer acknowledges &amp; signs a TAX invoice via the portal (minimal flow) — carries the Viva signed TAX INVOICE PDF</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name or ''">Customer</t>,
+        <br/><br/>
+        Thank you for acknowledging your invoice
+        <span style="font-weight: bold;" t-out="object.name or ''">INV/2026/00042</span>
+        amounting in <span style="font-weight: bold;" t-out="format_amount(object.amount_total, object.currency_id) or ''">฿ 1,000.00</span>.
+        <br/><br/>
+        The signed tax invoice document is attached to this email.
+        <br/><br/>
+        Do not hesitate to contact us if you have any questions.
+        <t t-if="not is_html_empty(object.invoice_user_id.signature)">
+            <div>--<br/><t t-out="object.invoice_user_id.signature or ''">Seller</t></div>
+        </t>
+    </p>
+</div>
+        </field>
+        <field name="report_template_ids" eval="[(4, ref('vivafarm_report.report_viva_invoice'))]"/>
+        <field name="auto_delete" eval="True"/>
+    </record>
 </odoo>

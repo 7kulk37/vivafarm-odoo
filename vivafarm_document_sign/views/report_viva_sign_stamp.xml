@@ -7,10 +7,14 @@
     <template id="viva_invoice_document_sign_stamp"
               name="Viva Invoice Signed Stamp"
               inherit_id="vivafarm_report.viva_invoice_document">
-        <!-- Insert BEFORE the signature section. wkhtmltopdf clips content
-             placed AFTER the Authorized Signatory box at the very bottom of
-             the page — the stamp must live above it (verified: variant test). -->
-        <xpath expr="//div[div[contains(., 'Signatures below constitute') or contains(., 'การลงลายมือชื่อในช่องต่อไปนี้')]]" position="before">
+        <!-- Insert AFTER the signature section — same placement as the SO /
+             plain invoice / delivery note hash blocks (the user asked for
+             the SO layout, 2026-08-21). Verified with fitz on a signed tax
+             invoice: the signature rows end ~707pt and the usable content
+             area ends ~789pt, leaving ~80pt slack — the ~40pt block fits
+             without clipping (the older "must be ABOVE" note predates the
+             compact layout). -->
+        <xpath expr="//div[div[contains(., 'Signatures below constitute') or contains(., 'การลงลายมือชื่อในช่องต่อไปนี้')]]" position="after">
             <div t-if="o.signed_document_id" class="row mt-2" style="page-break-inside: avoid;">
                 <div class="col-12" style="border: 1px solid #2e7d32; border-radius: 6px;">
                     <!-- Background on an INNER wrapper div (not the bordered

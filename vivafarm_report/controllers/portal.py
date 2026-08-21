@@ -470,10 +470,13 @@ class VivaSalePortal(CustomerPortal):
         # Hash the acknowledged invoice (customer signature baked in).
         invoice_sudo.with_context(invoice_include_signature=True)._hash_invoice_accepted()
 
-        # Render the Viva report — the override serves the STORED signed bytes.
+        # Render the Viva report — the override serves the STORED signed bytes
+        # (the report is the customer's invoice_template_pdf_report_id; a
+        # minimal-flow customer's is the TAX invoice, standard is plain).
+        viva_report = invoice_sudo._get_viva_invoice_report()
         pdf = request.env['ir.actions.report'].sudo().with_context(
             invoice_include_signature=True)._render_qweb_pdf(
-                'vivafarm_report.viva_invoice_plain', [invoice_sudo.id])[0]
+                viva_report.report_name, [invoice_sudo.id])[0]
 
         # Post the signed PDF in the chatter.
         invoice_sudo.message_post(
@@ -489,14 +492,16 @@ class VivaSalePortal(CustomerPortal):
         )
 
         # Send the customer's copy of the signed invoice (mirrors the SO
-        # confirmation email: report = viva_invoice_plain -> the stored
-        # signed PDF is attached). template.send_mail() creates a real
-        # mail.mail (recipient_ids + signed PDF attachment) — unlike
-        # message_post_with_source which posts to chatter only and never
-        # generates an outgoing email (user report 2026-08-20).
-        tpl = request.env.ref(
-            'vivafarm_report.viva_email_template_invoice_acknowledgment',
-            raise_if_not_found=False)
+        # confirmation email: the template whose report matches the signed
+        # document — TAX invoice for minimal-flow customers, plain invoice
+        # otherwise — so the STORED signed PDF is attached). template.send_mail()
+        # creates a real mail.mail (recipient_ids + signed PDF attachment) —
+        # unlike message_post_with_source which posts to chatter only and
+        # never generates an outgoing email (user report 2026-08-20).
+        tpl_xmlid = ('vivafarm_report.viva_email_template_invoice_acknowledgment_tax'
+                     if viva_report.report_name == 'vivafarm_report.viva_invoice'
+                     else 'vivafarm_report.viva_email_template_invoice_acknowledgment')
+        tpl = request.env.ref(tpl_xmlid, raise_if_not_found=False)
         if tpl:
             tpl.sudo().send_mail(
                 invoice_sudo.id,

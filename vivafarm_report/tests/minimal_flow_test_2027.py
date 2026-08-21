@@ -192,6 +192,23 @@ if signed:
         'vivafarm_report.viva_invoice', [inv.id])[0]
     check('M6 signed PDF has hash block', b'Digitally Signed Document' in html6,
           '(html len=%d)' % len(html6))
+    # CUSTOMER SIGNATURE renders in the "Received by Customer" box — same
+    # mechanism as the SO/plain invoice (user bug 2026-08-21: the tax
+    # invoice sign box was empty after signing).
+    html6sig = env['ir.actions.report'].with_context(
+        invoice_include_signature=True)._render_qweb_html(
+            'vivafarm_report.viva_invoice', [inv.id])[0]
+    check('M6 customer signature image rendered',
+          ('data:image/png;base64,%s' % SIGNATURE_B64).encode() in html6sig)
+    check('M6 customer Name rendered', b'Tax Sign Customer' in html6sig)
+    check('M6 customer Position rendered', b'Manager' in html6sig)
+    # Hash block placement: the signed HTML must have the signature boxes
+    # BEFORE the hash block (SO layout — block below the sign section).
+    idx_sig = html6sig.find(b'Authorized Signatory')
+    idx_hash = html6sig.find(b'Digitally Signed Document')
+    check('M6 hash block BELOW sign section (SO layout)',
+          idx_sig != -1 and idx_hash > idx_sig,
+          '(sig=%d hash=%d)' % (idx_sig, idx_hash))
 
 # ── M7: standard-flow regression ──
 print('--- M7 standard flow unchanged ---')
