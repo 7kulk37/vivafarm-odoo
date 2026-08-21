@@ -88,10 +88,13 @@ class VivaVerificationController(http.Controller):
         Record-level linkage only (user decision 2026-08-20) — no crypto
         chain. Rules (walk backwards):
           - Delivery Note -> its parent Sale Order (SO signed doc).
-          - Invoice (ใบแจ้งหนี้) -> the signed Delivery Note for that SO
-            (fallback: the signed SO itself).
-          - Payment Receipt -> the signed Invoice behind the payment's
-            reconciled invoice(s).
+          - Invoice / Tax Invoice -> the signed Delivery Note for that SO
+            (fallback: the signed SO itself). The minimal-flow tax invoice
+            (document_type 'tax_invoice', 2026-08-21) must resolve exactly
+            like the plain Invoice — before the v20 fix it fell into the
+            else branch and the verify page showed '-' on both links.
+          - Payment Receipt -> the signed Invoice/Tax Invoice behind the
+            payment's reconciled invoice(s).
           - Otherwise / no link -> empty dict (template renders '-').
         """
         Model = self.env['viva.signed.document'].sudo()
@@ -100,7 +103,7 @@ class VivaVerificationController(http.Controller):
                 ('sale_order_id', '=', signed.sale_order_id.id),
                 ('document_type', '=', 'sale_order'),
             ], limit=1)
-        elif signed.document_type == 'invoice' and signed.move_id:
+        elif signed.document_type in ('invoice', 'tax_invoice') and signed.move_id:
             so = signed.move_id.line_ids.mapped('sale_line_ids.order_id')[:1]
             prev = None
             if so:
@@ -119,7 +122,7 @@ class VivaVerificationController(http.Controller):
             if inv:
                 prev = Model.search([
                     ('move_id', '=', inv.id),
-                    ('document_type', '=', 'invoice'),
+                    ('document_type', 'in', ('invoice', 'tax_invoice')),
                 ], limit=1)
         else:
             prev = None
@@ -130,9 +133,13 @@ class VivaVerificationController(http.Controller):
 
         Rules (walk forwards):
           - Sale Order -> the signed Delivery Note for it (fallback:
-            the signed Invoice(s) for that SO).
-          - Delivery Note -> the signed Invoice for that SO.
-          - Invoice -> the signed Payment Receipt for its payment(s).
+            the signed Invoice/Tax Invoice(s) for that SO).
+          - Delivery Note -> the signed Invoice/Tax Invoice for that SO.
+          - Invoice / Tax Invoice -> the signed Payment Receipt for its
+            reconciled payment(s). Uses reconciled_payment_ids (a v20 fix:
+            move.payment_ids is the One2many of payments whose journal-entry
+            move is this move — always empty for reconciled invoices, so the
+            Next link never resolved for a paid invoice).
           - Otherwise / no link -> empty dict (template renders '-').
         """
         Model = self.env['viva.signed.document'].sudo()
@@ -146,7 +153,7 @@ class VivaVerificationController(http.Controller):
                 if invs:
                     nxt = Model.search([
                         ('move_id', 'in', invs.ids),
-                        ('document_type', '=', 'invoice'),
+                        ('document_type', 'in', ('invoice', 'tax_invoice')),
                     ], limit=1)
         elif signed.document_type == 'delivery_note' and signed.sale_order_id:
             invs = signed.sale_order_id.invoice_ids
@@ -154,10 +161,10 @@ class VivaVerificationController(http.Controller):
             if invs:
                 nxt = Model.search([
                     ('move_id', 'in', invs.ids),
-                    ('document_type', '=', 'invoice'),
+                    ('document_type', 'in', ('invoice', 'tax_invoice')),
                 ], limit=1)
-        elif signed.document_type == 'invoice' and signed.move_id:
-            pays = signed.move_id.payment_ids
+        elif signed.document_type in ('invoice', 'tax_invoice') and signed.move_id:
+            pays = signed.move_id.reconciled_payment_ids
             nxt = None
             if pays:
                 nxt = Model.search([
