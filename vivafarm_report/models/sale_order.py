@@ -15,6 +15,27 @@ class SaleOrder(models.Model):
     #: (user instruction 2026-08-20).
     viva_sent_at = fields.Datetime(string='Sent At (Viva)', copy=False)
 
+    def _get_manual_signed_document(self):
+        """The manual hand-signed upload sealed for this order, if any.
+
+        Manual uploads (channel='manual', user flow 2026-08-21) carry the
+        verification link/code the confirmation email references. Digital
+        signatures seal through vivafarm_document_sign._hash_customer_accepted
+        instead. Lives HERE (vivafarm_report loads before vivafarm_document_sign)
+        so the email templates render during module load — must be defensive:
+        the viva.signed.document model does NOT exist yet when the report
+        module's own templates are render-checked at load time.
+        """
+        try:
+            Model = self.env['viva.signed.document']
+        except KeyError:
+            return None
+        return Model.sudo().search([
+            ('sale_order_id', '=', self.id),
+            ('document_type', '=', 'sale_order'),
+            ('channel', '=', 'manual'),
+        ], limit=1)
+
     def _get_thai_date_display(self, field_name):
         """Date in Thai tax-invoice style: '03/ส.ค./2569' (Buddhist Era year = CE + 543).
 

@@ -15,6 +15,23 @@ class StockPicking(models.Model):
     #: 2026-08-20).
     viva_sent_at = fields.Datetime(string='Sent At (Viva)', copy=False)
 
+    def _get_manual_signed_document(self):
+        """The manual hand-signed upload sealed for this delivery, if any.
+
+        Defensive KeyError: viva.signed.document is not in the registry
+        during the report module's own load-time template render-check
+        (vivafarm_report loads before vivafarm_document_sign).
+        """
+        try:
+            model = self.env['viva.signed.document']
+        except KeyError:
+            return None
+        return model.sudo().search([
+            ('picking_id', '=', self.id),
+            ('document_type', '=', 'delivery_note'),
+            ('channel', '=', 'manual'),
+        ], limit=1)
+
     in_transit = fields.Boolean(
         string='In Transit',
         copy=False,

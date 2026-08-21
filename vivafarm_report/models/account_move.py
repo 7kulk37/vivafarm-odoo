@@ -216,6 +216,30 @@ class AccountMove(models.Model):
             raise_if_not_found=False,
         )
 
+    def _get_manual_signed_document(self):
+        """The manual hand-signed upload sealed for this invoice, if any.
+
+        The document_type follows the customer's invoice report: 'tax_invoice'
+        (minimal flow) or 'invoice' (plain, standard flow) — exactly like
+        _hash_invoice_accepted. Manual uploads are channel='manual'. Lives
+        HERE (vivafarm_report loads before vivafarm_document_sign) so the
+        email templates render during module load — defensive KeyError: the
+        viva.signed.document model does NOT exist yet at report load time.
+        """
+        try:
+            Model = self.env['viva.signed.document']
+        except KeyError:
+            return None
+        rep = self._get_viva_invoice_report()
+        doc_type = ('tax_invoice'
+                    if rep and rep.report_name == 'vivafarm_report.viva_invoice'
+                    else 'invoice')
+        return Model.sudo().search([
+            ('move_id', '=', self.id),
+            ('document_type', '=', doc_type),
+            ('channel', '=', 'manual'),
+        ], limit=1)
+
     def _get_tax_invoice_copies(self):
         """Copies to print for a tax invoice (Thai practice: 3 copies).
 

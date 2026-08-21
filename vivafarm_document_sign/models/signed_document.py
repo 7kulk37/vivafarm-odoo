@@ -8,10 +8,13 @@ Migration-ready: certificate fields are generic (type/issuer/serial/
 fingerprint), so swapping the TEST self-signed cert for a Thai CA cert
 is a config/trust change, not a schema change.
 """
+import base64
 import secrets
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+
+from psycopg2 import IntegrityError
 
 from ..services.signing_service import SigningService, sha256_hex
 
@@ -29,7 +32,15 @@ class VivaSignedDocument(models.Model):
         ('delivery_note', 'Delivery Note'),
         ('invoice', 'Invoice (ใบแจ้งหนี้)'),
         ('payment_receipt', 'Payment Receipt'),
+        ('payment_slip', 'Payment Slip (hand-signed upload)'),
     ], string='Document Type', required=True, default='tax_invoice')
+    channel = fields.Selection([
+        ('digital', 'Digital signature (portal)'),
+        ('manual', 'Manual upload (hand-signed paper copy)'),
+    ], string='Sealing Channel', required=True, default='digital',
+        help='How the document was sealed. Manual uploads seal the EXACT '
+             'bytes the customer submitted (hash only, no RSA signature — '
+             'same evidence model as the payment receipt).')
     document_number = fields.Char(string='Document Number', readonly=True, copy=False)
     odoo_model = fields.Char(string='Odoo Model', readonly=True, default='account.move')
     odoo_record_id = fields.Integer(string='Odoo Record ID', readonly=True, index=True)
@@ -80,6 +91,24 @@ class VivaSignedDocument(models.Model):
     signer_position = fields.Char(
         string='Signer Position', readonly=True, copy=False,
         help='The customer\'s typed position (from the portal signature form).')
+    # Manual-upload evidence (channel='manual'): the person who submitted the
+    # hand-signed paper copy + the network metadata captured at upload time.
+    # Legal note (2026-08-21, Thai law consultant memo): the typed name +
+    # confirmation checkbox raise ETA B.E.2544 §9/§11 originator weight — the
+    # upload moves from "submitted via link X" to "submitted by a person who
+    # identified against the order". IP/UA are retained per ETA §12(3).
+    uploader_name = fields.Char(
+        string='Uploaded by (typed)', readonly=True, copy=False,
+        help='The customer typed name on the manual-upload form. '
+             'Required — turns "uploaded via link" into "uploaded by a person".')
+    uploader_ip = fields.Char(string='Upload IP', readonly=True, copy=False)
+    uploader_user_agent = fields.Char(string='Upload User-Agent', readonly=True, copy=False)
+    source_filename = fields.Char(string='Source File Name', readonly=True, copy=False)
+    source_mimetype = fields.Char(string='Source MIME Type', readonly=True, copy=False)
+    seller_note = fields.Text(string='Seller Note', copy=False,
+                              help='Seller-side annotation (e.g. "customer '
+                                   'hand-signed in store on …", "received via '
+                                   'Line") — a contemporaneous business record.')
     signed_at = fields.Datetime(string='Signed At', readonly=True, copy=False)
     revoked_at = fields.Datetime(string='Revoked At', readonly=True, copy=False)
     revocation_reason = fields.Char(string='Revocation Reason', readonly=True, copy=False)
@@ -177,6 +206,102 @@ class VivaSignedDocument(models.Model):
             'event': event,
             'detail': detail,
         })
+
+    @api.model
+    def _create_manual_record(self, model, record_id, document_type,
+                              document_number, filename, mimetype, data,
+                              uploader_name, uploader_ip='', uploader_agent='',
+                              seller_note=''):
+        """Seal an uploaded hand-signed paper copy (channel='manual').
+
+        Same 4-step invariant as every other sign flow, but hashes the EXACT
+        uploaded bytes (no re-render, no RSA signature — hash-only, like the
+        payment receipt):
+          1. PRE-CREATE the record (token + number known) so the verification
+             token/code exist before storing the file.
+          2. SHA-256 the exact uploaded bytes.
+          3. Store the bytes as the immutable attachment.
+          4. Write the hash + source metadata onto the record.
+
+        Legal model (2026-08-21, Thai law consultant memo): the claims are
+        ONLY (a) these exact bytes were submitted through the token-linked
+        portal at time T, (b) they are unaltered since (SHA-256), (c)
+        re-checkable anytime. The typed uploader_name + network metadata are
+        captured per ETA B.E.2544 §9/§11/§12(3).
+
+        Returns the sealed record (converges on the winner when a duplicate
+        upload races the DB unique constraint).
+        """
+        # Idempotency guard — one sealed record per (model, record, type).
+        # A document is sealed ONCE, by whichever method: the UNIQUE(move_id)
+        # / UNIQUE(picking_id) / partial-UNIQUE(sale_order_id) constraints
+        # guarantee it at DB level, so a manual upload on an already-digital
+        # sealed doc converges on the existing record (and vice-versa).
+        existing = self.sudo().search([
+            ('odoo_model', '=', model),
+            ('odoo_record_id', '=', record_id),
+            ('document_type', '=', document_type),
+        ], limit=1)
+        if existing:
+            return existing
+        if not data:
+            raise UserError(_('No file data received.'))
+        try:
+            with self.env.cr.savepoint():
+                # Link field mirrors the digital paths (move_id /
+                # sale_order_id / picking_id) so the verify page's
+                # Previous/Next chain treats manual records uniformly.
+                link_vals = {}
+                if model == 'account.move':
+                    link_vals['move_id'] = record_id
+                elif model == 'sale.order':
+                    link_vals['sale_order_id'] = record_id
+                elif model == 'stock.picking':
+                    link_vals['picking_id'] = record_id
+                elif model == 'payment.transaction':
+                    tx = self.env['payment.transaction'].browse(record_id)
+                    if tx.payment_id:
+                        link_vals['payment_id'] = tx.payment_id.id
+                signed = self.env['viva.signed.document'].create({
+                    'document_number': document_number,
+                    'document_type': document_type,
+                    'channel': 'manual',
+                    'odoo_model': model,
+                    'odoo_record_id': record_id,
+                    'revision': 1,
+                    'signer_name': uploader_name,
+                    'uploader_name': uploader_name,
+                    'uploader_ip': uploader_ip,
+                    'uploader_user_agent': uploader_agent,
+                    'source_filename': filename,
+                    'source_mimetype': mimetype,
+                    'seller_note': seller_note,
+                    'signed_at': fields.Datetime.now(),
+                    **link_vals,
+                })
+        except IntegrityError:
+            signed = self.env['viva.signed.document'].search([
+                ('odoo_model', '=', model),
+                ('odoo_record_id', '=', record_id),
+                ('document_type', '=', document_type),
+            ], limit=1)
+            if not signed:
+                raise
+
+        pdf_hash = sha256_hex(data)
+        attachment = self.env['ir.attachment'].create({
+            'name': '%s_%s' % (document_number.replace('/', '_'), filename or 'upload'),
+            'datas': base64.b64encode(data),
+            'res_model': 'viva.signed.document',
+            'res_id': signed.id,
+            'type': 'binary',
+        })
+        signed.write({
+            'pdf_sha256': pdf_hash,
+            'signed_attachment_id': attachment.id,
+        })
+        signed._log_event('MANUAL_UPLOAD', detail='sha256=%s' % pdf_hash[:16])
+        return signed
 
     def _get_verification_url(self):
         """Public verification URL for the QR code."""

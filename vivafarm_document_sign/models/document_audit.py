@@ -19,6 +19,7 @@ class VivaDocumentAudit(models.Model):
         ('CREATED', 'Created'),
         ('SIGNED', 'Signed'),
         ('HASHED', 'Hashed'),
+        ('MANUAL_UPLOAD', 'Manual Upload Sealed'),
         ('VERIFIED', 'Verified'),
         ('REVOKED', 'Revoked'),
     ], string='Event', required=True)

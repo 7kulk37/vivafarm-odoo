@@ -515,3 +515,165 @@ class VivaSalePortal(CustomerPortal):
             'redirect_url': invoice_sudo.get_portal_url(
                 query_string='&message=invoice_sign_ok'),
         }
+
+    # ────────────────────────────────────────────────────────────────
+    # Manual hand-signed upload (no digital signature) — user flow
+    # 2026-08-21. The customer prints, hand-signs, scans, and uploads
+    # the signed paper copy back through the token-protected portal.
+    # The ERP seals the EXACT uploaded bytes (SHA-256, hash-only, no
+    # RSA — same evidence model as the payment receipt) and emails a
+    # confirmation containing the /v/<token> verification link.
+    #
+    # Legal model (Thai law consultant memo 2026-08-21): we claim ONLY
+    # (a) these bytes were submitted via the token-linked portal at T,
+    # (b) unaltered since (SHA-256), (c) re-checkable anytime. We do NOT
+    # claim handwriting/signature authenticity, legal-binding status, or
+    # confirmed payment. The typed uploader_name + confirmation checkbox
+    # raise ETA B.E.2544 §9/§11 originator weight; IP/UA are retained
+    # per §12(3).
+    # ────────────────────────────────────────────────────────────────
+
+    _MANUAL_ALLOWED_MIMETYPES = {
+        'application/pdf': 'pdf',
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+    }
+    _MANUAL_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+
+    def _seal_manual_upload(self, record, doc_key, document_type, model,
+                            upload, uploader_name, confirm, template_xmlid,
+                            document_number=None):
+        """Common seal + chatter + email for a manual hand-signed upload.
+
+        Returns a redirect_url (string). The caller redirects there.
+        """
+        if not upload:
+            return self._manual_redirect(record, doc_key, '&message=upload_no_file')
+        filename = upload.filename or 'upload'
+        mimetype = upload.content_type or 'application/octet-stream'
+        data = upload.read()
+        if mimetype not in self._MANUAL_ALLOWED_MIMETYPES:
+            return self._manual_redirect(record, doc_key, '&message=upload_bad_type')
+        if len(data) > self._MANUAL_MAX_SIZE:
+            return self._manual_redirect(record, doc_key, '&message=upload_too_large')
+        if not uploader_name or not uploader_name.strip():
+            return self._manual_redirect(record, doc_key, '&message=upload_name_required')
+        if not confirm:
+            return self._manual_redirect(record, doc_key, '&message=upload_confirm_required')
+
+        ip = request.httprequest.remote_addr or ''
+        ua = (request.httprequest.user_agent or '')[:500]
+
+        signed = request.env['viva.signed.document'].sudo()._create_manual_record(
+            model=model,
+            record_id=record.id,
+            document_type=document_type,
+            document_number=document_number or record.name,
+            filename=filename,
+            mimetype=mimetype,
+            data=data,
+            uploader_name=uploader_name.strip(),
+            uploader_ip=ip,
+            uploader_agent=ua,
+        )
+
+        # Chatter post — the seller sees the upload with the verify link.
+        record.message_post(
+            body=('Hand-signed copy received from %s (%s). Verify: %s · Code: %s'
+                  % (uploader_name.strip(), filename,
+                     signed._get_verification_url(), signed.verification_code)),
+            attachments=[(filename, data)],
+            author_id=(record.partner_id.id
+                       if request.env.user._is_public()
+                       else request.env.user.partner_id.id),
+            message_type='comment',
+            subtype_xmlid='mail.mt_comment',
+        )
+
+        # Confirmation email — template.send_mail() (real mail.mail), the
+        # template body carries the verification link + code (lawyer-approved
+        # wording, see the template records).
+        tpl = request.env.ref(template_xmlid, raise_if_not_found=False)
+        if tpl:
+            tpl.sudo().send_mail(
+                record.id,
+                force_send=True,
+                raise_exception=False,
+                email_layout_xmlid='mail.mail_notification_layout_with_responsible_signature',
+            )
+
+        return self._manual_redirect(record, doc_key, '&message=upload_ok')
+
+    def _manual_redirect(self, record, doc_key, message):
+        """Redirect the customer back to the portal page with a status."""
+        if doc_key == 'order':
+            return record.get_portal_url(query_string=message)
+        if doc_key == 'invoice':
+            return record.get_portal_url(query_string=message)
+        so = record.sale_id
+        if so:
+            so._portal_ensure_token()
+            return so.get_portal_url(query_string=message)
+        return '/my'
+
+    @http.route(['/my/orders/<int:order_id>/confirm_viva'], type='http',
+                auth="public", website=True, methods=['POST'], csrf=False)
+    def portal_order_confirm_manual(self, order_id, access_token=None, **post):
+        """Customer uploads the hand-signed quotation/SO paper copy."""
+        access_token = access_token or post.get('access_token')
+        try:
+            order_sudo = self._document_check_access(
+                'sale.order', order_id, access_token=access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+        url = self._seal_manual_upload(
+            order_sudo, 'order', 'sale_order',
+            'sale.order', post.get('upload', ''), post.get('uploader_name', ''),
+            post.get('confirm', ''),
+            'vivafarm_report.viva_email_template_manual_upload_sale',
+            document_number=order_sudo.name,
+        )
+        return request.redirect(url)
+
+    @http.route(['/my/picking/<int:picking_id>/confirm_viva'], type='http',
+                auth="public", website=True, methods=['POST'], csrf=False)
+    def portal_picking_confirm_manual(self, picking_id, access_token=None, **post):
+        """Route uploads a hand-signed DELIVERY NOTE paper copy."""
+        access_token = access_token or post.get('access_token')
+        try:
+            picking_sudo = self._stock_picking_check_access(picking_id, access_token=access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+        url = self._seal_manual_upload(
+            picking_sudo, 'picking', 'delivery_note', 'stock.picking',
+            post.get('upload', ''), post.get('uploader_name', ''),
+            post.get('confirm', ''),
+            'vivafarm_report.viva_email_template_manual_upload_delivery',
+            document_number=picking_sudo.name,
+        )
+        return request.redirect(url)
+
+    @http.route(['/my/invoices/<int:invoice_id>/confirm_viva'], type='http',
+                auth="public", website=True, methods=['POST'], csrf=False)
+    def portal_invoice_confirm_manual(self, invoice_id, access_token=None, **post):
+        """Route uploads a hand-signed INVOICE (tax/commercial) paper copy."""
+        access_token = access_token or post.get('access_token')
+        try:
+            invoice_sudo = self._invoice_check_access(invoice_id, access_token=access_token)
+        except (AccessError, MissingError):
+            return request.redirect('/my')
+        # The sealed document_type follows the customer's invoice report —
+        # 'tax_invoice' for minimal-flow customers, 'invoice' otherwise —
+        # exactly like _hash_invoice_accepted and _get_manual_signed_document.
+        viva_report = invoice_sudo._get_viva_invoice_report()
+        doc_type = ('tax_invoice'
+                    if viva_report and viva_report.report_name == 'vivafarm_report.viva_invoice'
+                    else 'invoice')
+        url = self._seal_manual_upload(
+            invoice_sudo, 'invoice', doc_type, 'account.move',
+            post.get('upload', ''), post.get('uploader_name', ''),
+            post.get('confirm', ''),
+            'vivafarm_report.viva_email_template_manual_upload_invoice',
+            document_number=invoice_sudo.name,
+        )
+        return request.redirect(url)

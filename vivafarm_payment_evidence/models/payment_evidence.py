@@ -64,6 +64,22 @@ class PaymentTransaction(models.Model):
         for tx in self:
             tx.evidence_count = len(tx.evidence_ids)
 
+    def _get_manual_signed_document(self):
+        """The manual hand-signed payment slip sealed for this tx, if any.
+
+        Defensive KeyError: viva.signed.document may not be in the registry
+        during payment_evidence's own load-time template render-check.
+        """
+        try:
+            model = self.env['viva.signed.document']
+        except KeyError:
+            return None
+        return model.sudo().search([
+            ('payment_id', '=', self.payment_id.id),
+            ('document_type', '=', 'payment_slip'),
+            ('channel', '=', 'manual'),
+        ], limit=1)
+
     def action_view_evidence(self):
         self.ensure_one()
         return {

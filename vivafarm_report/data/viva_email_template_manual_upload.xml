@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Manual hand-signed upload confirmation emails (user flow 2026-08-21).
+         Sent by the /confirm_viva portal routes AFTER the uploaded bytes are
+         sealed (channel='manual', hash-only). The body carries the public
+         /v/<token> verification link + verification code.
+
+         Wording per the Thai law consultant memo (2026-08-21): we assert ONLY
+         "received + preserved (sealed) + re-checkable anytime". We do NOT
+         claim signature authenticity, legal-binding status, or confirmed
+         payment. TH translations mirror the EN claims exactly.
+    -->
+
+    <!-- Sale Order / Quotation -->
+    <record id="viva_email_template_manual_upload_sale" model="mail.template">
+        <field name="name">Sales: Hand-signed copy received (Viva)</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="subject">Hand-signed {{ object.state in ('draft', 'sent') and 'quotation' or 'order' }} received (Ref {{ object.name or 'n/a' }})</field>
+        <field name="email_from">{{ (object.user_id.email_formatted or object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="partner_to" eval="False"/>
+        <field name="use_default_to" eval="True"/>
+        <field name="description">Sent when a customer uploads the hand-signed quotation/SO paper copy — carries the verification link</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name or ''">Customer</t>,
+        <br/><br/>
+        Your hand-signed copy for
+        <span style="font-weight: bold;" t-out="object.name or ''">S00049</span>
+        was received and preserved (sealed).
+        <t t-set="manual" t-value="object._get_manual_signed_document()"/>
+        <t t-if="manual">
+            <br/><br/>
+            Verify it anytime:
+            <a t-att-href="manual._get_verification_url()"><t t-esc="manual._get_verification_url()"/></a><br/>
+            Verification code: <span style="font-family: monospace; font-weight: bold;" t-esc="manual.verification_code"/>
+        </t>
+        <br/><br/>
+        The recorded checksum and submission time let you confirm at any time that your document has not been altered.
+        <br/><br/>
+        Do not hesitate to contact us if you have any questions.
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Delivery Note -->
+    <record id="viva_email_template_manual_upload_delivery" model="mail.template">
+        <field name="name">Delivery: Hand-signed received (Viva)</field>
+        <field name="model_id" ref="stock.model_stock_picking"/>
+        <field name="subject">Hand-signed delivery note received (Ref)</field>
+        <field name="email_from">{{ (object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="partner_to" eval="False"/>
+        <field name="use_default_to" eval="True"/>
+        <field name="description">Sent when a customer uploads the hand-signed delivery note paper copy — carries the verification link</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name or ''">Customer</t>,
+        <br/><br/>
+        Your hand-signed delivery note for
+        <span style="font-weight: bold;" t-out="object.name or ''">WH/OUT/00000</span>
+        was received and preserved (sealed).
+        <t t-set="manual" t-value="object._get_manual_signed_document()"/>
+        <t t-if="manual">
+            <br/><br/>
+            Verify it anytime at <a t-att-href="manual._get_verification_url()"><t t-esc="manual._get_verification_url()"/></a><br/>
+            Verification code: <span style="font-family: monospace; font-weight: bold;" t-esc="manual.verification_code"/>
+        </t>
+        <br/><br/>
+        The recorded checksum and submission time let you confirm at any time that your document has not been altered.
+        <br/><br/>
+        Do not hesitate to contact us if you have any questions.
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+    <!-- Invoice (tax or plain — resolves via the customer's report) -->
+    <record id="viva_email_template_manual_upload_invoice" model="mail.template">
+        <field name="name">Invoice: Hand-signed received (Viva)</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="subject">Hand-signed invoice received (Ref {{ object.name or 'n/a' }})</field>
+        <field name="email_from">{{ (object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="partner_to" eval="False"/>
+        <field name="use_default_to" eval="True"/>
+        <field name="description">Sent when a customer uploads the hand-signed invoice paper copy — carries the verification link</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name or ''">Customer</t>,
+        <br/><br/>
+        Your hand-signed invoice
+        <span style="font-weight: bold;" t-out="object.name or ''">INV/2026/00000</span>
+        was received and preserved (sealed).
+        <t t-set="manual" t-value="object._get_manual_signed_document()"/>
+        <t t-if="manual">
+            <br/><br/>
+            Verify it anytime at <a t-att-href="manual._get_verification_url()"><t t-esc="manual._get_verification_url()"/></a><br/>
+            Verification code: <span style="font-family: monospace; font-weight: bold;" t-esc="manual.verification_code"/>
+        </t>
+        <br/><br/>
+        The recorded checksum and submission time let you confirm at any time that your document has not been altered.
+        <br/><br/>
+        Do not hesitate to contact us if you have any questions.
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+</odoo>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Manual hand-signed payment slip confirmation email (user flow 2026-08-21).
+         Sent by the /payment/evidence/upload route AFTER the uploaded slip is
+         sealed (channel='manual', hash-only). The body carries the public
+         /v/<token> verification link + code.
+
+         Wording per the Thai law consultant memo (2026-08-21): assert ONLY
+         "slip received + recorded + re-checkable anytime". NEVER "payment
+         confirmed" — bank credit is verified separately.
+
+         Lives HERE (vivafarm_payment_evidence owns the payment.transaction
+         _get_manual_signed_document helper and loads before vivafarm_report),
+         so the template render-check passes during module load. -->
+    <record id="viva_email_template_manual_upload_slip" model="mail.template">
+        <field name="name">Payment slip: Hand-signed received (Viva)</field>
+        <field name="model_id" ref="payment.model_payment_transaction"/>
+        <field name="subject">Payment slip received (Ref {{ object.reference or 'n/a' }})</field>
+        <field name="email_from">{{ (object.company_id.email_formatted or user.email_formatted) }}</field>
+        <field name="partner_to" eval="False"/>
+        <field name="use_default_to" eval="True"/>
+        <field name="description">Sent when a customer uploads the hand-signed payment slip — carries the verification link. Does NOT confirm payment.</field>
+        <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name or ''">Customer</t>,
+        <br/><br/>
+        We received your payment slip
+        <t t-set="manual" t-value="object._get_manual_signed_document()"/>
+        <t t-if="manual">
+            <br/><br/>
+            The slip you submitted is recorded on your order and can be verified anytime at
+            <a t-att-href="manual._get_verification_url()"><t t-esc="manual._get_verification_url()"/></a><br/>
+            Verification code: <span style="font-family: monospace; font-weight: bold;" t-esc="manual.verification_code"/>
+        </t>
+        <br/><br/>
+        The recorded checksum and submission time let you confirm at any time that your document has not been altered.
+        <br/><br/>
+        Note: this confirmation does not constitute a payment confirmation — the actual crediting of your payment is confirmed separately.
+        <br/><br/>
+        Do not hesitate to contact us if you have any questions.
+    </p>
+</div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+</odoo>

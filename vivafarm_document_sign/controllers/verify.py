@@ -51,11 +51,23 @@ class VivaVerificationController(http.Controller):
 
         # Signature verification (independent of upload — always shown).
         # Hash-only documents (payment_receipt) have NO signature — the
-        # page shows "HASH RECORD (seller-side)" instead of a signature badge.
-        if signed.document_type == 'payment_receipt':
+        # page shows "HASH RECORD (SELLER-SIDE)" instead of a signature badge.
+        # Manual hand-signed uploads (channel='manual') are hash-only too —
+        # the page shows "MANUAL UPLOAD — HAND-SIGNED PAPER COPY" plus the
+        # uploader/source rows and the lawyer-approved disclaimer (no
+        # signature authenticity claims, Thai law memo 2026-08-21).
+        if signed.channel == 'manual':
+            result['is_manual_upload'] = True
+            result['is_hash_only'] = False
+            result['signature_valid'] = None
+            result['uploader_name'] = signed.uploader_name
+            result['source_filename'] = signed.source_filename
+        elif signed.document_type == 'payment_receipt':
+            result['is_manual_upload'] = False
             result['is_hash_only'] = True
             result['signature_valid'] = None
         else:
+            result['is_manual_upload'] = False
             result['is_hash_only'] = False
             result['signature_valid'] = self._verify_signature(signed)
 
@@ -116,7 +128,7 @@ class VivaVerificationController(http.Controller):
                         ('sale_order_id', '=', so.id),
                         ('document_type', '=', 'sale_order'),
                     ], limit=1)
-        elif signed.document_type == 'payment_receipt' and signed.payment_id:
+        elif signed.document_type in ('payment_receipt', 'payment_slip') and signed.payment_id:
             inv = signed.payment_id.reconciled_invoice_ids[:1]
             prev = None
             if inv:
@@ -169,7 +181,7 @@ class VivaVerificationController(http.Controller):
             if pays:
                 nxt = Model.search([
                     ('payment_id', 'in', pays.ids),
-                    ('document_type', '=', 'payment_receipt'),
+                    ('document_type', 'in', ('payment_receipt', 'payment_slip')),
                 ], limit=1)
         else:
             nxt = None

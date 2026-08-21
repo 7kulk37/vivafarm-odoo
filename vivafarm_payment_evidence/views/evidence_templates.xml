@@ -18,6 +18,12 @@
                             <input type="hidden" name="reference" t-att-value="tx.reference"/>
                             <input type="file" name="evidence_file" accept=".pdf,.png,.jpg,.jpeg"
                                    class="form-control form-control-sm" required="required"/>
+                            <input type="text" name="uploader_name" placeholder="Your full name"
+                                   class="form-control form-control-sm" required="required"/>
+                            <label class="small form-check mb-0">
+                                <input type="checkbox" name="confirm" value="1" required="required" class="form-check-input me-1"/>
+                                I confirm this is my payment slip.
+                            </label>
                             <button type="submit" class="btn btn-primary btn-sm">Upload evidence</button>
                         </form>
                     </div>

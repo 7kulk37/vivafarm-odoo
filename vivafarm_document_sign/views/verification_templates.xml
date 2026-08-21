@@ -27,6 +27,9 @@
                     .upload button { margin-top: 10px; padding: 8px 18px; border: 0; border-radius: 6px;
                                      background: #2e7d32; color: #fff; font-weight: 600; cursor: pointer; }
                     .hash-line { font-family: monospace; font-size: 11px; }
+                    .disclaim { margin-top: 12px; padding: 10px 12px; border: 1px dashed #c3cdd8;
+                                border-radius: 8px; font-size: 12px; color: #5b6b7a;
+                                background: #fafbfc; line-height: 1.5; }
                     .footer { margin-top: 24px; font-size: 11px; color: #8a97a5; text-align: center; }
                 </style>
             </head>
@@ -43,7 +46,8 @@
                         <t t-else=""><span class="badge badge-warn" t-esc="state"/></t>
                     </dd></div>
                     <div class="row"><dt>Signature</dt><dd>
-                        <t t-if="is_hash_only"><span class="badge badge-ok">HASH RECORD (SELLER-SIDE)</span></t>
+                        <t t-if="is_manual_upload"><span class="badge badge-warn">MANUAL UPLOAD — HAND-SIGNED PAPER COPY</span></t>
+                        <t t-elif="is_hash_only"><span class="badge badge-ok">HASH RECORD (SELLER-SIDE)</span></t>
                         <t t-elif="signature_valid"><span class="badge badge-ok">VALID</span></t>
                         <t t-else=""><span class="badge badge-fail">INVALID</span></t>
                     </dd></div>
@@ -60,6 +64,18 @@
                         <t t-if="odoo_record_locked"><span class="badge badge-ok">LOCKED</span></t>
                         <t t-else=""><span class="badge badge-fail">UNLOCKED</span></t>
                     </dd></div>
+
+                    <t t-if="is_manual_upload">
+                        <div class="row"><dt>Uploaded By</dt><dd t-esc="uploader_name or '-'"/></div>
+                        <div class="row"><dt>Source File</dt><dd t-esc="source_filename or '-'"/></div>
+                        <div class="row"><dt>Uploaded At</dt><dd t-esc="signed_at or ''"/></div>
+                        <div class="disclaim">
+                            This is a hand-signed paper copy submitted through the customer
+                            portal. The file is stored unaltered since submission and can be
+                            re-checked anytime. This does not constitute authentication of any
+                            handwriting, signature, or the identity of any person.
+                        </div>
+                    </t>
 
                     <t t-if="uploaded">
                         <div class="row"><dt>Uploaded SHA-256</dt><dd class="hash-line" t-esc="uploaded_sha256"/></div>

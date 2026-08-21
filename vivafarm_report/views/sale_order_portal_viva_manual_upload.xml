@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Manual hand-signed upload buttons + modals (user flow 2026-08-21).
+         The customer prints, hand-signs, scans, and uploads the signed paper
+         copy back through the token-protected portal. The ERP seals the EXACT
+         uploaded bytes (hash-only, channel='manual') and emails the
+         verification link.
+
+         Each portal page gets an "Upload hand-signed copy" button + a modal
+         form with: file input (PDF/PNG/JPG), required typed name, required
+         confirmation checkbox, hidden access_token. Posts to the matching
+         /confirm_viva route (multipart, csrf disabled). -->
+    <template id="sale_order_portal_viva_manual_upload"
+              name="VivaFarm Sale Order Portal Manual Upload"
+              inherit_id="sale.sale_order_portal_template">
+        <xpath expr="//div[@id='sale_order_sidebar_button_viva']" position="after">
+            <div class="d-flex flex-column gap-2 mt-2" id="sale_order_manual_upload">
+                <a
+                    role="button"
+                    class="btn btn-light"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalmanual_upload"
+                    href="#"
+                >
+                    <i class="fa fa-upload me-1"/>Upload hand-signed copy
+                </a>
+            </div>
+        </xpath>
+        <xpath expr="//div[@id='modalaccept_viva']" position="after">
+            <div role="dialog" class="modal fade" id="modalmanual_upload"
+                 name="sale_order_modal_manual_upload">
+                <div class="modal-dialog">
+                    <form method="post"
+                          t-att-action="sale_order.get_portal_url(suffix='/confirm_viva')"
+                          enctype="multipart/form-data"
+                          class="modal-content">
+                        <input type="hidden" name="access_token" t-att-value="sale_order.access_token"/>
+                        <header class="modal-header">
+                            <h4 class="modal-title">Upload hand-signed copy</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                        </header>
+                        <main class="modal-body">
+                            <p>
+                                Print this document, sign it by hand, scan or photograph it,
+                                then upload the file (PDF, PNG or JPG, max 10&#160;MB).
+                            </p>
+                            <div class="mb-3">
+                                <label class="form-label">File</label>
+                                <input type="file" name="upload" accept="application/pdf,image/png,image/jpeg" class="form-control" required="required"/>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Your full name</label>
+                                <input type="text" name="uploader_name" class="form-control" required="required"
+                                       t-att-value="sale_order.partner_id.name or ''"/>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" name="confirm" id="manual_upload_confirm" class="form-check-input" required="required" value="1"/>
+                                <label class="form-check-label" for="manual_upload_confirm">
+                                    I confirm this is the signed document for this order.
+                                </label>
+                            </div>
+                            <p class="text-muted small mt-2">
+                                The uploaded file is stored unaltered and can be verified at any time.
+                                This does not constitute a digital signature.
+                            </p>
+                        </main>
+                        <footer class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="fa fa-upload me-1"/>Upload</button>
+                        </footer>
+                    </form>
+                </div>
+            </div>
+        </xpath>
+    </template>
+</odoo>

@@ -60,6 +60,47 @@ class PaymentEvidenceController(http.Controller):
             'check_result': message,
         })
 
+        # Seal the uploaded slip as a manual signed document (user flow
+        # 2026-08-21): hash-only, channel='manual', same evidence model as
+        # the payment receipt. The verification link + code ride in the
+        # confirmation email (lawyer-approved wording — "slip received",
+        # never "payment confirmed"; the bank credit is verified separately).
+        uploader = post.get('uploader_name', '').strip() or (tx.partner_id.name or '')
+        try:
+            slip_signed = request.env['viva.signed.document'].sudo()._create_manual_record(
+                model='payment.transaction',
+                record_id=tx.id,
+                document_type='payment_slip',
+                document_number=tx.reference or tx.name or 'TX%s' % tx.id,
+                filename=filename,
+                mimetype=mimetype,
+                data=data,
+                uploader_name=uploader,
+                uploader_ip=request.httprequest.remote_addr or '',
+                uploader_agent=(request.httprequest.user_agent or '')[:500],
+            )
+        except Exception:
+            slip_signed = None
+
+        # Confirmation email with the verification link (lawyer wording:
+        # slip received + recorded, NOT payment confirmed). The slip may be
+        # uploaded before the payment is created (pending evidence), so the
+        # email is best-effort — never a blocker.
+        if slip_signed:
+            tpl = request.env.ref(
+                'vivafarm_report.viva_email_template_manual_upload_slip',
+                raise_if_not_found=False)
+            if tpl:
+                try:
+                    tpl.sudo().send_mail(
+                        tx.id,
+                        force_send=True,
+                        raise_exception=False,
+                        email_layout_xmlid='mail.mail_notification_layout_with_responsible_signature',
+                    )
+                except Exception:
+                    pass
+
         # Post a chatter message on the linked invoice(s) so the seller sees
         # the upload right in the invoice log. Odoo 19 escapes plain str
         # bodies and body_is_html only works for internal users — use a
