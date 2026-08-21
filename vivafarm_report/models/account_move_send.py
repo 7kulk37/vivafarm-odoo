@@ -46,10 +46,24 @@ class AccountMoveSend(models.AbstractModel):
         return res
 
     def _get_default_pdf_report_id(self, move):
-        """Return the Viva Invoice (ใบแจ้งหนี้) report when the Send INV
-        context flag is set; otherwise keep the standard resolution chain.
+        """Return the Viva report when the Send INV context flag is set.
+
+        Preference order (minimal-flow support, 2026-08-21):
+          1. The customer's invoice_template_pdf_report_id when it is a Viva
+             report — a minimal-flow customer has it set to the Tax invoice
+             (ใบกำกับภาษี) 3 copied report, so Send INV emails the TAX
+             INVOICE / DELIVERY ORDER / INVOICE PDF (no SO/DN/plain invoice).
+          2. Fallback: the Viva Invoice (ใบแจ้งหนี้) plain report (standard
+             flow, partner report unset).
+        Otherwise keep the standard resolution chain.
         """
         if self.env.context.get('viva_invoice_report'):
+            partner_report = move.commercial_partner_id.with_company(
+                move.company_id).invoice_template_pdf_report_id
+            if partner_report and partner_report.report_name in (
+                    'vivafarm_report.viva_invoice',
+                    'vivafarm_report.viva_invoice_plain'):
+                return partner_report
             viva_report = self.env.ref(
                 'vivafarm_report.report_viva_invoice_plain',
                 raise_if_not_found=False,

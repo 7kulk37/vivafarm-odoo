@@ -364,14 +364,16 @@ class VivaSalePortal(CustomerPortal):
             # Single-copy preview — the wrapper renders ONE copy for
             # report_type='html' (portal iframe), keeping PDF as triplicate.
             report = report_env._render_qweb_html(
-                'vivafarm_report.viva_invoice_plain', [invoice_sudo.id],
+                invoice_sudo._get_viva_invoice_report().report_name,
+                [invoice_sudo.id],
                 data={'report_type': 'html'})[0]
             headers = [('Content-Type', 'text/html; charset=utf-8'),
                        ('Content-Length', len(report))]
             return request.make_response(report, headers=headers)
         report = request.env['ir.actions.report'].sudo().with_context(
             viva_show_stamp=True)._render_qweb_pdf(
-            'vivafarm_report.viva_invoice_plain', [invoice_sudo.id])[0]
+            invoice_sudo._get_viva_invoice_report().report_name,
+            [invoice_sudo.id])[0]
         pdfhttpheaders = [
             ('Content-Type', 'application/pdf'),
             ('Content-Length', len(report)),

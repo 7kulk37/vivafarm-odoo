@@ -21,12 +21,30 @@ def check(name, cond, detail=''):
         FAIL += 1
         print('  FAIL: %s %s' % (name, detail))
 
-# ── Setup: a posted customer invoice ──
-inv = env['account.move'].search([
-    ('move_type', '=', 'out_invoice'),
-    ('state', '=', 'posted'),
-    ('name', '!=', '/'),
-], order='id desc', limit=1)
+# ── Setup: a posted customer invoice for a STANDARD-flow partner ──
+# (partner WITHOUT invoice_template_pdf_report_id — the minimal-flow
+# customer's report would change the resolution and poison the assertions;
+# same class as the "verify WHICH record the picker selected" pitfall.)
+std_partner = env['res.partner'].search([
+    ('name', '=', 'SO Sign Test Customer'),
+], limit=1)
+if not std_partner:
+    std_partner = env['res.partner'].create({
+        'name': 'SO Sign Test Customer', 'is_company': True, 'lang': 'en_US',
+    })
+std_partner.write({'invoice_template_pdf_report_id': False})
+product = env['product.product'].search([('name', '=', 'SO Sign Test Product')], limit=1)
+if not product:
+    product = env['product.product'].create({'name': 'SO Sign Test Product', 'type': 'service', 'sale_ok': True})
+if not product.property_account_income_id:
+    income = env['account.account'].search([('account_type', '=', 'income')], limit=1)
+    product.write({'property_account_income_id': income.id})
+inv = env['account.move'].create({
+    'move_type': 'out_invoice',
+    'partner_id': std_partner.id,
+    'invoice_line_ids': [(0, 0, {'product_id': product.id, 'quantity': 1, 'price_unit': 100})],
+})
+inv.action_post()
 print('INV', inv.id, inv.name)
 
 # ── T1: method exists ──

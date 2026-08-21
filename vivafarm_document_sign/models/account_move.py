@@ -109,6 +109,17 @@ class AccountMove(models.Model):
         service = SigningService(self.env)
         cert_info = service.backend.certificate_info()
 
+        # Minimal flow (2026-08-21): the customer's invoice report field
+        # decides WHICH document gets signed. A minimal-flow customer has it
+        # set to the Tax invoice (ใบกำกับภาษี) 3 copied report — the signed
+        # record is document_type 'tax_invoice' and the stored-bytes override
+        # branch for viva_invoice serves it on every channel. Standard flow
+        # (report unset) keeps the plain Invoice (ใบแจ้งหนี้) + 'invoice'.
+        report = self._get_viva_invoice_report()
+        doc_type = ('tax_invoice' if report
+                    and report.report_name == 'vivafarm_report.viva_invoice'
+                    else 'invoice')
+
         # 1. Pre-create the record (token + identity known before rendering)
         # DB-layer race (same class as the SO/DN paths, guard 3): a
         # concurrent sign of the SAME invoice raises IntegrityError on the
@@ -118,7 +129,7 @@ class AccountMove(models.Model):
             with self.env.cr.savepoint():
                 signed = self.env['viva.signed.document'].create({
                     'document_number': self.name,
-                    'document_type': 'invoice',
+                    'document_type': doc_type,
                     'odoo_model': 'account.move',
                     'odoo_record_id': self.id,
                     'move_id': self.id,
@@ -147,7 +158,7 @@ class AccountMove(models.Model):
         pdf_bytes = self.env['ir.actions.report'].with_context(
             viva_show_stamp=True,
         )._render_qweb_pdf(
-            'vivafarm_report.viva_invoice_plain', [self.id])[0]
+            report.report_name, [self.id])[0]
         pdf_hash = sha256_hex(pdf_bytes)
 
         # 3. Sign the exact stamped bytes

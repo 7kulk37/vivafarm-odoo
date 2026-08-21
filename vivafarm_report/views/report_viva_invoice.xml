@@ -583,7 +583,7 @@
 
     <!-- ── Report action ── -->
     <record id="report_viva_invoice" model="ir.actions.report">
-        <field name="name">Tax Invoice</field>
+        <field name="name">Tax invoice (ใบกำกับภาษี) 3 copied</field>
         <field name="model">account.move</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">vivafarm_report.viva_invoice</field>

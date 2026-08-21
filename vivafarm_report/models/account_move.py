@@ -190,6 +190,32 @@ class AccountMove(models.Model):
         utc = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
         return utc.astimezone(ZoneInfo('Asia/Bangkok')).strftime('%Y-%m-%d %H:%M:%S')
 
+    def _get_viva_invoice_report(self):
+        """Resolve the Viva invoice report for this move (minimal flow).
+
+        Preference order (2026-08-21, user-approved minimal flow):
+          1. The customer's invoice_template_pdf_report_id when it is a Viva
+             report — a minimal-flow customer has it set to the Tax invoice
+             (ใบกำกับภาษี) 3 copied report, so the portal sign path and the
+             Send INV attachment both use the TAX INVOICE / DELIVERY ORDER /
+             INVOICE PDF (no SO/DN/plain invoice).
+          2. Fallback: the Viva Invoice (ใบแจ้งหนี้) plain report (standard
+             flow, partner report unset).
+
+        Returns the ir.actions.report record (or False).
+        """
+        self.ensure_one()
+        partner_report = self.commercial_partner_id.with_company(
+            self.company_id).invoice_template_pdf_report_id
+        if partner_report and partner_report.report_name in (
+                'vivafarm_report.viva_invoice',
+                'vivafarm_report.viva_invoice_plain'):
+            return partner_report
+        return self.env.ref(
+            'vivafarm_report.report_viva_invoice_plain',
+            raise_if_not_found=False,
+        )
+
     def _get_tax_invoice_copies(self):
         """Copies to print for a tax invoice (Thai practice: 3 copies).
 
