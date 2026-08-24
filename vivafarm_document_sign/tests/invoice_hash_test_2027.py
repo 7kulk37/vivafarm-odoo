@@ -26,11 +26,27 @@ def check(name, cond, detail=''):
         print('  FAIL: %s %s' % (name, detail))
 
 # ── Setup: a posted customer invoice ──
+# Exclude (1) invoices that already carry a signed document (any doc_type),
+# and (2) minimal-flow partners whose invoice_template_pdf_report_id forces
+# doc_type='tax_invoice'. The old 'signature=False' picker alone was poisoned
+# by both — leftover minimal-flow invoices signed as 'tax_invoice' AND
+# unsigned minimal-flow invoices that would hash as 'tax_invoice' (handoff
+# lesson, verified 2026-08-24: INV/2026/00096 and INV/2026/00078).
+_already_sealed = env['viva.signed.document'].search([]).mapped('move_id').ids
+_tax_report = env['ir.actions.report'].search(
+    [('report_name', '=', 'vivafarm_report.viva_invoice')], limit=1)
+_standard_partner_ids = env['res.partner'].search([
+    '|',
+    ('invoice_template_pdf_report_id', '=', False),
+    ('invoice_template_pdf_report_id', '!=', _tax_report.id if _tax_report else 0),
+]).ids
 inv = env['account.move'].search([
     ('move_type', '=', 'out_invoice'),
     ('state', '=', 'posted'),
     ('name', '!=', '/'),
     ('signature', '=', False),
+    ('id', 'not in', _already_sealed),
+    ('partner_id', 'in', _standard_partner_ids),
 ], order='id desc', limit=1)
 print('INV', inv.id, inv.name)
 

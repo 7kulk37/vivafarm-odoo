@@ -21,9 +21,7 @@ NEVER gates payment: refusal = chatter note + no state change.
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
-from ..services.signing_service import SigningService, sha256_hex
-
-import base64
+from ..services.signing_service import SigningService
 
 from psycopg2 import IntegrityError
 
@@ -48,9 +46,16 @@ class AccountMove(models.Model):
         """Signed integrity records for this move."""
         return self.env['viva.signed.document'].search([('move_id', 'in', self.ids)])
 
+    def _sealed_document(self):
+        """The ONE seal record for this move (invoice or tax_invoice), any channel."""
+        return self.env['viva.signed.document'].search([
+            ('move_id', '=', self.id),
+            ('document_type', 'in', ('invoice', 'tax_invoice')),
+        ], limit=1)
+
     def _is_signed(self):
         """Whether this move has a signed integrity record."""
-        return bool(self._get_signed_documents())
+        return bool(self._sealed_document())
 
     def write(self, vals):
         """Reject substance changes on signed invoices (server-side lock)."""
@@ -120,6 +125,17 @@ class AccountMove(models.Model):
                     and report.report_name == 'vivafarm_report.viva_invoice'
                     else 'invoice')
 
+        # One seal per doc (any channel) — if this exact document_type is
+        # already sealed (manual hand-signed upload first, or a prior digital
+        # sign), return it. Never overwrite a manual hash-only record with
+        # RSA signature fields (review seam fix, 2026-08-24).
+        existing = self.env['viva.signed.document'].search([
+            ('move_id', '=', self.id),
+            ('document_type', '=', doc_type),
+        ], limit=1)
+        if existing:
+            return existing
+
         # 1. Pre-create the record (token + identity known before rendering)
         # DB-layer race (same class as the SO/DN paths, guard 3): a
         # concurrent sign of the SAME invoice raises IntegrityError on the
@@ -147,36 +163,14 @@ class AccountMove(models.Model):
                     'signed_at': fields.Datetime.now(),
                 })
         except IntegrityError:
-            signed = self.env['viva.signed.document'].search(
-                [('move_id', '=', self.id)], limit=1)
+            signed = self._sealed_document()
             if not signed:
                 raise
 
-        # 2. Render the STAMPED invoice (record exists -> hash block renders;
-        # the customer signature is baked in via the context flag used by
-        # the route when it writes the acknowledgment).
-        pdf_bytes = self.env['ir.actions.report'].with_context(
-            viva_show_stamp=True,
-        )._render_qweb_pdf(
-            report.report_name, [self.id])[0]
-        pdf_hash = sha256_hex(pdf_bytes)
-
-        # 3. Sign the exact stamped bytes
-        sig_b64, _cert_info, _signed_at = service.sign_pdf(pdf_bytes)
-
-        # 4. Store the stamped PDF (immutable — this is what printing returns)
-        attachment = self.env['ir.attachment'].create({
-            'name': '%s_signed.pdf' % self.name.replace('/', '_'),
-            'datas': base64.b64encode(pdf_bytes),
-            'res_model': 'account.move',
-            'res_id': self.id,
-            'type': 'binary',
-        })
-        signed.write({
-            'pdf_sha256': pdf_hash,
-            'signature_b64': sig_b64,
-            'public_key_pem': service.backend.public_key_pem(),
-            'signed_attachment_id': attachment.id,
-        })
-
-        signed._log_event('SIGNED', detail='sha256=%s' % pdf_hash[:16])
+        # 2–4. Render the STAMPED invoice once, hash + RSA sign those exact
+        # bytes, store as the immutable attachment + crypto evidence
+        # (shared 4-step invariant — see VivaSignMixin._sign_and_store).
+        # report is the customer's invoice report (minimal flow: tax
+        # invoice; standard flow: plain invoice).
+        self._sign_and_store(self, signed, service,
+                             report_name=report.report_name)

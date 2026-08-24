@@ -113,6 +113,17 @@ class VivaSignWizard(models.TransientModel):
         revision = (previous_signed.revision + 1) if previous_signed else 1
         previous_hash = previous_signed.pdf_sha256 if previous_signed else False
 
+        # One seal per doc (any channel) — if the invoice already has a seal
+        # (manual upload first, or prior sign), abort the wizard sign. The
+        # wizard pre-check (_prepare_evidence) already blocks _is_signed();
+        # this closes the race where a manual upload lands mid-wizard
+        # (review seam fix, 2026-08-24).
+        existing = self.move_id._sealed_document()
+        if existing:
+            raise UserError(_(
+                'This invoice already has a sealed signed document '
+                '(digital or manual upload). Re-signing would overwrite it.'))
+
         # 1. Pre-create the record (token + identity known before rendering)
         # DB-layer race (same class as the SO path, guard 3): a concurrent
         # sign of the SAME invoice raises IntegrityError on the
@@ -139,41 +150,26 @@ class VivaSignWizard(models.TransientModel):
                     'signed_at': fields.Datetime.now(),
                 })
         except IntegrityError:
-            signed = self.env['viva.signed.document'].search(
-                [('move_id', '=', self.move_id.id)], limit=1)
+            signed = self.move_id._sealed_document()
             if not signed:
                 raise
 
-        # 2. Render the STAMPED PDF (record exists → stamp + QR render)
-        pdf_bytes = self._render_invoice_pdf()
-        pdf_hash = sha256_hex(pdf_bytes)
-
-        # 3. Sign the exact stamped bytes
-        sig_b64, _cert_info, _signed_at = service.sign_pdf(pdf_bytes)
-
-        # 4. Store the stamped PDF (immutable — this is what printing returns)
-        attachment = self.env['ir.attachment'].create({
-            'name': '%s_signed.pdf' % self.move_id.name.replace('/', '_'),
-            'datas': base64.b64encode(pdf_bytes),
-            'res_model': 'account.move',
-            'res_id': self.move_id.id,
-            'type': 'binary',
-        })
-        signed.write({
-            'pdf_sha256': pdf_hash,
-            'signature_b64': sig_b64,
-            'public_key_pem': service.backend.public_key_pem(),
-            'signed_attachment_id': attachment.id,
-        })
+        # 2–4. Hash + RSA sign the STAMPED PDF bytes and store as the
+        # immutable attachment + crypto evidence (shared 4-step invariant —
+        # see VivaSignMixin._sign_and_store; pdf_bytes already rendered by
+        # _render_invoice_pdf so the stamp + QR render).
+        self._sign_and_store(self.move_id, signed, service,
+                             pdf_bytes=self._render_invoice_pdf())
 
         # 5. ALSO make the invoice itself carry the signed PDF. Odoo 19's send
         # flow (account.move._get_invoice_legal_documents) emails
         # move.invoice_pdf_report_file — not a fresh render — so without this,
         # emails/portal would serve an UNSIGNED render and the byte-identity
         # guarantee (print == email == verified) breaks.
-        self.move_id.write({'invoice_pdf_report_file': base64.b64encode(pdf_bytes)})
-
-        signed._log_event('SIGNED', detail='sha256=%s' % pdf_hash[:16])
+        self.move_id.write({
+            'invoice_pdf_report_file':
+                base64.b64encode(signed.signed_attachment_id.datas),
+        })
 
         return {
             'type': 'ir.actions.client',

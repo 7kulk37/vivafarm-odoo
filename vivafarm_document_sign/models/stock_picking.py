@@ -22,9 +22,7 @@ lines) are rejected at ORM level, AND the picking cannot be cancelled
 from odoo import _, fields, models
 from odoo.exceptions import UserError
 
-from ..services.signing_service import SigningService, sha256_hex
-
-import base64
+from ..services.signing_service import SigningService
 
 from psycopg2 import IntegrityError
 
@@ -45,11 +43,16 @@ class StockPicking(models.Model):
         'viva.signed.document', 'picking_id', string='Signed Documents',
         readonly=True)
 
+    def _sealed_document(self):
+        """The ONE seal record for this delivery, any channel."""
+        return self.env['viva.signed.document'].search([
+            ('picking_id', '=', self.id),
+            ('document_type', '=', 'delivery_note'),
+        ], limit=1)
+
     def _is_signed(self):
-        """Whether this picking has a signed integrity record."""
-        return bool(self.env['viva.signed.document'].search([
-            ('picking_id', 'in', self.ids),
-        ], limit=1))
+        """Whether this picking has its own signed integrity record."""
+        return bool(self._sealed_document())
 
     def _hash_delivery_accepted(self):
         """Render the acknowledged delivery note once, hash + sign, store.
@@ -68,6 +71,11 @@ class StockPicking(models.Model):
         self.ensure_one()
         service = SigningService(self.env)
         cert_info = service.backend.certificate_info()
+
+        # One seal per doc (any channel) — see _hash_customer_accepted.
+        existing = self._sealed_document()
+        if existing:
+            return existing
 
         # 1. Pre-create the record (token + identity known before rendering)
         # DB-layer race (same class as the SO/invoice paths, guard 3): a
@@ -97,39 +105,15 @@ class StockPicking(models.Model):
                     'signed_at': fields.Datetime.now(),
                 })
         except IntegrityError:
-            signed = self.env['viva.signed.document'].search(
-                [('picking_id', '=', self.id)], limit=1)
+            signed = self._sealed_document()
             if not signed:
                 raise
 
-        # 2. Render the STAMPED delivery note (record exists -> hash block
-        # renders; the receiver signature is baked in via the context flag
-        # used by the route when it writes the acknowledgment).
-        pdf_bytes = self.env['ir.actions.report'].with_context(
-            viva_show_stamp=True,
-        )._render_qweb_pdf(
-            'vivafarm_report.viva_delivery_note', [self.id])[0]
-        pdf_hash = sha256_hex(pdf_bytes)
-
-        # 3. Sign the exact stamped bytes
-        sig_b64, _cert_info, _signed_at = service.sign_pdf(pdf_bytes)
-
-        # 4. Store the stamped PDF (immutable — this is what printing returns)
-        attachment = self.env['ir.attachment'].create({
-            'name': '%s_signed.pdf' % self.name.replace('/', '_'),
-            'datas': base64.b64encode(pdf_bytes),
-            'res_model': 'stock.picking',
-            'res_id': self.id,
-            'type': 'binary',
-        })
-        signed.write({
-            'pdf_sha256': pdf_hash,
-            'signature_b64': sig_b64,
-            'public_key_pem': service.backend.public_key_pem(),
-            'signed_attachment_id': attachment.id,
-        })
-
-        signed._log_event('SIGNED', detail='sha256=%s' % pdf_hash[:16])
+        # 2–4. Render the STAMPED delivery note once, hash + RSA sign those
+        # exact bytes, store as the immutable attachment + crypto evidence
+        # (shared 4-step invariant — see VivaSignMixin._sign_and_store).
+        self._sign_and_store(self, signed, service,
+                             report_name='vivafarm_report.viva_delivery_note')
 
     def write(self, vals):
         """Reject substance changes on signed deliveries (server-side lock).

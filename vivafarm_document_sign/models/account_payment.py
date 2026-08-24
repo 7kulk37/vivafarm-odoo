@@ -30,11 +30,16 @@ class AccountPayment(models.Model):
         'viva.signed.document', 'payment_id', string='Signed Documents',
         readonly=True)
 
+    def _sealed_document(self):
+        """The ONE seal record for this payment (receipt or slip), any channel."""
+        return self.env['viva.signed.document'].search([
+            ('payment_id', '=', self.id),
+            ('document_type', 'in', ('payment_receipt', 'payment_slip')),
+        ], limit=1)
+
     def _is_signed(self):
         """Whether this payment has a hash-only integrity record."""
-        return bool(self.env['viva.signed.document'].search([
-            ('payment_id', 'in', self.ids),
-        ], limit=1))
+        return bool(self._sealed_document())
 
     def _hash_payment_receipt(self):
         """Render the receipt once, hash it, store as the immutable record.

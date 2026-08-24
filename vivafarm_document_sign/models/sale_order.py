@@ -18,9 +18,7 @@ frozen. A counter-offer (CCC §359) is a NEW quotation, not an edit.
 from odoo import _, fields, models
 from odoo.exceptions import UserError
 
-from ..services.signing_service import SigningService, sha256_hex
-
-import base64
+from ..services.signing_service import SigningService
 
 from psycopg2 import IntegrityError
 
@@ -42,11 +40,21 @@ class SaleOrder(models.Model):
         'viva.signed.document', 'sale_order_id', string='Signed Documents',
         readonly=True)
 
+    def _sealed_document(self):
+        """The ONE seal record for this order, any channel (one seal per doc).
+
+        Scoped by document_type='sale_order' — the delivery_note's chain
+        link (sale_order_id on the DN record) must NOT count as this order's
+        own seal (review seam fix, 2026-08-24).
+        """
+        return self.env['viva.signed.document'].search([
+            ('sale_order_id', '=', self.id),
+            ('document_type', '=', 'sale_order'),
+        ], limit=1)
+
     def _is_signed(self):
-        """Whether this order has a signed integrity record."""
-        return bool(self.env['viva.signed.document'].search([
-            ('sale_order_id', 'in', self.ids),
-        ], limit=1))
+        """Whether this order has its OWN signed integrity record."""
+        return bool(self._sealed_document())
 
     def action_confirm(self):
         """Confirm the order; if the customer accepted via portal, hash it.
@@ -80,6 +88,14 @@ class SaleOrder(models.Model):
         service = SigningService(self.env)
         cert_info = service.backend.certificate_info()
 
+        # One seal per doc (any channel) — if a seal already exists (manual
+        # hand-signed upload first, or a prior digital sign), the document
+        # is already sealed; return it. Never overwrite a manual hash-only
+        # record with RSA signature fields (review seam fix, 2026-08-24).
+        existing = self._sealed_document()
+        if existing:
+            return existing
+
         # 1. Pre-create the record (token + identity known before rendering)
         # DB-layer race: two concurrent sign attempts for the SAME order both
         # pass `not so._is_signed()` (neither committed yet), then both
@@ -110,37 +126,15 @@ class SaleOrder(models.Model):
                     'signed_at': fields.Datetime.now(),
                 })
         except IntegrityError:
-            signed = self.env['viva.signed.document'].search(
-                [('sale_order_id', '=', self.id)], limit=1)
+            signed = self._sealed_document()
             if not signed:
                 raise
 
-        # 2. Render the STAMPED SO PDF (record exists -> hash block renders)
-        pdf_bytes = self.env['ir.actions.report'].with_context(
-            viva_show_stamp=True,
-        )._render_qweb_pdf(
-            'vivafarm_report.viva_quotation_so', [self.id])[0]
-        pdf_hash = sha256_hex(pdf_bytes)
-
-        # 3. Sign the exact stamped bytes
-        sig_b64, _cert_info, _signed_at = service.sign_pdf(pdf_bytes)
-
-        # 4. Store the stamped PDF (immutable — this is what printing returns)
-        attachment = self.env['ir.attachment'].create({
-            'name': '%s_signed.pdf' % self.name.replace('/', '_'),
-            'datas': base64.b64encode(pdf_bytes),
-            'res_model': 'sale.order',
-            'res_id': self.id,
-            'type': 'binary',
-        })
-        signed.write({
-            'pdf_sha256': pdf_hash,
-            'signature_b64': sig_b64,
-            'public_key_pem': service.backend.public_key_pem(),
-            'signed_attachment_id': attachment.id,
-        })
-
-        signed._log_event('SIGNED', detail='sha256=%s' % pdf_hash[:16])
+        # 2–4. Render the STAMPED SO PDF once, hash + RSA sign those exact
+        # bytes, store as the immutable attachment + crypto evidence
+        # (shared 4-step invariant — see VivaSignMixin._sign_and_store).
+        self._sign_and_store(self, signed, service,
+                             report_name='vivafarm_report.viva_quotation_so')
 
     def write(self, vals):
         """Reject substance changes on hashed orders (server-side lock)."""
