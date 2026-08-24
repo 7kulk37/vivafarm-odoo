@@ -165,6 +165,20 @@ class VivaSignedDocument(models.Model):
                 ON viva_signed_document (sale_order_id)
                 WHERE document_type = 'sale_order'
         """)
+        # Receipt idempotency (review defect #1, 2026-08-24): the Omise
+        # webhook and the 2-min rescue cron can both call _create_payment ->
+        # _hash_payment_receipt for the SAME payment. The other three seal
+        # paths converge on UNIQUE constraints; the receipt path had only a
+        # soft pre-check search, so a race could create TWO payment_receipt
+        # records. Partial index (payment_id) WHERE document_type =
+        # 'payment_receipt' — a payment may still carry a manual payment_slip
+        # upload (channel='manual'), which must NOT collide.
+        self.env.cr.execute("""
+            DROP INDEX IF EXISTS viva_signed_document_payment_unique;
+            CREATE UNIQUE INDEX IF NOT EXISTS viva_signed_document_payment_unique_partial
+                ON viva_signed_document (payment_id)
+                WHERE document_type = 'payment_receipt'
+        """)
         return res
 
     @api.model_create_multi

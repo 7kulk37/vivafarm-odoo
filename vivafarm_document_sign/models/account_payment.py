@@ -18,6 +18,8 @@ import base64
 
 from odoo import fields, models
 
+from psycopg2 import IntegrityError
+
 from ..services.signing_service import sha256_hex
 
 
@@ -51,17 +53,31 @@ class AccountPayment(models.Model):
         ], limit=1)
         if existing:
             return existing
-        # 1. Pre-create the record (token known before rendering)
-        signed = self.env['viva.signed.document'].create({
-            'document_number': self.name,
-            'document_type': 'payment_receipt',
-            'odoo_model': 'account.payment',
-            'odoo_record_id': self.id,
-            'payment_id': self.id,
-            'revision': 1,
-            'signer_user_id': self.env.user.id,
-            'signed_at': fields.Datetime.now(),
-        })
+        # 1. Pre-create the record (token known before rendering).
+        # DB-layer race (same class as the SO/DN/invoice paths): a
+        # concurrent webhook + rescue cron can both pass the pre-check
+        # before either commits. The partial UNIQUE(payment_id) index
+        # (document_type='payment_receipt') rejects the second create —
+        # converge on the winner's record instead of crashing.
+        try:
+            with self.env.cr.savepoint():
+                signed = self.env['viva.signed.document'].create({
+                    'document_number': self.name,
+                    'document_type': 'payment_receipt',
+                    'odoo_model': 'account.payment',
+                    'odoo_record_id': self.id,
+                    'payment_id': self.id,
+                    'revision': 1,
+                    'signer_user_id': self.env.user.id,
+                    'signed_at': fields.Datetime.now(),
+                })
+        except IntegrityError:
+            signed = self.env['viva.signed.document'].search([
+                ('payment_id', '=', self.id),
+                ('document_type', '=', 'payment_receipt'),
+            ], limit=1)
+            if not signed:
+                raise
         # 2. Render the STAMPED receipt (record exists -> hash block renders)
         pdf_bytes = self.env['ir.actions.report'].with_context(
             viva_show_stamp=True,
