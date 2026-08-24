@@ -28,6 +28,8 @@ class VivaSignWizard(models.TransientModel):
     _name = 'viva.sign.wizard'
     _description = 'Sign & Lock Tax Invoice'
 
+    _inherit = ['viva.sign.mixin']
+
     move_id = fields.Many2one('account.move', string='Invoice', required=True, readonly=True)
     document_number = fields.Char(string='Document', readonly=True,
                                   related='move_id.name')
@@ -70,24 +72,6 @@ class VivaSignWizard(models.TransientModel):
             'view_mode': 'form',
             'target': 'new',
         }
-
-    @staticmethod
-    def _is_test_cert(cert_info):
-        return 'Test' in cert_info.get('subject', '') or 'Test' in cert_info.get('issuer', '')
-
-    @staticmethod
-    def _to_odoo_datetime(iso_str):
-        """Convert ISO-8601 (e.g. 2026-08-15T03:35:49+00:00) to Odoo Datetime
-        string (naive UTC '%Y-%m-%d %H:%M:%S')."""
-        if not iso_str:
-            return False
-        try:
-            dt = datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
-            if dt.tzinfo is not None:
-                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-            return dt.strftime('%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            return False
 
     def _render_invoice_pdf(self):
         """Render the tax invoice PDF (the exact bytes that get hashed)."""

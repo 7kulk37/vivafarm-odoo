@@ -1,5 +1,6 @@
 from . import res_company
 from . import base_document_layout
+from . import viva_mixin
 from . import account_move
 from . import account_move_send
 from . import mail_compose_message

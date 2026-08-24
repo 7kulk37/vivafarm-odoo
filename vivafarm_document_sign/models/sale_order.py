@@ -36,7 +36,7 @@ PROTECTED_FIELDS = {
 
 
 class SaleOrder(models.Model):
-    _inherit = 'sale.order'
+    _inherit = ['sale.order', 'viva.sign.mixin']
 
     signed_document_id = fields.One2many(
         'viva.signed.document', 'sale_order_id', string='Signed Documents',
@@ -157,21 +157,3 @@ class SaleOrder(models.Model):
                     'locked. The accepted contract cannot be changed. '
                     'A counter-offer must be a new quotation (CCC §359).'))
         return super().write(vals)
-
-    @staticmethod
-    def _is_test_cert(cert_info):
-        return 'Test' in cert_info.get('subject', '') or 'Test' in cert_info.get('issuer', '')
-
-    @staticmethod
-    def _to_odoo_datetime(iso_str):
-        """Convert ISO-8601 to Odoo Datetime string (naive UTC)."""
-        from datetime import datetime, timezone
-        if not iso_str:
-            return False
-        try:
-            dt = datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
-            if dt.tzinfo is not None:
-                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-            return dt.strftime('%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            return False

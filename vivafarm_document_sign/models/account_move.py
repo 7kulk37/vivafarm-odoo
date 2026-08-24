@@ -38,7 +38,7 @@ PROTECTED_FIELDS = {
 
 
 class AccountMove(models.Model):
-    _inherit = 'account.move'
+    _inherit = ['account.move', 'viva.sign.mixin']
 
     signed_document_id = fields.One2many(
         'viva.signed.document', 'move_id', string='Signed Documents',
@@ -180,21 +180,3 @@ class AccountMove(models.Model):
         })
 
         signed._log_event('SIGNED', detail='sha256=%s' % pdf_hash[:16])
-
-    @staticmethod
-    def _is_test_cert(cert_info):
-        return 'Test' in cert_info.get('subject', '') or 'Test' in cert_info.get('issuer', '')
-
-    @staticmethod
-    def _to_odoo_datetime(iso_str):
-        """Convert ISO-8601 to Odoo Datetime string (naive UTC)."""
-        from datetime import datetime, timezone
-        if not iso_str:
-            return False
-        try:
-            dt = datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
-            if dt.tzinfo is not None:
-                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-            return dt.strftime('%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            return False

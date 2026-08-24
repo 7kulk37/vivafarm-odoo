@@ -2,7 +2,7 @@ from odoo import _, fields, models
 
 
 class SaleOrder(models.Model):
-    _inherit = 'sale.order'
+    _inherit = ['sale.order', 'viva.report.mixin']
 
     signed_position = fields.Char(
         string='Signed Position',
@@ -35,36 +35,6 @@ class SaleOrder(models.Model):
             ('document_type', '=', 'sale_order'),
             ('channel', '=', 'manual'),
         ], limit=1)
-
-    def _get_thai_date_display(self, field_name):
-        """Date in Thai tax-invoice style: '03/ส.ค./2569' (Buddhist Era year = CE + 543).
-
-        Mirrors account.move._get_thai_date_display so the Quotation/SO's TH
-        form uses the same date format as the tax invoice.
-        """
-        self.ensure_one()
-        value = self[field_name]
-        if not value:
-            return ''
-        from odoo.tools.misc import format_date
-        day_month = format_date(self.env, value, lang_code='th_TH', date_format='dd/MMM')
-        return '%s/%s' % (day_month, value.year + 543)
-
-    def _get_viva_datetime_display(self, field_name):
-        """Datetime in the report sign-section style: '2026-08-20 23:23:51'
-        (Bangkok local, Asia/Bangkok UTC+7).
-
-        `signed_on` / `viva_sent_at` are stored UTC; the report must show the
-        local wall-clock time the customer sees, not the UTC value.
-        """
-        self.ensure_one()
-        value = self[field_name]
-        if not value:
-            return ''
-        from datetime import datetime, timezone
-        from zoneinfo import ZoneInfo
-        utc = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
-        return utc.astimezone(ZoneInfo('Asia/Bangkok')).strftime('%Y-%m-%d %H:%M:%S')
 
     def message_post(self, **kwargs):
         """Stamp viva_sent_at when the Sent Quotation wizard marks the SO sent.

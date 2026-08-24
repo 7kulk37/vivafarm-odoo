@@ -39,7 +39,7 @@ PROTECTED_FIELDS = {
 
 
 class StockPicking(models.Model):
-    _inherit = 'stock.picking'
+    _inherit = ['stock.picking', 'viva.sign.mixin']
 
     signed_document_id = fields.One2many(
         'viva.signed.document', 'picking_id', string='Signed Documents',
@@ -159,21 +159,3 @@ class StockPicking(models.Model):
                 'This delivery note has been SIGNED by the customer '
                 '(goods received) and cannot be cancelled.'))
         return super().action_cancel()
-
-    @staticmethod
-    def _is_test_cert(cert_info):
-        return 'Test' in cert_info.get('subject', '') or 'Test' in cert_info.get('issuer', '')
-
-    @staticmethod
-    def _to_odoo_datetime(iso_str):
-        """Convert ISO-8601 to Odoo Datetime string (naive UTC)."""
-        from datetime import datetime, timezone
-        if not iso_str:
-            return False
-        try:
-            dt = datetime.fromisoformat(iso_str.replace('Z', '+00:00'))
-            if dt.tzinfo is not None:
-                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
-            return dt.strftime('%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            return False

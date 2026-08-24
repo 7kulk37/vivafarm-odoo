@@ -13,7 +13,7 @@ MULTIPAGE_PRODUCT_LINES = 5
 
 
 class AccountMove(models.Model):
-    _inherit = 'account.move'
+    _inherit = ['account.move', 'viva.report.mixin']
 
     #: Original tax invoice this document was re-issued to replace (Thai
     #: Revenue Code ป.86/2542 ข้อ 25(2)/(3)): when a posted tax invoice has
@@ -158,37 +158,6 @@ class AccountMove(models.Model):
         # heuristic so the continuation note + grouped ending still apply.
         return any(line.name and line.name.count('\n') > 30
                    for line in self.invoice_line_ids if line.name)
-
-    def _get_thai_date_display(self, field_name):
-        """Date in Thai tax-invoice style: '03/ส.ค./2569' (Buddhist Era year = CE + 543).
-
-        Babel has no Buddhist calendar engine, so the TH report computes the
-        day/month via the Thai locale (dd/MMM -> '03/ส.ค.') and appends the
-        Buddhist Era year (Gregorian year + 543).
-        """
-        self.ensure_one()
-        value = self[field_name]
-        if not value:
-            return ''
-        from odoo.tools.misc import format_date
-        day_month = format_date(self.env, value, lang_code='th_TH', date_format='dd/MMM')
-        return '%s/%s' % (day_month, value.year + 543)
-
-    def _get_viva_datetime_display(self, field_name):
-        """Datetime in the report sign-section style: '2026-08-20 23:23:51'
-        (Bangkok local, Asia/Bangkok UTC+7).
-
-        `signed_on` / `viva_sent_at` are stored UTC; the report must show the
-        local wall-clock time the customer sees, not the UTC value.
-        """
-        self.ensure_one()
-        value = self[field_name]
-        if not value:
-            return ''
-        from datetime import datetime, timezone
-        from zoneinfo import ZoneInfo
-        utc = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
-        return utc.astimezone(ZoneInfo('Asia/Bangkok')).strftime('%Y-%m-%d %H:%M:%S')
 
     def _get_viva_invoice_report(self):
         """Resolve the Viva invoice report for this move (minimal flow).
