@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- VS-07: PND 3/53 filing records (filed-marker + amended type) -->
+    <record id="view_viva_pnd_return_tree" model="ir.ui.view">
+        <field name="name">viva.pnd.return.tree</field>
+        <field name="model">viva.pnd.return</field>
+        <field name="arch" type="xml">
+            <list string="PND 3/53 Filings" editable="bottom">
+                <field name="form_type"/>
+                <field name="period_from"/>
+                <field name="period_to"/>
+                <field name="return_type"/>
+                <field name="state"/>
+                <field name="filed_date"/>
+                <field name="filing_number"/>
+                <field name="surcharge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_viva_pnd_return_form" model="ir.ui.view">
+        <field name="name">viva.pnd.return.form</field>
+        <field name="model">viva.pnd.return</field>
+        <field name="arch" type="xml">
+            <form string="PND 3/53 Filing">
+                <group>
+                    <group>
+                        <field name="form_type"/>
+                        <field name="period_from"/>
+                        <field name="period_to"/>
+                        <field name="return_type"/>
+                    </group>
+                    <group>
+                        <field name="state"/>
+                        <field name="filed_date"/>
+                        <field name="filing_number"/>
+                        <field name="surcharge"/>
+                    </group>
+                </group>
+                <field name="note"/>
+                <footer>
+                    <button name="action_mark_filed" type="object"
+                            string="Mark Filed" class="btn-primary"
+                            invisible="state == 'filed'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_viva_pnd_return" model="ir.actions.act_window">
+        <field name="name">PND 3/53 Filings</field>
+        <field name="res_model">viva.pnd.return</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Record your monthly PND 3/53 filings here.
+            </p>
+            <p>
+                After e-filing on the RD portal, create a record with the
+                filed date and filing number. Use <b>Amended / Additional</b>
+                for missed-WHT self-corrections (ยื่นเพิ่มเติม + §27 surcharge).
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_viva_pnd_return" name="PND 3/53 Filings"
+              parent="account.menu_finance_reports" sequence="40"
+              action="action_viva_pnd_return"/>
+</odoo>

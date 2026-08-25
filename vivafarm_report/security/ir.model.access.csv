@@ -3,3 +3,4 @@ access_tax_report_wizard,access_tax_report_wizard,model_tax_report_wizard,accoun
 access_reissue_warning,access_reissue_warning,model_reissue_warning,account.group_account_user,1,1,1,1
 access_cost_of_cultivation_wizard,access_cost_of_cultivation_wizard,model_cost_of_cultivation_wizard,account.group_account_user,1,1,1,1
 access_viva_wht_reminder,access_viva_wht_reminder,model_viva_wht_reminder,account.group_account_user,1,1,1,1
+access_viva_pnd_return,access_viva_pnd_return,model_viva_pnd_return,account.group_account_user,1,1,1,1
