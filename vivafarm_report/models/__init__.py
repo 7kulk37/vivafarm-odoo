@@ -18,5 +18,7 @@ from . import res_bank
 from . import res_partner
 from . import purchase_order_line
 from . import account_move_line
+from . import wht_reminder
+from . import account_payment_register
 from . import tax_report_wizard
 from . import cost_of_cultivation_wizard

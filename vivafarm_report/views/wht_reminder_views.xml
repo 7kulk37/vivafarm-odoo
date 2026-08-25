@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- VS-05: WHT remittance reminders (one per paid WHT bill) -->
+    <record id="view_viva_wht_reminder_tree" model="ir.ui.view">
+        <field name="name">viva.wht.reminder.tree</field>
+        <field name="model">viva.wht.reminder</field>
+        <field name="arch" type="xml">
+            <list string="WHT Remittance Reminders" editable="bottom">
+                <field name="payment_date"/>
+                <field name="partner_id"/>
+                <field name="bill_id"/>
+                <field name="wht_amount" sum="1"/>
+                <field name="remit_due"/>
+                <field name="state"/>
+                <field name="remitted_date" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_viva_wht_reminder" model="ir.actions.act_window">
+        <field name="name">WHT Remittance Reminders</field>
+        <field name="res_model">viva.wht.reminder</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Withheld tax must be remitted with the monthly ภ.ง.ด.3/53
+                return by the 7th of the following month (15th e-filing).
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_viva_wht_reminder"
+              name="WHT Reminders"
+              parent="account.menu_finance"
+              action="action_viva_wht_reminder"
+              sequence="60"/>
+</odoo>
