@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ResCompany(models.Model):
@@ -38,6 +38,64 @@ class ResCompany(models.Model):
         help='Effective date of VAT registration. Bills dated before this '
              'keep non-recoverable purchase VAT; bills on/after flip to '
              'recoverable input VAT (มาตรา 82/5, 86/4).')
+
+    # ── Turnover monitor (VS-18) ──
+    # Early-warning for the VAT registration trigger: 1.8M THB annual
+    # turnover (30-day registration window). NOTE: 600k is the statutory
+    # FLOOR the exemption can't go below (มาตรา 81/1), NOT the operative
+    # threshold — the actual small-business exemption is 1.8M (Royal
+    # Decree). A 600k alarm would false-alarm, so only 1.8M is flagged.
+    viva_turnover_12m = fields.Monetary(
+        string='Turnover (12 months)',
+        currency_field='currency_id',
+        compute='_compute_viva_turnover',
+        help='Total posted sales (out_invoice + out_refund net) in the '
+             'trailing 12 months — the VAT registration early-warning.',
+    )
+    viva_turnover_1_8m = fields.Boolean(
+        string='Turnover > 1.8M',
+        compute='_compute_viva_turnover',
+        help='Trailing-12-month turnover exceeds the 1.8M THB VAT '
+             'registration threshold — register within 30 days (มาตรา 81/1, '
+             '§90/2 fine if missed).',
+    )
+
+    # ── PP.36 / self-accounting note (VS-17) ──
+    # Informational only: ภ.พ.36 reverse-charge self-accounting applies to
+    # direct foreign digital/software purchases (import of services), due
+    # 7th of the following month. Only actionable once VAT-registered —
+    # VivaFarm is §81(1)-exempt today, so this is a note, not a journal.
+    viva_pp36_note = fields.Text(
+        string='PP.36 Self-Accounting Note (VS-17)',
+        help='Informational: ภ.พ.36 reverse-charge self-accounting applies '
+             'to direct foreign digital/software purchases (import of '
+             'services), due 7th of the following month. Only actionable '
+             'once VAT-registered — VivaFarm is §81(1)-exempt today. '
+             'Foreign digital purchases also trigger PND 54 WHT (income '
+             'tax) even while VAT-exempt.',
+    )
+
+    @api.depends('viva_vat_registered')
+    def _compute_viva_turnover(self):
+        for company in self:
+            today = fields.Date.context_today(self)
+            from_date = today.replace(year=today.year - 1)
+            moves = self.env['account.move'].search([
+                ('company_id', '=', company.id),
+                ('move_type', 'in', ('out_invoice', 'out_refund')),
+                ('state', '=', 'posted'),
+                ('invoice_date', '>=', from_date),
+                ('invoice_date', '<=', today),
+            ])
+            turnover = 0.0
+            for m in moves:
+                # out_refund amounts are POSITIVE in Odoo 19 — flip sign.
+                if m.move_type == 'out_invoice':
+                    turnover += m.amount_untaxed
+                else:
+                    turnover -= m.amount_untaxed
+            company.viva_turnover_12m = turnover
+            company.viva_turnover_1_8m = turnover > 1800000
 
     def _get_recoverable_purchase_vat_tax(self):
         """Return (creating if needed) the recoverable purchase VAT tax.

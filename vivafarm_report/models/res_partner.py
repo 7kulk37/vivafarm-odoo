@@ -113,6 +113,23 @@ class ResPartner(models.Model):
         help='WHT tax auto-suggested on vendor bill lines for this vendor '
              '(computed from income type + company/person).')
 
+    # ── Non-resident vendor flag (VS-16) ──
+    # Informational only: non-resident vendors are subject to 5%/15% WHT +
+    # PND 54 (not PND 3/53). The _post guardrail already skips foreign
+    # vendors (no Thai TIN); this flag surfaces the PND 54 path in the UI.
+    viva_non_resident = fields.Boolean(
+        string='Non-resident Vendor (PND 54)',
+        compute='_compute_viva_non_resident',
+        help='Informational: this vendor is non-resident — WHT at 5%/15% '
+             'with PND 54 (ภ.ง.ด.54), not PND 3/53 (VS-16).',
+    )
+
+    @api.depends('country_id')
+    def _compute_viva_non_resident(self):
+        for partner in self:
+            partner.viva_non_resident = bool(
+                partner.country_id and partner.country_id.code != 'TH')
+
     viva_vat_registered_since = fields.Date(
         string='VAT Registered Since',
         help='Date this vendor became VAT-registered. A vendor tax invoice '

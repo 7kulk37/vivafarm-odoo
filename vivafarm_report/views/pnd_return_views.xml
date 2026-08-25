@@ -13,6 +13,7 @@
                 <field name="state"/>
                 <field name="filed_date"/>
                 <field name="filing_number"/>
+                <field name="filed_on_time"/>
                 <field name="surcharge"/>
             </list>
         </field>
@@ -34,6 +35,7 @@
                         <field name="state"/>
                         <field name="filed_date"/>
                         <field name="filing_number"/>
+                        <field name="filed_on_time"/>
                         <field name="surcharge"/>
                     </group>
                 </group>

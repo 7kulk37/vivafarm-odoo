@@ -12,6 +12,8 @@
                        string="Income Type (WHT)"
                        help="Thai withholding-tax classification. Auto-suggests the WHT tax on vendor bill lines. Goods = no WHT; rent 5%; transport 1%; service 3%; advertising 2%."/>
                 <field name="viva_default_wht_tax_id" readonly="1" string="Default WHT Tax"/>
+                <field name="viva_non_resident" readonly="1"
+                       help="Informational: non-resident vendors are subject to 5%/15% WHT with PND 54 (ภ.ง.ด.54), not PND 3/53 (VS-16)."/>
             </xpath>
         </field>
     </record>

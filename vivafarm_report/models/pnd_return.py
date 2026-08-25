@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class VivaPndReturn(models.Model):
@@ -36,6 +36,28 @@ class VivaPndReturn(models.Model):
         help='§27 1.5%/month surcharge on late/amended remittance. '
              'Recorded as a note — never booked as a tax.',
     )
+    # VS-19: filed-on-time marker — computed from filed_date vs the 15th
+    # e-filing deadline of the month after the period end. Surcharge stays
+    # 0 unless the owner opts into real §27 computation.
+    filed_on_time = fields.Boolean(
+        string='Filed On Time',
+        compute='_compute_filed_on_time',
+        help='True when filed_date ≤ the 15th e-filing deadline of the '
+             'month after the period end (VS-19).',
+    )
+
+    @api.depends('filed_date', 'period_to')
+    def _compute_filed_on_time(self):
+        for rec in self:
+            if not rec.filed_date or not rec.period_to:
+                rec.filed_on_time = False
+                continue
+            # E-filing deadline: the 15th of the month AFTER the period end.
+            if rec.period_to.month == 12:
+                deadline = rec.period_to.replace(year=rec.period_to.year + 1, month=1, day=15)
+            else:
+                deadline = rec.period_to.replace(month=rec.period_to.month + 1, day=15)
+            rec.filed_on_time = rec.filed_date <= deadline
     company_id = fields.Many2one(
         'res.company', string='Company', required=True,
         default=lambda self: self.env.company,

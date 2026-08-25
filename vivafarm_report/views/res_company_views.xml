@@ -19,6 +19,19 @@
                         </group>
                     </group>
                 </page>
+                <page string="VAT &amp; WHT Monitor" name="vivafarm_vat_wht_monitor">
+                    <group>
+                        <group>
+                            <field name="viva_vat_registered"/>
+                            <field name="viva_vat_registered_since"/>
+                            <field name="viva_turnover_12m" readonly="1"/>
+                            <field name="viva_turnover_1_8m" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="viva_pp36_note"/>
+                        </group>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>
