@@ -75,7 +75,13 @@ class VivaWhtReminder(models.Model):
             return existing
         wht_lines = bill.line_ids.filtered(
             lambda l: l.tax_line_id and l.tax_line_id.amount < 0)
-        wht_amount = sum(-l.balance for l in wht_lines)
+        full_wht = sum(-l.balance for l in wht_lines)
+        # VS-10: partial payments — WHT is incurred on each payment slice
+        # (มาตรา 50 — withhold at every payment). Scale by the paid ratio.
+        ratio = 1.0
+        if bill.amount_total:
+            ratio = min(1.0, payment.amount / bill.amount_total)
+        wht_amount = full_wht * ratio
         warn, note = self._check_de_minimis(payment, bill)
         reminder = self.create({
             'partner_id': bill.partner_id.id,
@@ -93,7 +99,8 @@ class VivaWhtReminder(models.Model):
             # l10n_th _pre_render_qweb_pdf override calls _get_report on the
             # ref and a record object breaks the cache key (unhashable list).
             pdf = self.env['ir.actions.report']._render_qweb_pdf(
-                'vivafarm_report.report_viva_wht_certificate', [bill.id])[0]
+                'vivafarm_report.report_viva_wht_certificate', [bill.id],
+                data={'payment_id': payment.id})[0]
             self.env['ir.attachment'].create({
                 'name': 'WHT_Cert_%s.pdf' % (bill.name or bill.id),
                 'res_model': 'account.payment',

@@ -47,26 +47,41 @@ class ReportPnd53(models.AbstractModel):
         return pay[:1].date if pay else False
 
     @api.model
+    def _payment_ratio_in_period(self, bill, wizard):
+        """Share of the bill paid in the period (VS-10 partial-payment split).
+
+        WHT is incurred per payment slice (มาตรา 50 — withhold at every
+        payment), so a bill paid in two installments across two months
+        contributes only its in-period slice to each month's return.
+        """
+        pay = bill._get_reconciled_payments().filtered(
+            lambda p: wizard.date_from <= p.date <= wizard.date_to)
+        if not pay or not bill.amount_total:
+            return 0.0
+        return min(1.0, sum(p.amount for p in pay) / bill.amount_total)
+
+    @api.model
     def _get_report_values(self, docids, data=None):
         wizard = self.env['tax.report.wizard'].browse(docids)
         currency = self.env.company.currency_id
         income_lines = self._get_wht_lines(wizard, 'Income PND53')
         remit_lines = self._get_wht_lines(wizard, 'PND53')
-        total_income = sum(l.tax_base_amount for l in income_lines)
-        total_remit = sum(-l.balance for l in remit_lines)
+        total_income = sum(l.tax_base_amount * self._payment_ratio_in_period(l.move_id, wizard) for l in income_lines)
+        total_remit = sum(-l.balance * self._payment_ratio_in_period(l.move_id, wizard) for l in remit_lines)
         surcharge = 0.0
         # Detail rows per partner for the register section
         rows = []
         for l in remit_lines:
             pay_date = self._payment_date_in_period(l.move_id, wizard)
+            ratio = self._payment_ratio_in_period(l.move_id, wizard)
             rows.append({
                 'date': pay_date or l.date,
                 'name': l.move_id.name,
                 'partner': l.partner_id.name,
-                'income': l.tax_base_amount,
-                'remit': -l.balance,
-                'income_fmt': format_amount(self.env, l.tax_base_amount, currency),
-                'remit_fmt': format_amount(self.env, -l.balance, currency),
+                'income': l.tax_base_amount * ratio,
+                'remit': -l.balance * ratio,
+                'income_fmt': format_amount(self.env, l.tax_base_amount * ratio, currency),
+                'remit_fmt': format_amount(self.env, -l.balance * ratio, currency),
             })
         return {
             'doc_ids': wizard.ids,

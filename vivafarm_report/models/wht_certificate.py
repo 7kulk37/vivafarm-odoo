@@ -36,8 +36,13 @@ class ReportVivaWhtCertificate(models.AbstractModel):
         return 'service'
 
     @api.model
-    def _get_wht_lines(self, move):
-        """Return WHT lines of a bill: [{tax, rate, base, base_fmt, wht, wht_fmt, income_type}]."""
+    def _get_wht_lines(self, move, ratio=1.0):
+        """Return WHT lines of a bill: [{tax, rate, base, base_fmt, wht, wht_fmt, income_type}].
+
+        ``ratio`` scales the rows to a payment slice (VS-10): a partial
+        payment withholds only on the paid portion (มาตรา 50 — withhold at
+        every payment), so the cert shows the slice, not the whole bill.
+        """
         currency = move.currency_id or self.env.company.currency_id
         lines = move.line_ids.filtered(
             lambda l: l.tax_line_id and l.tax_line_id.amount < 0)
@@ -46,10 +51,10 @@ class ReportVivaWhtCertificate(models.AbstractModel):
             rows.append({
                 'tax': l.tax_line_id.name,
                 'rate': -l.tax_line_id.amount,
-                'base': l.tax_base_amount,
-                'base_fmt': format_amount(self.env, l.tax_base_amount, currency),
-                'wht': -l.balance,
-                'wht_fmt': format_amount(self.env, -l.balance, currency),
+                'base': l.tax_base_amount * ratio,
+                'base_fmt': format_amount(self.env, l.tax_base_amount * ratio, currency),
+                'wht': -l.balance * ratio,
+                'wht_fmt': format_amount(self.env, -l.balance * ratio, currency),
                 'income_type': self._get_income_type(l.tax_line_id),
             })
         return rows
@@ -68,11 +73,21 @@ class ReportVivaWhtCertificate(models.AbstractModel):
     def _get_report_values(self, docids, data=None):
         moves = self.env['account.move'].browse(docids)
         docs = moves
+        # VS-10: when rendered from a payment (reminder), scale rows to the
+        # payment slice; standalone renders show the full bill.
+        ratio = 1.0
+        payment = False
+        if data and data.get('payment_id'):
+            payment = self.env['account.payment'].browse(data['payment_id'])
+            if payment and moves and moves[0].amount_total:
+                ratio = min(1.0, payment.amount / moves[0].amount_total)
         rows = []
         for m in moves:
-            rows.extend(self._get_wht_lines(m))
+            rows.extend(self._get_wht_lines(m, ratio))
         currency = moves[0].currency_id or self.env.company.currency_id
         payment_date = self._get_payment_date(moves[0]) if moves else False
+        if payment:
+            payment_date = payment.date
         payment_date_th = False
         if payment_date:
             from odoo.tools.misc import format_date
