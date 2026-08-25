@@ -549,4 +549,18 @@ class AccountMove(models.Model):
                            "vendor's tax invoice number + date (VS-12) for the "
                            "purchase register (รายงานภาษีซื้อ) and §82/5 input-tax "
                            "support.", vendor=partner.display_name))
+            # VS-04: missing-vendor-doc soft-warn — a Thai vendor bill with NO
+            # attachment (no vendor invoice PDF, no bank slip) is at
+            # expense-disallowance risk on audit (§65 ter(18) — the payer must
+            # identify the recipient; §65 bis — the taxpayer bears the burden
+            # of proof). Alternative evidence (bank slip, voucher, delivery
+            # note) satisfies the rule, so this is a WARNING, never a block.
+            if not move.attachment_ids:
+                move._message_log(
+                    body=_("Vendor bill %(name)s has no attached document. "
+                           "Attach the vendor's invoice PDF or alternative "
+                           "evidence (bank slip, payment voucher, delivery "
+                           "note) — §65 bis puts the burden of proving the "
+                           "expense on the farm (VS-04).",
+                           name=move.name or move.ref or 'draft'))
         return res
