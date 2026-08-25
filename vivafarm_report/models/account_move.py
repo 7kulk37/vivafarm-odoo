@@ -511,11 +511,12 @@ class AccountMove(models.Model):
         # invoice lines carry purchase VAT (payment-term lines are
         # regenerated during post and may be deleted mid-flight).
         self.invoice_line_ids._apply_vat_flip()
-        res = super()._post(soft=soft)
-        # VS-09: detect over-withheld WHT when a vendor credit note reduces
-        # a paid-and-withheld bill (RD Ruling Gor.Kor. 0702/9205).
-        for move in self.filtered(lambda m: m.move_type == 'in_refund'):
-            self.env['viva.wht.reminder']._check_over_withheld(move)
+        # VS-02/VS-03 evidence guardrails MUST run BEFORE super()._post().
+        # Running them after the base post marks the move posted + assigns
+        # the sequence in-memory even though the UserError rolls the DB
+        # back — a code path catching the exception (or the web client's
+        # record cache) would see a posted move + a consumed number. Hard
+        # guards belong pre-post; only soft-warns run after.
         for move in self.filtered(lambda m: m.move_type == 'in_invoice'):
             partner = move.commercial_partner_id
             # Foreign/non-resident vendors: no Thai TIN — PND 54 path, never block.
@@ -537,8 +538,18 @@ class AccountMove(models.Model):
                     "Vendor bill %(name)s: the vendor's invoice number (ref) is "
                     "required for Thai companies. Enter the vendor's own invoice "
                     "number before posting.",
-                    name=move.name or 'draft',
+                    name=move.name or move.ref or 'draft',
                 ))
+        res = super()._post(soft=soft)
+        # VS-09: detect over-withheld WHT when a vendor credit note reduces
+        # a paid-and-withheld bill (RD Ruling Gor.Kor. 0702/9205).
+        for move in self.filtered(lambda m: m.move_type == 'in_refund'):
+            self.env['viva.wht.reminder']._check_over_withheld(move)
+        for move in self.filtered(lambda m: m.move_type == 'in_invoice'):
+            partner = move.commercial_partner_id
+            # Foreign/non-resident vendors: no Thai TIN — PND 54 path, never block.
+            if not partner or (partner.country_id and partner.country_id.code != 'TH'):
+                continue
             # VS-12: vendor tax-invoice capture — soft-required when the vendor
             # is VAT-registered (the purchase-register entry key + §82/5
             # input-tax support). Warn, never block posting.
