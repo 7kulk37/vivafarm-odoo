@@ -487,6 +487,12 @@ class AccountMove(models.Model):
           voucher is still evidence under §65 bis). Never blocks petty
           cash (no vendor bill) or foreign vendors.
         """
+        # VS-14: swap non-recoverable -> recoverable purchase VAT on bills
+        # dated on/after registration (forward-only). Must run BEFORE
+        # super()._post() — the lines are immutable once posted. Only
+        # invoice lines carry purchase VAT (payment-term lines are
+        # regenerated during post and may be deleted mid-flight).
+        self.invoice_line_ids._apply_vat_flip()
         res = super()._post(soft=soft)
         for move in self.filtered(lambda m: m.move_type == 'in_invoice'):
             partner = move.commercial_partner_id

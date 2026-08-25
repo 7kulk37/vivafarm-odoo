@@ -113,6 +113,13 @@ class ResPartner(models.Model):
         help='WHT tax auto-suggested on vendor bill lines for this vendor '
              '(computed from income type + company/person).')
 
+    viva_vat_registered_since = fields.Date(
+        string='VAT Registered Since',
+        help='Date this vendor became VAT-registered. A vendor tax invoice '
+             'only supports the farm\'s input-VAT credit if the vendor was '
+             'registered at the time (มาตรา 82/5, 86/4). Bills dated before '
+             'this keep non-recoverable purchase VAT.')
+
     @api.depends('viva_income_type', 'company_type')
     def _compute_viva_default_wht_tax(self):
         for partner in self:

@@ -26,6 +26,70 @@ class ResCompany(models.Model):
         default='00000',
     )
 
+    # ── Future-VAT switch (VS-14) ──
+    viva_vat_registered = fields.Boolean(
+        string='VAT Registered',
+        help='Set when the farm registers for VAT (turnover >1.8M THB, '
+             '30-day window). Flips purchase VAT from non-recoverable cost '
+             'to recoverable input VAT on bills dated on/after '
+             'viva_vat_registered_since (forward-only, no retroactive claims).')
+    viva_vat_registered_since = fields.Date(
+        string='VAT Registered Since',
+        help='Effective date of VAT registration. Bills dated before this '
+             'keep non-recoverable purchase VAT; bills on/after flip to '
+             'recoverable input VAT (มาตรา 82/5, 86/4).')
+
+    def _get_recoverable_purchase_vat_tax(self):
+        """Return (creating if needed) the recoverable purchase VAT tax.
+
+        The flip (VS-14) swaps the non-recoverable purchase VAT for this
+        recoverable tax on bills dated on/after registration. It carries the
+        statutory 6./7. tags so the ภ.พ.30 input-tax lines compute. Created
+        on demand — the tax only exists once the flip is actually used.
+        """
+        self.ensure_one()
+        tax = self.env['account.tax'].search([
+            ('name', '=', 'Purchase Recoverable VAT 7%'),
+            ('type_tax_use', '=', 'purchase'),
+        ], limit=1)
+        if tax:
+            return tax
+        tag6 = self.env['account.account.tag'].search(
+            [('name', '=', '6. Purchase amount that is entitled to deduction of input tax from output tax in tax computation')], limit=1)
+        tag7 = self.env['account.account.tag'].search(
+            [('name', '=', '7. Input tax (according to invoice of purchase amount in 6.)')], limit=1)
+        if not tag6 or not tag7:
+            # JSONB-translated names: fall back to scanning all tags.
+            all_tags = self.env['account.account.tag'].search([])
+            for t in all_tags:
+                n = t.name
+                if n and '6. Purchase amount' in n:
+                    tag6 = t
+                if n and '7. Input tax' in n:
+                    tag7 = t
+        vat_group = self.env['account.tax.group'].search([('name', '=', 'VAT')], limit=1)
+        return self.env['account.tax'].create({
+            'name': 'Purchase Recoverable VAT 7%',
+            'type_tax_use': 'purchase',
+            'amount_type': 'percent',
+            'amount': 7.0,
+            'description': 'Recoverable VAT 7%',
+            'price_include': True,
+            'tax_group_id': vat_group.id if vat_group else False,
+            'invoice_repartition_line_ids': [
+                (0, 0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'base',
+                    'tag_ids': [(6, 0, [tag6.id])] if tag6 else [],
+                }),
+                (0, 0, {
+                    'factor_percent': 100,
+                    'repartition_type': 'tax',
+                    'tag_ids': [(6, 0, [tag7.id])] if tag7 else [],
+                }),
+            ],
+        })
+
     def _get_light_tint(self, color, pct=0.92):
         """Return a light tint of a hex color (mix toward white).
 
