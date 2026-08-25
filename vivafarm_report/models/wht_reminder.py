@@ -50,6 +50,12 @@ class VivaWhtReminder(models.Model):
              'original cert, and file an amended PND for the payment month '
              '(ยื่นเพิ่มเติม). Never net against next month.')
     wht_correction_note = fields.Text(string='WHT Correction Note')
+    return_in_picking_id = fields.Many2one(
+        'stock.picking', string='Return-in Picking',
+        help='Negative GRN (return-in) evidencing the goods return behind a '
+             'vendor credit note (VS-11). Link the return picking here to '
+             'complete the evidence trail.',
+    )
 
     @api.model
     def _compute_remit_due(self, payment_date):

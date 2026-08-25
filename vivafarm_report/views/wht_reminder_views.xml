@@ -14,6 +14,7 @@
                 <field name="state"/>
                 <field name="de_minimis_warning" optional="show"/>
                 <field name="wht_correction" optional="show"/>
+                <field name="return_in_picking_id" optional="show"/>
                 <field name="remitted_date" optional="show"/>
             </list>
         </field>
