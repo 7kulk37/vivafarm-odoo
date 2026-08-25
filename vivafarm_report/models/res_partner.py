@@ -1,6 +1,6 @@
 import unicodedata
 
-from odoo import models
+from odoo import api, fields, models
 
 # English names for all 77 Thai provinces (ISO 3166-2:TH base data).
 # res.country.state.name is NOT translatable in Odoo 19, so the report maps
@@ -90,6 +90,48 @@ _TH_STATE_EN = {unicodedata.normalize('NFC', k): v for k, v in _TH_STATE_EN.item
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
+
+    # ── Vendor WHT classification (VS-01) ──
+    # The vendor's income type drives the default withholding tax on vendor
+    # bills. Classification errors (rent 5% vs service 3% vs transport 1%)
+    # are the top WHT audit finding; a per-vendor default kills the class.
+    # Goods purchases NEVER carry WHT (sale of goods is not on the WHT list).
+    viva_income_type = fields.Selection([
+        ('goods', 'Goods (no WHT)'),
+        ('rent', 'Rent (5% WH C R)'),
+        ('transport', 'Transport (1% WH C T)'),
+        ('service', 'Service (3% WH C S / WH P S)'),
+        ('advertising', 'Advertising (2% WH C A)'),
+        ('other', 'Other (manual WHT)'),
+    ], string='Income Type (WHT)', default='goods',
+        help='Thai withholding-tax classification for this vendor. '
+             'Auto-suggests the WHT tax on vendor bill lines (VS-01). '
+             'Goods = no WHT; rent 5%; transport 1%; service 3%; advertising 2%.')
+
+    viva_default_wht_tax_id = fields.Many2one(
+        'account.tax', string='Default WHT Tax', compute='_compute_viva_default_wht_tax',
+        help='WHT tax auto-suggested on vendor bill lines for this vendor '
+             '(computed from income type + company/person).')
+
+    @api.depends('viva_income_type', 'company_type')
+    def _compute_viva_default_wht_tax(self):
+        for partner in self:
+            tax = self.env['account.tax']
+            if partner.viva_income_type == 'rent':
+                tax = self.env['account.tax'].search(
+                    [('name', '=', '5% WH C R'), ('type_tax_use', '=', 'purchase')], limit=1)
+            elif partner.viva_income_type == 'transport':
+                tax = self.env['account.tax'].search(
+                    [('name', '=', '1% WH C T'), ('type_tax_use', '=', 'purchase')], limit=1)
+            elif partner.viva_income_type == 'service':
+                name = '3% WH P S' if partner.company_type == 'person' else '3% WH C S'
+                tax = self.env['account.tax'].search(
+                    [('name', '=', name), ('type_tax_use', '=', 'purchase')], limit=1)
+            elif partner.viva_income_type == 'advertising':
+                tax = self.env['account.tax'].search(
+                    [('name', '=', '2% WH C A'), ('type_tax_use', '=', 'purchase')], limit=1)
+            # goods / other -> no default WHT tax
+            partner.viva_default_wht_tax_id = tax.id
 
     def _get_state_display(self, state):
         """State name in the report language.

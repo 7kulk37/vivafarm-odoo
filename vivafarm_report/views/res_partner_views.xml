@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- VS-01: per-vendor WHT income-type + default tax on the partner form
+         (Sales &amp; Purchase page, Purchase group). -->
+    <record id="view_res_partner_form_vivafarm_wht" model="ir.ui.view">
+        <field name="name">res.partner.form.vivafarm.wht</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='sales_purchases']//group[@name='purchase']" position="inside">
+                <field name="viva_income_type"
+                       string="Income Type (WHT)"
+                       help="Thai withholding-tax classification. Auto-suggests the WHT tax on vendor bill lines. Goods = no WHT; rent 5%; transport 1%; service 3%; advertising 2%."/>
+                <field name="viva_default_wht_tax_id" readonly="1" string="Default WHT Tax"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
