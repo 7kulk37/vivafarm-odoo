@@ -23,7 +23,7 @@
     <record id="action_viva_wht_reminder" model="ir.actions.act_window">
         <field name="name">WHT Remittance Reminders</field>
         <field name="res_model">viva.wht.reminder</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Withheld tax must be remitted with the monthly ภ.ง.ด.3/53
