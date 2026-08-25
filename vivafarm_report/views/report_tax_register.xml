@@ -45,6 +45,18 @@
                                         <t t-if="lang == 'th_TH'">ภาษี</t>
                                         <t t-else="">VAT</t>
                                     </th>
+                                    <th class="text-end" t-if="register_type == 'purchase'">
+                                        <t t-if="lang == 'th_TH'">หัก ณ ที่จ่าย</t>
+                                        <t t-else="">WHT</t>
+                                    </th>
+                                    <th t-if="register_type == 'purchase'">
+                                        <t t-if="lang == 'th_TH'">ประเภทรายได้</t>
+                                        <t t-else="">Income Type</t>
+                                    </th>
+                                    <th t-if="register_type == 'purchase'">
+                                        <t t-if="lang == 'th_TH'">เลขที่ใบรับรอง</t>
+                                        <t t-else="">Cert No.</t>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -54,6 +66,9 @@
                                     <td t-esc="r['partner']"/>
                                     <td class="text-end" t-esc="r['base']"/>
                                     <td class="text-end" t-esc="r['tax']"/>
+                                    <td class="text-end" t-if="register_type == 'purchase'" t-esc="r['wht']"/>
+                                    <td t-if="register_type == 'purchase'" t-esc="r['income_type']"/>
+                                    <td t-if="register_type == 'purchase'" t-esc="r['cert_no']"/>
                                 </tr>
                             </tbody>
                             <tfoot>
@@ -64,6 +79,9 @@
                                     </td>
                                     <td class="text-end" t-esc="totals['base']"/>
                                     <td class="text-end" t-esc="totals['tax']"/>
+                                    <td class="text-end" t-if="register_type == 'purchase'" t-esc="totals['wht']"/>
+                                    <td t-if="register_type == 'purchase'"/>
+                                    <td t-if="register_type == 'purchase'"/>
                                 </tr>
                             </tfoot>
                         </table>

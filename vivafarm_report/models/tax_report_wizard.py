@@ -114,6 +114,22 @@ class ReportTaxRegister(models.AbstractModel):
             # in move lines) — flip so refunds reduce the register base.
             base_raw = m.amount_untaxed if m.move_type in ('out_invoice', 'in_invoice') else -m.amount_untaxed
             tax_raw = m.amount_tax if m.move_type in ('out_invoice', 'in_invoice') else -m.amount_tax
+            # VS-15: WHT columns on the purchase register (internal
+            # reconciliation aid — the statutory annex sets a floor, not a
+            # ceiling, per ประกาศอธิบดี ฉบับที่ 89 ข้อ 2). WHT = sum of the
+            # bill's negative tax lines; income type from the vendor master;
+            # cert no. = the reconciled payment name (the cert is generated
+            # per payment slice, VS-05/VS-10).
+            wht_raw = 0.0
+            income_type = ''
+            cert_no = ''
+            if register_type == 'purchase':
+                wht_lines = m.line_ids.filtered(
+                    lambda l: l.tax_line_id and l.tax_line_id.amount < 0)
+                wht_raw = sum(-l.balance for l in wht_lines)
+                income_type = m.partner_id.viva_income_type or ''
+                pay = m._get_reconciled_payments()[:1]
+                cert_no = pay.name if pay else ''
             rows.append({
                 'date': m.invoice_date,
                 'name': m.name,
@@ -122,10 +138,15 @@ class ReportTaxRegister(models.AbstractModel):
                 'tax': format_amount(self.env, tax_raw, currency),
                 'base_raw': base_raw,
                 'tax_raw': tax_raw,
+                'wht': format_amount(self.env, wht_raw, currency),
+                'wht_raw': wht_raw,
+                'income_type': income_type,
+                'cert_no': cert_no,
             })
         totals = {
             'base': format_amount(self.env, sum(r['base_raw'] for r in rows), currency),
             'tax': format_amount(self.env, sum(r['tax_raw'] for r in rows), currency),
+            'wht': format_amount(self.env, sum(r['wht_raw'] for r in rows), currency),
         }
         return {
             'doc_ids': wizard.ids,
