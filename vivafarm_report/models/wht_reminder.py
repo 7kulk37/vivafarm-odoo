@@ -42,6 +42,14 @@ class VivaWhtReminder(models.Model):
              'below the threshold (over-withheld) or the threshold was '
              'crossed without WHT (missed).')
     de_minimis_note = fields.Text(string='De-minimis Note')
+    wht_correction = fields.Boolean(
+        string='WHT Correction Needed',
+        help='Set when a vendor credit note after a paid-and-withheld bill '
+             'over-withheld WHT (VS-09, RD Ruling Gor.Kor. 0702/9205). '
+             'Operator must: refund the excess to the payee, cancel the '
+             'original cert, and file an amended PND for the payment month '
+             '(ยื่นเพิ่มเติม). Never net against next month.')
+    wht_correction_note = fields.Text(string='WHT Correction Note')
 
     @api.model
     def _compute_remit_due(self, payment_date):
@@ -135,3 +143,51 @@ class VivaWhtReminder(models.Model):
     def action_mark_remitted(self):
         for rec in self:
             rec.write({'state': 'remitted', 'remitted_date': fields.Date.context_today(self)})
+
+    @api.model
+    def _check_over_withheld(self, credit_note):
+        """Flag over-withheld WHT when a credit note reduces a paid bill (VS-09).
+
+        RD Ruling Gor.Kor. 0702/9205 (8 Oct 2015): when WHT was over-withheld
+        (e.g. bill 10,000 withheld 300, credit note 2,000 -> correct WHT on
+        net 8,000 is 240, excess 60), the payer must refund the excess to the
+        payee, cancel the original cert, and file an amended PND for the
+        payment month (ยื่นเพิ่มเติม). Never net against next month.
+
+        This is a FLAG for the operator — never auto-cancel certs or auto-file.
+        """
+        if credit_note.move_type != 'in_refund':
+            return
+        original = credit_note.reversed_entry_id
+        if not original or original.move_type != 'in_invoice':
+            return
+        # Only when the original was paid (WHT was actually withheld).
+        reminder = self.search([
+            ('bill_id', '=', original.id),
+            ('state', '=', 'pending'),
+        ], limit=1)
+        if not reminder or not reminder.wht_amount:
+            return
+        # Recompute WHT on the net-of-credit-note amount. in_refund moves
+        # have POSITIVE amount_total in Odoo 19 (sign lives in lines).
+        net = original.amount_total - credit_note.amount_total
+        wht_tax = original.line_ids.filtered(
+            lambda l: l.tax_line_id and l.tax_line_id.amount < 0)
+        if not wht_tax:
+            return
+        rate = -wht_tax[0].tax_line_id.amount
+        # price_include=True grosses up: base = net / (1 - rate), tax = base * rate.
+        correct_wht = net * rate / (1 - rate) if wht_tax[0].tax_line_id.price_include else net * rate
+        excess = reminder.wht_amount - correct_wht
+        if excess > 0.01:
+            reminder.write({
+                'wht_correction': True,
+                'wht_correction_note': (
+                    'Credit note %s reduces bill %s. WHT withheld %.2f, '
+                    'correct on net %.2f is %.2f — excess %.2f. Refund the '
+                    'excess to the payee, cancel the original cert, and file '
+                    'an amended PND for the payment month (ยื่นเพิ่มเติม). '
+                    'Never net against next month (RD Ruling Gor.Kor. 0702/9205).'
+                    % (credit_note.name, original.name, reminder.wht_amount,
+                       net, correct_wht, excess)),
+            })

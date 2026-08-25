@@ -494,6 +494,10 @@ class AccountMove(models.Model):
         # regenerated during post and may be deleted mid-flight).
         self.invoice_line_ids._apply_vat_flip()
         res = super()._post(soft=soft)
+        # VS-09: detect over-withheld WHT when a vendor credit note reduces
+        # a paid-and-withheld bill (RD Ruling Gor.Kor. 0702/9205).
+        for move in self.filtered(lambda m: m.move_type == 'in_refund'):
+            self.env['viva.wht.reminder']._check_over_withheld(move)
         for move in self.filtered(lambda m: m.move_type == 'in_invoice'):
             partner = move.commercial_partner_id
             # Foreign/non-resident vendors: no Thai TIN — PND 54 path, never block.
