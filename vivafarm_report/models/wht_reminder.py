@@ -35,6 +35,13 @@ class VivaWhtReminder(models.Model):
         ('remitted', 'Remitted'),
     ], string='State', default='pending')
     remitted_date = fields.Date(string='Remitted Date')
+    de_minimis_warning = fields.Boolean(
+        string='De-minimis Warning',
+        help='Set when the 1,000 THB cumulative per-vendor-per-year threshold '
+             'interacts with this payment (VS-08): either WHT was withheld '
+             'below the threshold (over-withheld) or the threshold was '
+             'crossed without WHT (missed).')
+    de_minimis_note = fields.Text(string='De-minimis Note')
 
     @api.model
     def _compute_remit_due(self, payment_date):
@@ -61,6 +68,7 @@ class VivaWhtReminder(models.Model):
         wht_lines = bill.line_ids.filtered(
             lambda l: l.tax_line_id and l.tax_line_id.amount < 0)
         wht_amount = sum(-l.balance for l in wht_lines)
+        warn, note = self._check_de_minimis(payment, bill)
         reminder = self.create({
             'partner_id': bill.partner_id.id,
             'bill_id': bill.id,
@@ -68,6 +76,8 @@ class VivaWhtReminder(models.Model):
             'wht_amount': wht_amount,
             'payment_date': payment.date,
             'remit_due': self._compute_remit_due(payment.date),
+            'de_minimis_warning': warn,
+            'de_minimis_note': note,
         })
         # Attach the WHT certificate PDF to the payment (one per bill).
         try:
@@ -88,6 +98,39 @@ class VivaWhtReminder(models.Model):
             # Certificate render failure must not block the payment.
             pass
         return reminder
+
+    @api.model
+    def _check_de_minimis(self, payment, bill):
+        """Flag 1,000 THB cumulative-rule interactions (VS-08).
+
+        The de-minimis is per-vendor CUMULATIVE per calendar year. Two
+        warning cases at payment time:
+          - WHT withheld but annual cumulative <= 1,000  -> over-withheld
+            (operator should have removed the WHT line)
+          - No WHT on the bill but annual cumulative > 1,000 -> missed WHT
+            (the threshold was crossed; withholding applies from the
+            crossing payment onward)
+        Returns a (warning, note) tuple; the operator decides the fix.
+        """
+        partner = bill.commercial_partner_id
+        if not partner or partner.viva_income_type == 'goods':
+            return False, ''
+        cumulative = partner._cumulative_paid_year(payment.date.year)
+        has_wht = bool(bill.line_ids.filtered(
+            lambda l: l.tax_line_id and l.tax_line_id.amount < 0))
+        if has_wht and cumulative <= 1000.0:
+            return True, (
+                'WHT withheld on %s but annual cumulative paid to %s is '
+                '%.2f (<= 1,000). The 1,000 THB de-minimis is cumulative '
+                'per vendor per year — consider removing the WHT line.'
+                % (bill.name, partner.name, cumulative))
+        if not has_wht and cumulative > 1000.0:
+            return True, (
+                'No WHT on %s but annual cumulative paid to %s is %.2f '
+                '(> 1,000). The 1,000 THB de-minimis is cumulative per '
+                'vendor per year — WHT applies from the crossing payment.'
+                % (bill.name, partner.name, cumulative))
+        return False, ''
 
     def action_mark_remitted(self):
         for rec in self:

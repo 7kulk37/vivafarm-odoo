@@ -12,6 +12,7 @@
                 <field name="wht_amount" sum="1"/>
                 <field name="remit_due"/>
                 <field name="state"/>
+                <field name="de_minimis_warning" optional="show"/>
                 <field name="remitted_date" optional="show"/>
             </list>
         </field>

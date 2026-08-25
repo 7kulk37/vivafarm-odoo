@@ -146,3 +146,21 @@ class ResPartner(models.Model):
         if self.env.lang == 'en_US':
             return _TH_STATE_EN.get(unicodedata.normalize('NFC', state.name), state.name)
         return state.name
+
+    def _cumulative_paid_year(self, year):
+        """Total paid to this vendor in the calendar year (VS-08).
+
+        The 1,000 THB WHT de-minimis is per-vendor CUMULATIVE per calendar
+        year, not per bill: recurring bills under 1,000 each still trigger
+        withholding once the annual total exceeds 1,000. Sums the reconciled
+        outbound payments to this partner in the given year.
+        """
+        self.ensure_one()
+        payments = self.env['account.payment'].search([
+            ('partner_id', '=', self.id),
+            ('payment_type', '=', 'outbound'),
+            ('state', 'in', ('in_process', 'paid')),
+            ('date', '>=', '%s-01-01' % year),
+            ('date', '<=', '%s-12-31' % year),
+        ])
+        return sum(p.amount for p in payments)
