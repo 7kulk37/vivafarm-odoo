@@ -20,6 +20,41 @@
         </field>
     </record>
 
+    <record id="view_viva_wht_reminder_form" model="ir.ui.view">
+        <field name="name">viva.wht.reminder.form</field>
+        <field name="model">viva.wht.reminder</field>
+        <field name="arch" type="xml">
+            <form string="WHT Remittance Reminder">
+                <group>
+                    <group>
+                        <field name="partner_id"/>
+                        <field name="bill_id"/>
+                        <field name="payment_id"/>
+                        <field name="payment_date"/>
+                    </group>
+                    <group>
+                        <field name="wht_amount"/>
+                        <field name="remit_due"/>
+                        <field name="state"/>
+                        <field name="remitted_date"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="de_minimis_warning"/>
+                    <field name="de_minimis_note"/>
+                    <field name="wht_correction"/>
+                    <field name="wht_correction_note"/>
+                    <field name="return_in_picking_id"/>
+                </group>
+                <footer>
+                    <button name="action_mark_remitted" type="object"
+                            string="Mark Remitted" class="btn-primary"
+                            invisible="state == 'remitted'"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
     <record id="action_viva_wht_reminder" model="ir.actions.act_window">
         <field name="name">WHT Remittance Reminders</field>
         <field name="res_model">viva.wht.reminder</field>
