@@ -40,6 +40,24 @@ class AccountMove(models.Model):
         'account.move', string='Debit Note Of', ondelete='set null',
         help="Original tax invoice this debit note adjusts upward (มาตรา 86/9).")
 
+    # ── Vendor tax-invoice capture (VS-12) ──
+    # The vendor's own tax invoice number + date, recorded on the bill header.
+    # Required (soft) only when the vendor is VAT-registered — it is the
+    # purchase-register (รายงานภาษีซื้อ) entry key and the §82/5 input-tax
+    # support at future registration. Free text: Thai tax-invoice numbers
+    # vary (book/เล่ม + serial, abbreviated invoices). Never blocks posting.
+    viva_vendor_tax_invoice_no = fields.Char(
+        string='Vendor Tax Invoice No.',
+        help='The vendor\'s own tax invoice number (ใบกำกับภาษี) for this bill. '
+             'Required when the vendor is VAT-registered — the purchase-register '
+             'entry key and §82/5 input-tax support. Free text.',
+    )
+    viva_vendor_tax_invoice_date = fields.Date(
+        string='Vendor Tax Invoice Date',
+        help='Date stated on the vendor\'s tax invoice (DG VAT No. 89 ข้อ 8(2) — '
+             'the register records the date on the tax invoice).',
+    )
+
     #: Root of the re-issue chain (ป.86/2542 ข้อ 25). Every member of a chain
     #: (the voided original and each re-issued replacement) carries the id of
     #: the chain ROOT. Stored so the re-issue history is searchable — the
@@ -521,4 +539,14 @@ class AccountMove(models.Model):
                     "number before posting.",
                     name=move.name or 'draft',
                 ))
+            # VS-12: vendor tax-invoice capture — soft-required when the vendor
+            # is VAT-registered (the purchase-register entry key + §82/5
+            # input-tax support). Warn, never block posting.
+            if (partner.viva_vat_registered_since
+                    and not move.viva_vendor_tax_invoice_no):
+                move._message_log(
+                    body=_("Vendor %(vendor)s is VAT-registered — record the "
+                           "vendor's tax invoice number + date (VS-12) for the "
+                           "purchase register (รายงานภาษีซื้อ) and §82/5 input-tax "
+                           "support.", vendor=partner.display_name))
         return res
