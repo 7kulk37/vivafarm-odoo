@@ -16,6 +16,7 @@ from . import pnd50_report
 from . import account_payment
 from . import res_bank
 from . import res_partner
+from . import hr_employee
 from . import purchase_order_line
 from . import account_move_line
 from . import wht_reminder
