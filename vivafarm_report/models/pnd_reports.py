@@ -20,15 +20,31 @@ class ReportPnd53(models.AbstractModel):
 
     @api.model
     def _get_wht_lines(self, wizard, tag_name):
-        """Posted WHT lines in period carrying the given tag."""
-        return self.env['account.move.line'].search([
+        """Posted WHT lines whose bill was PAID in the selected period.
+
+        The PND month is the month of PAYMENT (มาตรา 50 — withholding
+        occurs at payment), not the invoice date. A bill invoiced in month
+        A but paid in month B belongs in month B's return. Unpaid bills
+        are excluded (no withholding yet).
+        """
+        lines = self.env['account.move.line'].search([
             ('parent_state', '=', 'posted'),
             ('tax_line_id', '!=', False),
             ('tax_line_id.amount', '<', 0),
-            ('date', '>=', wizard.date_from),
-            ('date', '<=', wizard.date_to),
             ('tax_line_id.invoice_repartition_line_ids.tag_ids.name', '=', tag_name),
         ])
+        return lines.filtered(lambda l: self._bill_paid_in_period(l.move_id, wizard))
+
+    @api.model
+    def _bill_paid_in_period(self, bill, wizard):
+        return bool(bill._get_reconciled_payments().filtered(
+            lambda p: wizard.date_from <= p.date <= wizard.date_to))
+
+    @api.model
+    def _payment_date_in_period(self, bill, wizard):
+        pay = bill._get_reconciled_payments().filtered(
+            lambda p: wizard.date_from <= p.date <= wizard.date_to)
+        return pay[:1].date if pay else False
 
     @api.model
     def _get_report_values(self, docids, data=None):
@@ -42,8 +58,9 @@ class ReportPnd53(models.AbstractModel):
         # Detail rows per partner for the register section
         rows = []
         for l in remit_lines:
+            pay_date = self._payment_date_in_period(l.move_id, wizard)
             rows.append({
-                'date': l.date,
+                'date': pay_date or l.date,
                 'name': l.move_id.name,
                 'partner': l.partner_id.name,
                 'income': l.tax_base_amount,
