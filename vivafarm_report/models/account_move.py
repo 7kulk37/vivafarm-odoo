@@ -471,3 +471,44 @@ class AccountMove(models.Model):
             'res_id': new_invoice.id,
             'view_mode': 'form',
         }
+
+    def _post(self, soft=True):
+        """Vendor-bill evidence guardrails (VS-02/VS-03).
+
+        Before posting a vendor bill (in_invoice):
+        - VS-03: the vendor's Tax ID (vat) is REQUIRED for Thai payees —
+          §65 ter(18) disallows an expense whose recipient cannot be
+          identified; ภ.ง.ด.53/3 payee detail needs the Tax ID (CID for
+          natural persons). Hard-block for Thai vendors; never block
+          foreign/non-resident vendors (no Thai TIN — PND 54 path).
+        - VS-02: the vendor's own invoice number (ref) is HARD-required
+          for Thai juristic vendors (they always issue invoices); SOFT
+          (warning only) for goods-only / no-invoice vendors (bank slip +
+          voucher is still evidence under §65 bis). Never blocks petty
+          cash (no vendor bill) or foreign vendors.
+        """
+        res = super()._post(soft=soft)
+        for move in self.filtered(lambda m: m.move_type == 'in_invoice'):
+            partner = move.commercial_partner_id
+            # Foreign/non-resident vendors: no Thai TIN — PND 54 path, never block.
+            if not partner or (partner.country_id and partner.country_id.code != 'TH'):
+                continue
+            # Thai payee: Tax ID required (VS-03)
+            if not partner.vat:
+                raise UserError(_(
+                    "Vendor bill %(name)s: the vendor %(vendor)s has no Tax ID. "
+                    "Thai payees must carry a Tax ID (13-digit CID for natural "
+                    "persons) — required for ภ.ง.ด.53/3 payee detail and §65 "
+                    "ter(18) recipient identification.",
+                    name=move.name or move.ref or 'draft',
+                    vendor=partner.display_name,
+                ))
+            # Thai juristic vendor: invoice ref hard-required (VS-02)
+            if partner.company_type == 'company' and not move.ref:
+                raise UserError(_(
+                    "Vendor bill %(name)s: the vendor's invoice number (ref) is "
+                    "required for Thai companies. Enter the vendor's own invoice "
+                    "number before posting.",
+                    name=move.name or 'draft',
+                ))
+        return res
