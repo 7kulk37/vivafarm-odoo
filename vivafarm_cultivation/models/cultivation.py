@@ -122,10 +122,23 @@ class Cultivation(models.Model):
 
     # Dates
     germinated_date = fields.Datetime(string='Germinated Date', readonly=True)
-    growing_date = fields.Datetime(string='Transplanted At', readonly=True)
+    growing_date = fields.Datetime(string='Growing Date', readonly=True)
     harvested_date = fields.Datetime(string='Harvested Date', readonly=True)
     done_date = fields.Datetime(string='Done Date', readonly=True)
     canceled_date = fields.Datetime(string='Canceled Date', readonly=True)
+    # CL-18: F-07 harvest + pack multi-event (GAP 3.5.1/3.6.1)
+    harvest_time = fields.Datetime(
+        string='Harvest Time',
+        help='When the harvest started',
+    )
+    packer_name = fields.Char(
+        string='Packer',
+        help='Worker who packed the produce (GAP 3.8.1 signature)',
+    )
+    pack_time = fields.Datetime(
+        string='Pack Time',
+        help='When the produce was packed',
+    )
 
     # Stock moves
     plant_picking_id = fields.Many2one('stock.picking', string='Plant Picking', readonly=True)
