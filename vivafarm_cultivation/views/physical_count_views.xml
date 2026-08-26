@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Physical Count list view -->
+        <record id="view_farm_physical_count_tree" model="ir.ui.view">
+            <field name="name">farm.physical.count.tree</field>
+            <field name="model">farm.physical.count</field>
+            <field name="arch" type="xml">
+                <list string="Physical Counts" multi_edit="1" editable="bottom">
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="product_id"/>
+                    <field name="counted_qty"/>
+                    <field name="system_qty" readonly="1"/>
+                    <field name="variance" readonly="1"/>
+                    <field name="performed_by"/>
+                    <field name="state" widget="badge"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Physical Count form view -->
+        <record id="view_farm_physical_count_form" model="ir.ui.view">
+            <field name="name">farm.physical.count.form</field>
+            <field name="model">farm.physical.count</field>
+            <field name="arch" type="xml">
+                <form string="Physical Count">
+                    <header>
+                        <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_cancel" type="object" string="Cancel"
+                                invisible="state != 'confirmed'"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="ref" readonly="1"/>
+                                <field name="date"/>
+                                <field name="product_id"/>
+                                <field name="counted_qty"/>
+                            </group>
+                            <group>
+                                <field name="system_qty" readonly="1"/>
+                                <field name="variance" readonly="1"/>
+                                <field name="performed_by"/>
+                                <field name="confirmed_by" readonly="1"/>
+                                <field name="state" widget="badge"/>
+                            </group>
+                        </group>
+                        <field name="notes" nolabel="1" placeholder="Notes about this count..."/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → Physical Counts -->
+        <record id="action_farm_physical_count" model="ir.actions.act_window">
+            <field name="name">Physical Counts</field>
+            <field name="res_model">farm.physical.count</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_physical_count"
+                  name="Physical Counts"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_physical_count"
+                  sequence="41"/>
+
+    </data>
+</odoo>

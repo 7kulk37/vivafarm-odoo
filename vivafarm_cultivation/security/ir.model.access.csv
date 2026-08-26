@@ -27,3 +27,5 @@ access_farm_vat_flip_guard_user,farm.vat.flip.guard.user,model_farm_vat_flip_gua
 access_farm_vat_flip_guard_manager,farm.vat.flip.guard.manager,model_farm_vat_flip_guard,base.group_system,1,1,1,1
 access_farm_year_end_closure_user,farm.year.end.closure.user,model_farm_year_end_closure,base.group_user,1,1,1,0
 access_farm_year_end_closure_manager,farm.year.end.closure.manager,model_farm_year_end_closure,base.group_system,1,1,1,1
+access_farm_physical_count_user,farm.physical.count.user,model_farm_physical_count,base.group_user,1,1,1,0
+access_farm_physical_count_manager,farm.physical.count.manager,model_farm_physical_count,base.group_system,1,1,1,1
