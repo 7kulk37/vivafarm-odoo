@@ -33,6 +33,23 @@ class FarmInputLog(models.Model):
         string='Probe Calibration Due',
         help='Date the probe calibration expires (typically +30 days)',
     )
+    # CL-28: out-of-band detection + correction trio (GAP 3.5.1)
+    is_out_of_band = fields.Boolean(
+        string='Out of Band', compute='_compute_out_of_band', store=True,
+        help='True when EC or pH is outside the recipe target band',
+    )
+    recheck_ec_value = fields.Float(
+        string='Re-check EC', digits=(4, 2),
+        help='EC after correction (re-check reading)',
+    )
+    recheck_ph_value = fields.Float(
+        string='Re-check pH', digits=(3, 1),
+        help='pH after correction (re-check reading)',
+    )
+    recheck_time = fields.Datetime(
+        string='Re-check Time',
+        help='When the re-check reading was taken',
+    )
     bench_id = fields.Many2one(
         'farm.location',
         string='Location',
@@ -131,6 +148,24 @@ class FarmInputLog(models.Model):
             if record.bench_id:
                 parts.append(record.bench_id.name)
             record.display_name = ' / '.join(parts) if parts else 'New Input Log'
+
+    @api.depends('ec_value', 'ph_value', 'lot_id')
+    def _compute_out_of_band(self):
+        """CL-28: flag when EC or pH is outside the recipe target band."""
+        for record in self:
+            recipe = record.lot_id.cultivation_recipe_id if hasattr(record.lot_id, 'cultivation_recipe_id') else False
+            if not recipe:
+                recipe = self.env['vivafarm.recipe'].search([
+                    ('crop_id', '=', record.lot_id.product_id.id),
+                ], limit=1)
+            if not recipe:
+                record.is_out_of_band = False
+                continue
+            ec_ok = (not recipe.target_ec_min or record.ec_value >= recipe.target_ec_min) and \
+                    (not recipe.target_ec_max or record.ec_value <= recipe.target_ec_max)
+            ph_ok = (not recipe.target_ph_min or record.ph_value >= recipe.target_ph_min) and \
+                    (not recipe.target_ph_max or record.ph_value <= recipe.target_ph_max)
+            record.is_out_of_band = not (ec_ok and ph_ok)
 
     def write(self, vals):
         """Block editing non-draft records."""
