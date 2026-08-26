@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- NRV Guard list view -->
+        <record id="view_farm_nrv_guard_tree" model="ir.ui.view">
+            <field name="name">farm.nrv.guard.tree</field>
+            <field name="model">farm.nrv.guard</field>
+            <field name="arch" type="xml">
+                <list string="NRV Guard" create="false" delete="false">
+                    <field name="product_id"/>
+                    <field name="cost" widget="monetary"/>
+                    <field name="nrv" widget="monetary"/>
+                    <field name="write_down_needed" widget="boolean_fa"/>
+                    <field name="write_down_amount" widget="monetary"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- NRV Guard form view -->
+        <record id="view_farm_nrv_guard_form" model="ir.ui.view">
+            <field name="name">farm.nrv.guard.form</field>
+            <field name="model">farm.nrv.guard</field>
+            <field name="arch" type="xml">
+                <form string="NRV Guard">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="product_id"/>
+                                <field name="cost" widget="monetary" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="nrv" widget="monetary" readonly="1"/>
+                                <field name="write_down_needed" readonly="1"/>
+                                <field name="write_down_amount" widget="monetary" readonly="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → NRV Guard -->
+        <record id="action_farm_nrv_guard" model="ir.actions.act_window">
+            <field name="name">NRV Guard</field>
+            <field name="res_model">farm.nrv.guard</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_nrv_guard"
+                  name="NRV Guard"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_nrv_guard"
+                  sequence="42"/>
+
+    </data>
+</odoo>
