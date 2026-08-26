@@ -125,10 +125,24 @@ class FarmWorkerLog(models.Model):
         CL-05: confirming a production worker log CAPITALIZES the wage into
         WIP (Dr 113400 / Cr 222100) — labor is a conversion cost, not a
         period expense. It flows to FG at harvest and to COGS on sale.
+
+        CL-38: a worker cannot be paid twice for the same date — the same
+        worker_name + date is blocked at confirm.
         """
         for record in self:
             if record.state != 'draft':
                 raise UserError(f'Can only confirm draft worker logs. Log {record.display_name} is in state "{record.state}".')
+            dup = self.search([
+                ('worker_name', '=', record.worker_name),
+                ('date', '=', record.date),
+                ('state', '=', 'confirmed'),
+                ('id', '!=', record.id),
+            ], limit=1)
+            if dup:
+                raise UserError(
+                    f'Duplicate wage log: {record.worker_name} already has a confirmed log for {record.date} '
+                    f'({dup.display_name}). A worker cannot be paid twice for the same day.'
+                )
         self.write({'state': 'confirmed', 'confirmed_by': self.env.user.id})
         for record in self:
             record._post_labor_accrual()

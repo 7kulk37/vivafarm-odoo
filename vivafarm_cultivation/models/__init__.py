@@ -21,3 +21,4 @@ from . import nrv_guard
 from . import recall_drill
 from . import insurance_policy
 from . import yield_metric
+from . import temperature_log

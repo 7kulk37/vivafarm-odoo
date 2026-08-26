@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Temperature Log list view -->
+        <record id="view_farm_temperature_log_tree" model="ir.ui.view">
+            <field name="name">farm.temperature.log.tree</field>
+            <field name="model">farm.temperature.log</field>
+            <field name="arch" type="xml">
+                <list string="Temperature Logs" multi_edit="1" editable="bottom">
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="min_temp"/>
+                    <field name="max_temp"/>
+                    <field name="range_ok" widget="boolean_fa"/>
+                    <field name="performed_by"/>
+                    <field name="state" widget="badge"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Temperature Log form view -->
+        <record id="view_farm_temperature_log_form" model="ir.ui.view">
+            <field name="name">farm.temperature.log.form</field>
+            <field name="model">farm.temperature.log</field>
+            <field name="arch" type="xml">
+                <form string="Temperature Log">
+                    <header>
+                        <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_cancel" type="object" string="Cancel"
+                                invisible="state != 'confirmed'"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="ref" readonly="1"/>
+                                <field name="date"/>
+                                <field name="min_temp"/>
+                                <field name="max_temp"/>
+                            </group>
+                            <group>
+                                <field name="range_ok" readonly="1"/>
+                                <field name="performed_by"/>
+                                <field name="confirmed_by" readonly="1"/>
+                                <field name="state" widget="badge"/>
+                            </group>
+                        </group>
+                        <field name="notes" nolabel="1" placeholder="Notes about this reading..."/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → Temperature Logs -->
+        <record id="action_farm_temperature_log" model="ir.actions.act_window">
+            <field name="name">Temperature Logs</field>
+            <field name="res_model">farm.temperature.log</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_temperature_log"
+                  name="Temperature Logs"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_temperature_log"
+                  sequence="46"/>
+
+    </data>
+</odoo>

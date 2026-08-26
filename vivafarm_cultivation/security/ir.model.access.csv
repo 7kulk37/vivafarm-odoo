@@ -37,3 +37,5 @@ access_farm_insurance_policy_user,farm.insurance.policy.user,model_farm_insuranc
 access_farm_insurance_policy_manager,farm.insurance.policy.manager,model_farm_insurance_policy,base.group_system,1,1,1,1
 access_farm_yield_metric_user,farm.yield.metric.user,model_farm_yield_metric,base.group_user,1,1,1,0
 access_farm_yield_metric_manager,farm.yield.metric.manager,model_farm_yield_metric,base.group_system,1,1,1,1
+access_farm_temperature_log_user,farm.temperature.log.user,model_farm_temperature_log,base.group_user,1,1,1,0
+access_farm_temperature_log_manager,farm.temperature.log.manager,model_farm_temperature_log,base.group_system,1,1,1,1
