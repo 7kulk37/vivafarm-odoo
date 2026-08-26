@@ -523,7 +523,10 @@ class Cultivation(models.Model):
             raise UserError('Enter a harvest date.')
         if not self.packed_product_id:
             raise UserError('Select a packed product.')
-        if not self.packed_kg:
+        # CL-23: zero-yield batch (full failure / all spoil) is allowed —
+        # packed_kg = 0 with spoilage_units = total plants. The WIP is
+        # written off to a period loss at action_done, not capitalized.
+        if not self.packed_kg and not (self.spoilage_units and self.spoilage_units >= (self.target_plant_count or 0)):
             raise UserError('Enter packed kg.')
 
         self.write({
@@ -557,7 +560,12 @@ class Cultivation(models.Model):
         return daily_rate * duration
 
     def action_done(self):
-        """Harvested → Done: execute stock moves (packed → WH/Stock, spoilage → Spoilage)."""
+        """Harvested → Done: execute stock moves (packed → WH/Stock, spoilage → Spoilage).
+
+        CL-23: a zero-yield batch (packed_kg = 0, all plants spoiled) writes
+        ALL its WIP (material + labor) to a period loss account with a
+        documented disposal event — never lingers as an asset.
+        """
         self.ensure_one()
         if self.state != 'harvested':
             raise UserError('Can only mark Done from Harvested state.')
@@ -574,6 +582,10 @@ class Cultivation(models.Model):
             raise UserError(
                 f'Spoilage units ({self.spoilage_units}) cannot exceed the batch size '
                 f'({total_units} live plants). Check the spoilage count before harvesting.')
+
+        # CL-23: zero-yield branch — no FG to produce; write off the batch WIP.
+        if not self.packed_kg and (self.spoilage_units or 0) >= total_units:
+            return self._write_off_zero_yield(total_units)
 
         prod_loc = self._get_production_loc()
         spoilage_loc = self._get_spoilage_loc()
@@ -809,6 +821,127 @@ class Cultivation(models.Model):
         # Thai accounting: the production-output move transfers WIP value to FG
         # (Dr 113100 / Cr 113400) at the AVCO layer cost — the packed product's
         # standard_price was set to the exact material batch cost before validation.
+        return self._reopen()
+
+    def _write_off_zero_yield(self, total_units):
+        """CL-23: write off a zero-yield batch's full WIP to a period loss.
+
+        Consumes all live plants (Stock → Production), moves them to the
+        Spoilage location, posts a period-loss JE for the batch's material +
+        labor cost, creates the disposal record, and marks the batch done.
+        """
+        self.ensure_one()
+        prod_loc = self._get_production_loc()
+        spoilage_loc = self._get_spoilage_loc()
+        stock_loc = self._get_stock_loc()
+        live_lot = self.live_lot_id
+
+        int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
+        if not int_type:
+            int_type = self.env['stock.picking.type'].search([
+                ('code', '=', 'internal')
+            ], limit=1)
+
+        # 1. Consume all live plants: Stock → Production
+        picking = self.env['stock.picking'].create({
+            'picking_type_id': int_type.id,
+            'location_id': stock_loc.id,
+            'location_dest_id': prod_loc.id,
+            'move_ids': [(0, 0, {
+                'product_id': live_lot.product_id.id,
+                'product_uom_qty': total_units,
+                'product_uom': live_lot.product_id.uom_id.id,
+                'location_id': stock_loc.id,
+                'location_dest_id': prod_loc.id,
+                'company_id': self.env.company.id,
+                'date': self.harvest_date,
+                'procure_method': 'make_to_stock',
+                'move_line_ids': [(0, 0, {
+                    'product_id': live_lot.product_id.id,
+                    'lot_id': live_lot.id,
+                    'quantity': total_units,
+                    'product_uom_id': live_lot.product_id.uom_id.id,
+                    'location_id': stock_loc.id,
+                    'location_dest_id': prod_loc.id,
+                })],
+            })],
+        })
+        for move in picking.move_ids:
+            move._set_quantity_done(move.product_uom_qty)
+        picking.button_validate()
+        material_cost = sum(move.value for move in picking.move_ids)
+
+        # 2. Move all to Spoilage (documented non-sale removal)
+        spoil_pick = self.env['stock.picking'].create({
+            'picking_type_id': int_type.id,
+            'location_id': prod_loc.id,
+            'location_dest_id': spoilage_loc.id,
+            'move_ids': [(0, 0, {
+                'product_id': live_lot.product_id.id,
+                'product_uom_qty': total_units,
+                'product_uom': live_lot.product_id.uom_id.id,
+                'location_id': prod_loc.id,
+                'location_dest_id': spoilage_loc.id,
+                'company_id': self.env.company.id,
+                'date': self.harvest_date,
+                'procure_method': 'make_to_stock',
+                'move_line_ids': [(0, 0, {
+                    'product_id': live_lot.product_id.id,
+                    'lot_id': live_lot.id,
+                    'quantity': total_units,
+                    'product_uom_id': live_lot.product_id.uom_id.id,
+                    'location_id': prod_loc.id,
+                    'location_dest_id': spoilage_loc.id,
+                })],
+            })],
+        })
+        for move in spoil_pick.move_ids:
+            move._set_quantity_done(move.product_uom_qty)
+        spoil_pick.button_validate()
+
+        # 3. Period-loss JE: Dr 516xxx (abnormal loss) / Cr 113400 (WIP)
+        # for the batch's material + labor share.
+        labor_share = self._compute_labor_share()
+        loss_amount = material_cost + labor_share
+        loss_acc = self.env['account.account'].search([('code', '=', '516100')], limit=1)
+        if not loss_acc:
+            loss_acc = self.env['account.account'].search([('code', '=', '511100')], limit=1)
+        stock_journal = self.env.company.account_stock_journal_id
+        if loss_acc and stock_journal and loss_amount > 0:
+            je = self.env['account.move'].create({
+                'journal_id': stock_journal.id,
+                'date': self.harvest_date,
+                'ref': f'ZERO-YIELD-LOSS-{self.id}',
+                'line_ids': [
+                    (0, 0, {'account_id': loss_acc.id, 'debit': loss_amount, 'credit': 0.0,
+                            'name': f'Zero-yield batch loss - {self.name}'}),
+                    (0, 0, {'account_id': self.env['account.account'].search([('code', '=', '113400')], limit=1).id,
+                            'debit': 0.0, 'credit': loss_amount,
+                            'name': f'Zero-yield batch loss - {self.name}'}),
+                ],
+            })
+            je.action_post()
+
+        # 4. Disposal record (documented event)
+        existing = self.env['farm.spoilage.disposal'].search([
+            ('cultivation_id', '=', self.id),
+        ], limit=1)
+        if not existing:
+            self.env['farm.spoilage.disposal'].create({
+                'date': self.harvest_date or fields.Date.today(),
+                'cultivation_id': self.id,
+                'lot_id': live_lot.id,
+                'quantity': total_units,
+                'classification': 'abnormal',
+                'reason': 'Zero-yield batch (full failure / all plants spoiled)',
+                'destination': 'Spoilage location',
+            })
+
+        self.write({
+            'state': 'done',
+            'done_date': fields.Datetime.now(),
+            'harvest_picking_id': picking.id,
+        })
         return self._reopen()
 
     def action_cancel(self):
