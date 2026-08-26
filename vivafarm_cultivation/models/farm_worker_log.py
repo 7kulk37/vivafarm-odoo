@@ -77,6 +77,18 @@ class FarmWorkerLog(models.Model):
         copy=False,
         help='Auto-generated reference number',
     )
+    # CL-08: GAP 3.8.1 signature pair — who did the work + who confirmed
+    performed_by = fields.Char(
+        string='Performed By',
+        help='Worker who performed the task (GAP 3.8.1 signature)',
+    )
+    confirmed_by = fields.Many2one(
+        'res.users',
+        string='Confirmed By',
+        readonly=True,
+        copy=False,
+        help='User who confirmed the record (bound at confirm = digital signature)',
+    )
     auto_recalculation_enabled = fields.Boolean(
         string='Auto Recalc Enabled',
         compute='_compute_auto_recalculation_enabled',
@@ -117,7 +129,7 @@ class FarmWorkerLog(models.Model):
         for record in self:
             if record.state != 'draft':
                 raise UserError(f'Can only confirm draft worker logs. Log {record.display_name} is in state "{record.state}".')
-        self.write({'state': 'confirmed'})
+        self.write({'state': 'confirmed', 'confirmed_by': self.env.user.id})
         for record in self:
             record._post_labor_accrual()
         if self.env['ir.config_parameter'].sudo().get_param('vivafarm.worker_log_auto_recalc', 'False').lower() == 'true':

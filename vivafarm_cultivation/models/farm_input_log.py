@@ -95,6 +95,18 @@ class FarmInputLog(models.Model):
         copy=False,
         help='Auto-generated reference number',
     )
+    # CL-08: GAP 3.8.1 signature pair — who did the work + who confirmed
+    performed_by = fields.Char(
+        string='Performed By',
+        help='Worker who performed the task (GAP 3.8.1 signature)',
+    )
+    confirmed_by = fields.Many2one(
+        'res.users',
+        string='Confirmed By',
+        readonly=True,
+        copy=False,
+        help='User who confirmed the record (bound at confirm = digital signature)',
+    )
 
     @api.depends('date', 'bench_id')
     def _compute_display_name(self):
@@ -117,11 +129,15 @@ class FarmInputLog(models.Model):
         return super().write(vals)
 
     def action_confirm(self):
-        """Confirm the input log. Only works from draft state."""
+        """Confirm the input log. Only works from draft state.
+
+        CL-08: confirm binds the confirming user as the digital signature
+        (GAP 3.8.1) — the record becomes immutable.
+        """
         for record in self:
             if record.state != 'draft':
                 raise UserError(f'Can only confirm draft input logs. Log {record.display_name} is in state "{record.state}".')
-        self.write({'state': 'confirmed'})
+        self.write({'state': 'confirmed', 'confirmed_by': self.env.user.id})
         return True
 
     def action_cancel(self):

@@ -19,6 +19,8 @@
                     <field name="safety_briefing" widget="boolean_fa"/>
                     <field name="wage_amount" sum="Total"/>
                     <field name="working_hours" sum="Total"/>
+                    <field name="performed_by" optional="show"/>
+                    <field name="confirmed_by" optional="show"/>
                     <button name="action_confirm" type="object"
                             string="Confirm"
                             icon="fa-check"
@@ -59,6 +61,8 @@
                             <group>
                                 <field name="safety_briefing"/>
                                 <field name="auto_recalculation_enabled" readonly="1"/>
+                                <field name="performed_by"/>
+                                <field name="confirmed_by" readonly="1"/>
                                 <field name="lot_ids" widget="many2many_tags"/>
                                 <field name="company_id" invisible="1"/>
                             </group>
