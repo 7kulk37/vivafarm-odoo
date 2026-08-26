@@ -104,6 +104,8 @@
                                        readonly="state not in ('transplanted', 'harvested')"/>
                                 <field name="spoilage_units"
                                        readonly="state not in ('transplanted', 'harvested')"/>
+                                <field name="spoilage_classification" readonly="1"
+                                       invisible="state in ('draft', 'canceled')"/>
                             </group>
                         </group>
                         <group>
