@@ -10,6 +10,9 @@
             <field name="arch" type="xml">
                 <field name="ref" position="after">
                     <field name="x_seed_lot" placeholder="Seed lot number (e.g. GO-2026-04)"/>
+                    <field name="x_vendor_id" placeholder="Seed supplier (GAP 3.4.2)"/>
+                    <field name="x_purchase_date" placeholder="Purchase date"/>
+                    <field name="x_purchase_qty" placeholder="Purchase qty"/>
                 </field>
                 <!-- Remove invisible="not display_complete" from the quantity div inside inventory_group -->
                 <xpath expr="//group[@name='inventory_group']//div[@invisible='not display_complete']" position="attributes">

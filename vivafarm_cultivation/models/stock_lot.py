@@ -9,6 +9,22 @@ class StockLot(models.Model):
         help='Seed lot number from supplier (e.g. GO-2026-04)',
     )
 
+    # GAP 3.4.2/3.4.3 input traceability: source, purchase date, quantity
+    # carried ON the lot record so a recall names the seed supplier in
+    # minutes without a multi-hop join into PO/GRN (CL-20).
+    x_vendor_id = fields.Many2one(
+        'res.partner', string='Supplier',
+        help='Seed supplier (GAP 3.4.2 source of input factor)',
+    )
+    x_purchase_date = fields.Date(
+        string='Purchase Date',
+        help='Date the seed lot was purchased (GAP 3.4.2)',
+    )
+    x_purchase_qty = fields.Float(
+        string='Purchase Qty',
+        help='Quantity purchased in the product UoM (GAP 3.4.2)',
+    )
+
     @api.depends('name')
     def _compute_display_complete(self):
         """Always show quantity and location fields on lot form."""
