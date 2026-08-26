@@ -15,3 +15,4 @@ from . import sale_order_line
 from . import water_test
 from . import cash_accrual_recon
 from . import vat_flip_guard
+from . import year_end_closure

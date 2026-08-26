@@ -1,6 +1,6 @@
 {
     'name': 'Hydroponic',
-    'version': '1.39.0',
+    'version': '1.41.0',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Hydroponic farm management - cultivation, recipes, logs, and material transformation',
     'description': """\
@@ -35,6 +35,7 @@
         'views/water_test_views.xml',
         'views/cash_accrual_recon_views.xml',
         'views/vat_flip_guard_views.xml',
+        'views/year_end_closure_views.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
