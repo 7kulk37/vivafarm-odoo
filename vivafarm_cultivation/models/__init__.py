@@ -11,3 +11,4 @@ from . import spoilage_disposal
 from . import nutrient_mix
 from . import pest_cleaning
 from . import chemical_register
+from . import sale_order_line

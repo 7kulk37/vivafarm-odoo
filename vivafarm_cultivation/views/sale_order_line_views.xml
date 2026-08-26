@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- CL-19: add Packed Lot to the sale order line tree (loose sale trace) -->
+        <record id="view_sale_order_line_packed_lot" model="ir.ui.view">
+            <field name="name">sale.order.line.packed.lot</field>
+            <field name="model">sale.order.line</field>
+            <field name="inherit_id" ref="sale.view_order_line_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='price_subtotal']" position="after">
+                    <field name="packed_lot_id" optional="show"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

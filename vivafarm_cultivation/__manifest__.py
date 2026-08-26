@@ -1,6 +1,6 @@
 {
     'name': 'Hydroponic',
-    'version': '1.31.0',
+    'version': '1.33.0',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Hydroponic farm management - cultivation, recipes, logs, and material transformation',
     'description': """\
@@ -14,7 +14,7 @@
         - Farm Worker Log: worker activity records with GAP compliance
         - Seed Lot tracking on stock lots for full traceability
     """,
-    'depends': ['stock'],
+    'depends': ['stock', 'sale'],
     'data': [
         'security/ir.model.access.csv',
         'data/sequences.xml',
@@ -31,6 +31,7 @@
         'views/nutrient_mix_views.xml',
         'views/pest_cleaning_views.xml',
         'views/chemical_register_views.xml',
+        'views/sale_order_line_views.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'installable': True,
