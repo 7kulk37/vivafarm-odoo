@@ -23,3 +23,5 @@ access_farm_water_test_user,farm.water.test.user,model_farm_water_test,base.grou
 access_farm_water_test_manager,farm.water.test.manager,model_farm_water_test,base.group_system,1,1,1,1
 access_farm_cash_accrual_recon_user,farm.cash.accrual.recon.user,model_farm_cash_accrual_recon,base.group_user,1,1,1,0
 access_farm_cash_accrual_recon_manager,farm.cash.accrual.recon.manager,model_farm_cash_accrual_recon,base.group_system,1,1,1,1
+access_farm_vat_flip_guard_user,farm.vat.flip.guard.user,model_farm_vat_flip_guard,base.group_user,1,1,1,0
+access_farm_vat_flip_guard_manager,farm.vat.flip.guard.manager,model_farm_vat_flip_guard,base.group_system,1,1,1,1

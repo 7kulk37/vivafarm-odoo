@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- VAT Flip Guard list view -->
+        <record id="view_farm_vat_flip_guard_tree" model="ir.ui.view">
+            <field name="name">farm.vat.flip.guard.tree</field>
+            <field name="model">farm.vat.flip.guard</field>
+            <field name="arch" type="xml">
+                <list string="VAT Flip Guard" create="false" delete="false">
+                    <field name="invoice_id"/>
+                    <field name="partner_id"/>
+                    <field name="vat_before"/>
+                    <field name="vat_after"/>
+                    <field name="flip_date"/>
+                    <field name="reason"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- VAT Flip Guard form view -->
+        <record id="view_farm_vat_flip_guard_form" model="ir.ui.view">
+            <field name="name">farm.vat.flip.guard.form</field>
+            <field name="model">farm.vat.flip.guard</field>
+            <field name="arch" type="xml">
+                <form string="VAT Flip Guard">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="invoice_id" readonly="1"/>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="flip_date" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="vat_before" readonly="1"/>
+                                <field name="vat_after" readonly="1"/>
+                            </group>
+                        </group>
+                        <field name="reason" readonly="1" nolabel="1"/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → VAT Flip Guard -->
+        <record id="action_farm_vat_flip_guard" model="ir.actions.act_window">
+            <field name="name">VAT Flip Guard</field>
+            <field name="res_model">farm.vat.flip.guard</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_vat_flip_guard"
+                  name="VAT Flip Guard"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_vat_flip_guard"
+                  sequence="39"/>
+
+    </data>
+</odoo>

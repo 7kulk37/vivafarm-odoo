@@ -50,7 +50,10 @@
                                 <field name="state" widget="badge"/>
                             </group>
                         </group>
-                        <field name="corrective_action" nolabel="1" placeholder="Corrective action after a fail (flush, UV, source change)..."/>
+                        <group string="Corrective Action" invisible="not corrective_action">
+                            <field name="corrective_action" nolabel="1"
+                                   placeholder="Corrective action after a fail (flush, UV, source change)..."/>
+                        </group>
                     </sheet>
                 </form>
             </field>
