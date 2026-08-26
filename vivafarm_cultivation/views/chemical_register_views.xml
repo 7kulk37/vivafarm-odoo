@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Chemical Register list view -->
+        <record id="view_farm_chemical_register_tree" model="ir.ui.view">
+            <field name="name">farm.chemical.register.tree</field>
+            <field name="model">farm.chemical.register</field>
+            <field name="arch" type="xml">
+                <list string="Chemical Register" multi_edit="1" editable="bottom">
+                    <field name="ref"/>
+                    <field name="name"/>
+                    <field name="active_ingredient"/>
+                    <field name="phi_days"/>
+                    <field name="phi_elapsed" widget="boolean_fa"/>
+                    <field name="sds_on_file" widget="boolean_fa"/>
+                    <field name="last_use_date"/>
+                    <field name="active" widget="boolean_toggle"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Chemical Register form view -->
+        <record id="view_farm_chemical_register_form" model="ir.ui.view">
+            <field name="name">farm.chemical.register.form</field>
+            <field name="model">farm.chemical.register</field>
+            <field name="arch" type="xml">
+                <form string="Chemical">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" placeholder="e.g. Nitric Acid 68%"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="ref" readonly="1"/>
+                                <field name="active_ingredient"/>
+                                <field name="phi_days"/>
+                                <field name="phi_elapsed" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="sds_on_file"/>
+                                <field name="last_use_date"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <field name="notes" nolabel="1" placeholder="Notes about this chemical..."/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → Chemical Register -->
+        <record id="action_farm_chemical_register" model="ir.actions.act_window">
+            <field name="name">Chemical Register</field>
+            <field name="res_model">farm.chemical.register</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_chemical_register"
+                  name="Chemical Register"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_chemical_register"
+                  sequence="36"/>
+
+    </data>
+</odoo>
