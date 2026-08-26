@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Nutrient Mix list view -->
+        <record id="view_farm_nutrient_mix_tree" model="ir.ui.view">
+            <field name="name">farm.nutrient.mix.tree</field>
+            <field name="model">farm.nutrient.mix</field>
+            <field name="arch" type="xml">
+                <list string="Nutrient Mixes" multi_edit="1" editable="bottom">
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="tank_name"/>
+                    <field name="recipe_id"/>
+                    <field name="concentrate_a_ml"/>
+                    <field name="concentrate_b_ml"/>
+                    <field name="water_liters"/>
+                    <field name="target_ec"/>
+                    <field name="target_ph"/>
+                    <field name="performed_by"/>
+                    <field name="state" widget="badge"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Nutrient Mix form view -->
+        <record id="view_farm_nutrient_mix_form" model="ir.ui.view">
+            <field name="name">farm.nutrient.mix.form</field>
+            <field name="model">farm.nutrient.mix</field>
+            <field name="arch" type="xml">
+                <form string="Nutrient Mix">
+                    <header>
+                        <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_cancel" type="object" string="Cancel"
+                                invisible="state != 'confirmed'"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="ref" readonly="1"/>
+                                <field name="date"/>
+                                <field name="tank_name"/>
+                                <field name="recipe_id"/>
+                            </group>
+                            <group>
+                                <field name="concentrate_a_ml"/>
+                                <field name="concentrate_b_ml"/>
+                                <field name="water_liters"/>
+                                <field name="target_ec"/>
+                                <field name="target_ph"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="performed_by"/>
+                                <field name="confirmed_by" readonly="1"/>
+                                <field name="state" widget="badge"/>
+                            </group>
+                            <group>
+                                <field name="notes" nolabel="1" placeholder="Notes about this mix..."/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → Nutrient Mixes -->
+        <record id="action_farm_nutrient_mix" model="ir.actions.act_window">
+            <field name="name">Nutrient Mixes</field>
+            <field name="res_model">farm.nutrient.mix</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_nutrient_mix"
+                  name="Nutrient Mixes"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_nutrient_mix"
+                  sequence="33"/>
+
+    </data>
+</odoo>

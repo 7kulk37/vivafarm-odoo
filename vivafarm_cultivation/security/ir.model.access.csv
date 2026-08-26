@@ -11,3 +11,5 @@ access_material_transformation_user,material.transformation.user,model_material_
 access_material_transformation_manager,material.transformation.manager,model_material_transformation,base.group_system,1,1,1,1
 access_farm_spoilage_disposal_user,farm.spoilage.disposal.user,model_farm_spoilage_disposal,base.group_user,1,1,1,0
 access_farm_spoilage_disposal_manager,farm.spoilage.disposal.manager,model_farm_spoilage_disposal,base.group_system,1,1,1,1
+access_farm_nutrient_mix_user,farm.nutrient.mix.user,model_farm_nutrient_mix,base.group_user,1,1,1,0
+access_farm_nutrient_mix_manager,farm.nutrient.mix.manager,model_farm_nutrient_mix,base.group_system,1,1,1,1

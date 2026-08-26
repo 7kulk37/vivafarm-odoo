@@ -34,5 +34,13 @@
             <field name="company_id" eval="False"/>
         </record>
 
+        <record id="seq_farm_nutrient_mix" model="ir.sequence">
+            <field name="name">Nutrient Mix</field>
+            <field name="code">farm.nutrient.mix</field>
+            <field name="prefix">NM-</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
     </data>
 </odoo>
