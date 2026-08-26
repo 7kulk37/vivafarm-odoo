@@ -98,6 +98,20 @@ class Cultivation(models.Model):
     packed_lot_id = fields.Many2one('stock.lot', string='Packed Lot', readonly=True)
     packed_lot_weight_g = fields.Integer(string='Packed Weight (g)', readonly=True)
     crop_batch_sequence = fields.Integer(string='Crop Batch Sequence', readonly=True)
+    # CL-10: per-packed-lot cost capture — specific-ID per batch survives
+    # multi-batch concurrency without relying on the global standard_price.
+    packed_lot_cost = fields.Float(
+        string='Packed Lot Cost (THB)', readonly=True,
+        help='Total batch cost (material + labor) captured at harvest',
+    )
+    packed_lot_cost_per_kg = fields.Float(
+        string='Cost per kg (THB)', readonly=True,
+        help='Packed lot cost / packed kg',
+    )
+    packed_lot_remaining_value = fields.Float(
+        string='Remaining Value (THB)', readonly=True,
+        help='Cost of the unsold portion of this packed lot',
+    )
     spoilage_units = fields.Integer(string='Spoilage Units', default=0)
     spoilage_classification = fields.Selection([
         ('normal', 'Normal (≤5%)'),
@@ -798,6 +812,10 @@ class Cultivation(models.Model):
             'packed_lot_id': packed_lot.id,
             'harvest_picking_id': picking.id,
             'packed_picking_id': picking2.id if produce_moves else False,
+            # CL-10: per-packed-lot cost capture (material + labor)
+            'packed_lot_cost': fg_cost,
+            'packed_lot_cost_per_kg': fg_cost / self.packed_kg if self.packed_kg else 0.0,
+            'packed_lot_remaining_value': fg_cost,
         })
 
         # CL-06: abnormal spoilage (>5%) must carry a documented disposal

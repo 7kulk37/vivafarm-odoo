@@ -121,6 +121,9 @@
                                 <field name="total_nutrient_consumed" invisible="state == 'draft'"/>
                                 <field name="total_acid_consumed" invisible="state == 'draft'"/>
                                 <field name="harvest_picking_id" invisible="state in ('draft', 'germinated', 'transplanted')"/>
+                                <field name="packed_lot_cost" readonly="1" invisible="state != 'done'"/>
+                                <field name="packed_lot_cost_per_kg" readonly="1" invisible="state != 'done'"/>
+                                <field name="packed_lot_remaining_value" readonly="1" invisible="state != 'done'"/>
                             </group>
                         </group>
                         <group string="Notes">

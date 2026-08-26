@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Batch Cost Sheet report template (CL-10) -->
+        <template id="report_batch_cost_sheet">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="cul">
+                    <t t-call="web.external_layout">
+                        <div class="page">
+                            <h2>Batch Cost Sheet</h2>
+                            <h4 t-esc="cul.name or 'Draft'"/>
+                            <table class="table table-sm">
+                                <tr><th>Crop</th><td t-esc="cul.packed_product_id.name or ''"/></tr>
+                                <tr><th>Packed Lot</th><td t-esc="cul.packed_lot_id.name or ''"/></tr>
+                                <tr><th>Harvest Date</th><td t-esc="cul.harvest_date or ''"/></tr>
+                                <tr><th>Packed Kg</th><td t-esc="cul.packed_kg"/></tr>
+                                <tr><th>Spoilage Units</th><td t-esc="cul.spoilage_units"/></tr>
+                                <tr><th>Spoilage Classification</th><td t-esc="cul.spoilage_classification or ''"/></tr>
+                                <tr><th>Packed Lot Cost (THB)</th><td t-esc="'%0.2f' % cul.packed_lot_cost"/></tr>
+                                <tr><th>Cost per kg (THB)</th><td t-esc="'%0.2f' % cul.packed_lot_cost_per_kg"/></tr>
+                                <tr><th>Remaining Value (THB)</th><td t-esc="'%0.2f' % cul.packed_lot_remaining_value"/></tr>
+                            </table>
+                            <p><em>Cost = material + capitalized direct labor (CL-05). Specific-identification per batch (CL-10).</em></p>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <!-- Report action -->
+        <record id="action_report_batch_cost_sheet" model="ir.actions.report">
+            <field name="name">Batch Cost Sheet</field>
+            <field name="model">vivafarm.cultivation</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">vivafarm_cultivation.report_batch_cost_sheet</field>
+            <field name="report_file">vivafarm_cultivation.report_batch_cost_sheet</field>
+            <field name="binding_model_id" ref="model_vivafarm_cultivation"/>
+            <field name="binding_type">report</field>
+        </record>
+
+    </data>
+</odoo>
