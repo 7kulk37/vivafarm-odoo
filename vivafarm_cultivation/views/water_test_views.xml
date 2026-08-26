@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Water Test list view -->
+        <record id="view_farm_water_test_tree" model="ir.ui.view">
+            <field name="name">farm.water.test.tree</field>
+            <field name="model">farm.water.test</field>
+            <field name="arch" type="xml">
+                <list string="Water Tests" multi_edit="1" editable="bottom">
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="source"/>
+                    <field name="result"/>
+                    <field name="lab_name"/>
+                    <field name="report_ref"/>
+                    <field name="retest_of_id"/>
+                    <field name="performed_by"/>
+                    <field name="state" widget="badge"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Water Test form view -->
+        <record id="view_farm_water_test_form" model="ir.ui.view">
+            <field name="name">farm.water.test.form</field>
+            <field name="model">farm.water.test</field>
+            <field name="arch" type="xml">
+                <form string="Water Test">
+                    <header>
+                        <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_cancel" type="object" string="Cancel"
+                                invisible="state != 'confirmed'"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="ref" readonly="1"/>
+                                <field name="date"/>
+                                <field name="source"/>
+                                <field name="result"/>
+                            </group>
+                            <group>
+                                <field name="lab_name"/>
+                                <field name="report_ref"/>
+                                <field name="retest_of_id"/>
+                                <field name="performed_by"/>
+                                <field name="confirmed_by" readonly="1"/>
+                                <field name="state" widget="badge"/>
+                            </group>
+                        </group>
+                        <field name="corrective_action" nolabel="1" placeholder="Corrective action after a fail (flush, UV, source change)..."/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → Water Tests -->
+        <record id="action_farm_water_test" model="ir.actions.act_window">
+            <field name="name">Water Tests</field>
+            <field name="res_model">farm.water.test</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_water_test"
+                  name="Water Tests"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_water_test"
+                  sequence="37"/>
+
+    </data>
+</odoo>

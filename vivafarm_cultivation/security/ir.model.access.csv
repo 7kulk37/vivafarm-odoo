@@ -19,3 +19,5 @@ access_farm_cleaning_log_user,farm.cleaning.log.user,model_farm_cleaning_log,bas
 access_farm_cleaning_log_manager,farm.cleaning.log.manager,model_farm_cleaning_log,base.group_system,1,1,1,1
 access_farm_chemical_register_user,farm.chemical.register.user,model_farm_chemical_register,base.group_user,1,1,1,0
 access_farm_chemical_register_manager,farm.chemical.register.manager,model_farm_chemical_register,base.group_system,1,1,1,1
+access_farm_water_test_user,farm.water.test.user,model_farm_water_test,base.group_user,1,1,1,0
+access_farm_water_test_manager,farm.water.test.manager,model_farm_water_test,base.group_system,1,1,1,1
