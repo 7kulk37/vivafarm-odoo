@@ -228,12 +228,13 @@ class Cultivation(models.Model):
     # ── Computed totals from daily logs ──────────────
 
     def _get_packed_lot_name(self):
-        """Return packed lot name in format GC-001-2643-N6C6.
+        """Return packed lot name in format GC-YYWW-001-2643-N6C6.
 
-        GC   = crop code (first letters of crop short name)
-        001  = crop-specific batch sequence
-        2643 = packed weight in grams (packed_kg * 1000)
-        N6C6 = nursery code + bench code (e.g. N6 + C6)
+        GC    = crop code (first letters of crop short name)
+        YYWW  = harvest year + ISO week (traceability window; CL-13)
+        001   = crop-specific batch sequence
+        2643  = packed weight in grams (packed_kg * 1000)
+        N6C6  = nursery code + bench code (e.g. N6 + C6)
         """
         self.ensure_one()
         # Crop code from packed product short name, e.g. 'Green Cos (Packed)' -> 'GC'
@@ -249,7 +250,10 @@ class Cultivation(models.Model):
         weight_g = int(round((self.packed_kg or 0.0) * 1000))
         nursery = self.nursery_id.name or ''
         bench = self.bench_id.name or ''
-        return f'{crop_code}-{seq:03d}-{weight_g:04d}-{nursery}{bench}'
+        # YY-WW from harvest date (fallback plant date) — shelf-pointable window
+        anchor = self.harvest_date or self.plant_date
+        yyww = fields.Date.from_string(anchor).strftime('%y%W') if anchor else '0000'
+        return f'{crop_code}-{yyww}-{seq:03d}-{weight_g:04d}-{nursery}{bench}'
 
     def _assign_crop_batch_sequence(self):
         """Assign the next batch sequence number for this crop."""
