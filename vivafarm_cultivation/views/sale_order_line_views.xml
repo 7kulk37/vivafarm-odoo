@@ -2,7 +2,26 @@
 <odoo>
     <data>
 
-        <!-- CL-19: add Packed Lot to the sale order line tree (loose sale trace) -->
+        <!-- CL-19: loose sale trace — add Packed Lot to the sales order line.
+             The SO form's order_line uses the custom sol_o2m widget, which
+             builds its list columns from the INLINE list inside the field
+             tag. Add it to the inline list (optional column) and to the
+             inline row form (editable) so it renders AND persists. -->
+        <record id="view_order_form_packed_lot" model="ir.ui.view">
+            <field name="name">sale.order.form.packed.lot</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']/list" position="inside">
+                    <field name="packed_lot_id" optional="show"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/form//field[@name='price_unit']" position="after">
+                    <field name="packed_lot_id" options="{'no_create': True}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Also expose it on the standalone line tree (used outside the SO form). -->
         <record id="view_sale_order_line_packed_lot" model="ir.ui.view">
             <field name="name">sale.order.line.packed.lot</field>
             <field name="model">sale.order.line</field>
