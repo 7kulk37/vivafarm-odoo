@@ -45,6 +45,12 @@
                                 <field name="nursery_id" options="{'no_create': True}"/>
                                 <field name="active"/>
                             </group>
+                            <group string="Target Bands (F-04)">
+                                <field name="target_ec_min"/>
+                                <field name="target_ec_max"/>
+                                <field name="target_ph_min"/>
+                                <field name="target_ph_max"/>
+                            </group>
                         </group>
                         <group>
                             <field name="notes" nolabel="1" placeholder="Notes about this recipe..."/>

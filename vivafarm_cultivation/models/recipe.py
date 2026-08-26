@@ -41,6 +41,12 @@ class Recipe(models.Model):
     target_plant_count = fields.Integer(string='Target Plants', default=240, required=True)
     transplant_amount = fields.Integer(string='Transplant Amount', default=240, required=True)
 
+    # CL-27: F-04 target bands (GAP 3.5.1 — the acceptable EC/pH range)
+    target_ec_min = fields.Float(string='Target EC Min', default=1.2, digits=(4, 2))
+    target_ec_max = fields.Float(string='Target EC Max', default=2.0, digits=(4, 2))
+    target_ph_min = fields.Float(string='Target pH Min', default=5.5, digits=(3, 1))
+    target_ph_max = fields.Float(string='Target pH Max', default=6.5, digits=(3, 1))
+
     # Durations (ideal days)
     germinate_duration = fields.Integer(
         string='Germinate Duration (days)', default=7,

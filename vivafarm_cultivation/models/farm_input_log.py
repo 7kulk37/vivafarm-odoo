@@ -19,6 +19,20 @@ class FarmInputLog(models.Model):
         default=fields.Date.context_today,
         index=True,
     )
+    # CL-27: F-04 reading time (GAP 3.5.1 — when the reading was taken)
+    reading_time = fields.Datetime(
+        string='Reading Time',
+        help='When the EC/pH reading was taken (GAP 3.5.1)',
+    )
+    # CL-27: EC/pH probe calibration trail (GAP 3.5.2)
+    probe_last_calibrated = fields.Date(
+        string='Probe Last Calibrated',
+        help='Date the EC/pH probe was last calibrated',
+    )
+    probe_calibration_due = fields.Date(
+        string='Probe Calibration Due',
+        help='Date the probe calibration expires (typically +30 days)',
+    )
     bench_id = fields.Many2one(
         'farm.location',
         string='Location',
