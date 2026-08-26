@@ -33,3 +33,7 @@ access_farm_nrv_guard_user,farm.nrv.guard.user,model_farm_nrv_guard,base.group_u
 access_farm_nrv_guard_manager,farm.nrv.guard.manager,model_farm_nrv_guard,base.group_system,1,1,1,1
 access_farm_recall_drill_user,farm.recall.drill.user,model_farm_recall_drill,base.group_user,1,1,1,0
 access_farm_recall_drill_manager,farm.recall.drill.manager,model_farm_recall_drill,base.group_system,1,1,1,1
+access_farm_insurance_policy_user,farm.insurance.policy.user,model_farm_insurance_policy,base.group_user,1,1,1,0
+access_farm_insurance_policy_manager,farm.insurance.policy.manager,model_farm_insurance_policy,base.group_system,1,1,1,1
+access_farm_yield_metric_user,farm.yield.metric.user,model_farm_yield_metric,base.group_user,1,1,1,0
+access_farm_yield_metric_manager,farm.yield.metric.manager,model_farm_yield_metric,base.group_system,1,1,1,1
