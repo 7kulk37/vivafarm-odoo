@@ -38,6 +38,23 @@ class FarmSpoilageDisposal(models.Model):
         ('abnormal', 'Abnormal (>5%)'),
     ], string='Classification', default='abnormal', required=True,
        help='CL-06: normal spoilage is absorbed into FG; abnormal is a period expense.')
+    # CL-22: non-sale removal type — every removal from the sale stream is
+    # flagged. Feed sale is REVENUE (a sale), never a loss.
+    removal_type = fields.Selection([
+        ('spoilage', 'Spoilage'),
+        ('flood_loss', 'Flood / Disaster Loss'),
+        ('donation', 'Donation'),
+        ('sample', 'Sample / Tasting'),
+        ('feed_sale', 'Feed Sale (revenue)'),
+        ('buyer_return', 'Buyer Return'),
+    ], string='Removal Type', default='spoilage', required=True,
+       help='CL-22: why produce left the sale stream. Feed sale is revenue.')
+    is_revenue = fields.Boolean(
+        string='Is Revenue', compute='_compute_revenue_loss', store=True,
+        help='True when the removal is a sale (feed sale) that posts to revenue.')
+    is_loss = fields.Boolean(
+        string='Is Loss', compute='_compute_revenue_loss', store=True,
+        help='True when the removal is a loss (spoilage, flood, donation, sample, return).')
     reason = fields.Text(
         string='Reason',
         help='Why the produce was rejected (disease, damage, operator error)',
@@ -83,6 +100,13 @@ class FarmSpoilageDisposal(models.Model):
         copy=False,
         help='User who confirmed the record (bound at confirm = digital signature)',
     )
+
+    @api.depends('removal_type')
+    def _compute_revenue_loss(self):
+        """CL-22: feed sale is revenue; all other removals are losses."""
+        for record in self:
+            record.is_revenue = record.removal_type == 'feed_sale'
+            record.is_loss = record.removal_type != 'feed_sale'
 
     @api.depends('date', 'cultivation_id')
     def _compute_display_name(self):

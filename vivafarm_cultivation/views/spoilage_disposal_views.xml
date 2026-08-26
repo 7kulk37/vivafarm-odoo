@@ -14,6 +14,9 @@
                     <field name="lot_id"/>
                     <field name="quantity"/>
                     <field name="classification"/>
+                    <field name="removal_type"/>
+                    <field name="is_revenue" widget="boolean_fa" optional="show"/>
+                    <field name="is_loss" widget="boolean_fa" optional="show"/>
                     <field name="reason"/>
                     <field name="destination"/>
                     <field name="worker_name"/>
@@ -43,6 +46,9 @@
                                 <field name="lot_id"/>
                                 <field name="quantity"/>
                                 <field name="classification"/>
+                                <field name="removal_type"/>
+                                <field name="is_revenue" readonly="1"/>
+                                <field name="is_loss" readonly="1"/>
                             </group>
                             <group>
                                 <field name="reason"/>
