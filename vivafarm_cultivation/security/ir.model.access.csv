@@ -31,3 +31,5 @@ access_farm_physical_count_user,farm.physical.count.user,model_farm_physical_cou
 access_farm_physical_count_manager,farm.physical.count.manager,model_farm_physical_count,base.group_system,1,1,1,1
 access_farm_nrv_guard_user,farm.nrv.guard.user,model_farm_nrv_guard,base.group_user,1,1,1,0
 access_farm_nrv_guard_manager,farm.nrv.guard.manager,model_farm_nrv_guard,base.group_system,1,1,1,1
+access_farm_recall_drill_user,farm.recall.drill.user,model_farm_recall_drill,base.group_user,1,1,1,0
+access_farm_recall_drill_manager,farm.recall.drill.manager,model_farm_recall_drill,base.group_system,1,1,1,1

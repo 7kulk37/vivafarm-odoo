@@ -18,3 +18,4 @@ from . import vat_flip_guard
 from . import year_end_closure
 from . import physical_count
 from . import nrv_guard
+from . import recall_drill
