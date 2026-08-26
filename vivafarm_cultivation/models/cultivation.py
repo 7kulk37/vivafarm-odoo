@@ -488,12 +488,26 @@ class Cultivation(models.Model):
         return self._reopen()
 
     def action_grow(self):
-        """Germinated → Growing: assign bench, move live plants."""
+        """Germinated → Growing: assign bench, move live plants.
+
+        CL-26: a bench can host only ONE active cultivation at a time.
+        """
         self.ensure_one()
         if self.state != 'germinated':
             raise UserError('Can only grow from Germinated state.')
         if not self.bench_id:
             raise UserError('Select a bench location.')
+        # CL-26: one-lot-per-bench invariant
+        occupied = self.search([
+            ('bench_id', '=', self.bench_id.id),
+            ('state', 'in', ('growing', 'transplanted', 'harvested')),
+            ('id', '!=', self.id),
+        ], limit=1)
+        if occupied:
+            raise UserError(
+                f'Bench {self.bench_id.name} is already occupied by {occupied.name}. '
+                'A bench can host only one active cultivation at a time.'
+            )
         if not self.transplant_amount or self.transplant_amount <= 0:
             raise UserError('Transplant amount must be greater than 0.')
 
