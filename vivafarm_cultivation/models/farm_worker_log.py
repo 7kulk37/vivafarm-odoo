@@ -108,20 +108,72 @@ class FarmWorkerLog(models.Model):
         return super().write(vals)
 
     def action_confirm(self):
-        """Confirm the worker log. Only works from draft state."""
+        """Confirm the worker log. Only works from draft state.
+
+        CL-05: confirming a production worker log CAPITALIZES the wage into
+        WIP (Dr 113400 / Cr 222100) — labor is a conversion cost, not a
+        period expense. It flows to FG at harvest and to COGS on sale.
+        """
         for record in self:
             if record.state != 'draft':
                 raise UserError(f'Can only confirm draft worker logs. Log {record.display_name} is in state "{record.state}".')
         self.write({'state': 'confirmed'})
+        for record in self:
+            record._post_labor_accrual()
         if self.env['ir.config_parameter'].sudo().get_param('vivafarm.worker_log_auto_recalc', 'False').lower() == 'true':
             self._recalculate_direct_labor_rate()
         return True
 
+    def _post_labor_accrual(self):
+        """Capitalize the wage into WIP: Dr 113400 / Cr 222100 (CL-05).
+
+        Idempotent — a second call on the same log does nothing.
+        """
+        self.ensure_one()
+        wip_acc = self.env['account.account'].search([('code', '=', '113400')], limit=1)
+        liab_acc = self.env['account.account'].search([('code', '=', '222100')], limit=1)
+        stock_journal = self.env.company.account_stock_journal_id
+        if not (wip_acc and liab_acc and stock_journal):
+            return
+        existing = self.env['account.move'].search(
+            [('ref', '=', f'LABOR-ACCRUAL-{self.id}')], limit=1)
+        if existing:
+            return
+        je = self.env['account.move'].create({
+            'journal_id': stock_journal.id,
+            'date': self.date,
+            'ref': f'LABOR-ACCRUAL-{self.id}',
+            'line_ids': [
+                (0, 0, {'account_id': wip_acc.id, 'debit': self.wage_amount, 'credit': 0.0,
+                        'name': f'Direct labor accrual - {self.display_name}'}),
+                (0, 0, {'account_id': liab_acc.id, 'debit': 0.0, 'credit': self.wage_amount,
+                        'name': f'Direct labor accrual - {self.display_name}'}),
+            ],
+        })
+        je.action_post()
+
+    def _reverse_labor_accrual(self):
+        """Reverse the WIP accrual when a confirmed log is canceled (CL-05)."""
+        self.ensure_one()
+        je = self.env['account.move'].search(
+            [('ref', '=', f'LABOR-ACCRUAL-{self.id}')], limit=1)
+        if je and je.state == 'posted':
+            rev = je._reverse_moves(
+                default_values_list=[{'ref': f'LABOR-ACCRUAL-REV-{self.id}'}])
+            for r in rev:
+                r.action_post()
+
     def action_cancel(self):
-        """Cancel the worker log. Only works from confirmed state."""
+        """Cancel the worker log. Only works from confirmed state.
+
+        CL-05: canceling reverses the WIP accrual (the wage is no longer a
+        conversion cost of any batch).
+        """
         for record in self:
             if record.state != 'confirmed':
                 raise UserError(f'Can only cancel confirmed worker logs. Log {record.display_name} is in state "{record.state}".')
+        for record in self:
+            record._reverse_labor_accrual()
         self.write({'state': 'canceled'})
         if self.env['ir.config_parameter'].sudo().get_param('vivafarm.worker_log_auto_recalc', 'False').lower() == 'true':
             self._recalculate_direct_labor_rate()

@@ -99,6 +99,12 @@ class Cultivation(models.Model):
     packed_lot_weight_g = fields.Integer(string='Packed Weight (g)', readonly=True)
     crop_batch_sequence = fields.Integer(string='Crop Batch Sequence', readonly=True)
     spoilage_units = fields.Integer(string='Spoilage Units', default=0)
+    spoilage_classification = fields.Selection([
+        ('normal', 'Normal (≤5%)'),
+        ('abnormal', 'Abnormal (>5%)'),
+    ], string='Spoilage Classification', compute='_compute_spoilage_classification', store=True,
+       help='CL-06: normal spoilage (≤5% of germinated) is absorbed into FG cost; '
+            'abnormal (>5%) is a flagged period expense with a disposal record.')
 
     # Dates
     germinated_date = fields.Datetime(string='Germinated Date', readonly=True)
@@ -170,6 +176,16 @@ class Cultivation(models.Model):
             ], order='id asc', limit=1)
             if lot:
                 self.seed_lot_id = lot.id
+
+    @api.depends('spoilage_units', 'target_plant_count')
+    def _compute_spoilage_classification(self):
+        """CL-06: normal ≤5% of germinated plants; above = abnormal."""
+        for record in self:
+            total = record.target_plant_count or 0
+            if total and record.spoilage_units > total * 0.05:
+                record.spoilage_classification = 'abnormal'
+            else:
+                record.spoilage_classification = 'normal'
 
     @api.depends('seed_lot_id')
     def _compute_seed_lot_hex(self):
@@ -669,25 +685,11 @@ class Cultivation(models.Model):
                 'procure_method': 'make_to_stock',
             })
 
-        # 6. Allocate direct labor cost via journal entry (exact amount, no standard_price gymnastics)
+        # 6. Direct labor: already capitalized into WIP at worker-log confirm
+        # (Dr 113400 / Cr 222100, CL-05). No harvest-time expense JE — labor
+        # flows to FG here and to COGS on sale. labor_share is this batch's
+        # share of the accrued wages (daily rate × duration).
         labor_share = self._compute_labor_share()
-        if labor_share > 0:
-            labor_cogs_acc = self.env['account.account'].search([('code', '=', '511200')], limit=1)
-            labor_liab_acc = self.env['account.account'].search([('code', '=', '222100')], limit=1)
-            stock_journal = self.env.company.account_stock_journal_id
-            if labor_cogs_acc and labor_liab_acc and stock_journal:
-                labor_je = self.env['account.move'].create({
-                    'journal_id': stock_journal.id,
-                    'date': self.harvest_date,
-                    'ref': f'LABOR-ALLOC-{self.id}',
-                    'line_ids': [
-                        (0, 0, {'account_id': labor_cogs_acc.id, 'debit': labor_share, 'credit': 0.0,
-                                'name': f'Direct labor allocation - {self.name}'}),
-                        (0, 0, {'account_id': labor_liab_acc.id, 'debit': 0.0, 'credit': labor_share,
-                                'name': f'Direct labor allocation - {self.name}'}),
-                    ],
-                })
-                labor_je.action_post()
 
         int_type = self.env.ref('stock.picking_type_internal', raise_if_not_found=False)
         if not int_type:
@@ -729,10 +731,12 @@ class Cultivation(models.Model):
                 for l in m.line_ids.filtered(lambda x: x.account_id.code == '113400'):
                     total_input_cost += l.debit - l.credit
 
-        # Include direct labor in product cost (labor_share computed above)
-        # NOTE: labor is deliberately NOT added to total_input_cost. The labor
-        # JE above (Dr 511200 / Cr 222100) expenses it to P&L, so FG cost is
-        # material cost only and WIP nets to ~0 per batch.
+        # Include direct labor in product cost (labor_share computed above).
+        # CL-05: labor is capitalized into WIP at worker-log confirm, so the
+        # FG cost = material + this batch's labor share. The labor accrual
+        # (Dr 113400) is already in WIP; adding labor_share to the FG cost
+        # makes WIP→FG carry the full conversion cost.
+        fg_cost = total_input_cost + labor_share
 
         if produce_moves:
             produce_dest = packed_loc
@@ -747,10 +751,10 @@ class Cultivation(models.Model):
 
             # Under AVCO the production-output move is valued from the packed
             # product's standard_price at validation, so set it to the exact
-            # material input cost per kg BEFORE validating. This makes the
-            # output layer carry the real batch cost and WIP→FG exact.
-            if total_input_cost and self.packed_kg:
-                self.packed_product_id.product_tmpl_id.standard_price = total_input_cost / self.packed_kg
+            # full conversion cost per kg (material + labor) BEFORE validating.
+            # This makes the output layer carry the real batch cost and WIP→FG exact.
+            if fg_cost and self.packed_kg:
+                self.packed_product_id.product_tmpl_id.standard_price = fg_cost / self.packed_kg
 
             # Create packed lot BEFORE validating so move lines can reference it.
             packed_lot = self.env['stock.lot'].create({
@@ -783,6 +787,24 @@ class Cultivation(models.Model):
             'harvest_picking_id': picking.id,
             'packed_picking_id': picking2.id if produce_moves else False,
         })
+
+        # CL-06: abnormal spoilage (>5%) must carry a documented disposal
+        # record — the rejected produce never entered the sale stream.
+        # Auto-create a draft disposal record the worker confirms.
+        if self.spoilage_units > 0 and self.spoilage_classification == 'abnormal':
+            existing = self.env['farm.spoilage.disposal'].search([
+                ('cultivation_id', '=', self.id),
+            ], limit=1)
+            if not existing:
+                self.env['farm.spoilage.disposal'].create({
+                    'date': self.harvest_date or fields.Date.today(),
+                    'cultivation_id': self.id,
+                    'lot_id': self.live_lot_id.id if self.live_lot_id else False,
+                    'quantity': self.spoilage_units,
+                    'classification': 'abnormal',
+                    'reason': 'Abnormal spoilage (>5% of germinated plants) at harvest',
+                    'destination': 'Spoilage location',
+                })
 
         # Thai accounting: the production-output move transfers WIP value to FG
         # (Dr 113100 / Cr 113400) at the AVCO layer cost — the packed product's
