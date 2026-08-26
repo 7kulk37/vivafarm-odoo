@@ -9,3 +9,4 @@ from . import farm_location
 from . import stock_move
 from . import spoilage_disposal
 from . import nutrient_mix
+from . import pest_cleaning

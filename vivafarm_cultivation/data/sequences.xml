@@ -42,5 +42,21 @@
             <field name="company_id" eval="False"/>
         </record>
 
+        <record id="seq_farm_pest_monitor" model="ir.sequence">
+            <field name="name">Pest Monitor</field>
+            <field name="code">farm.pest.monitor</field>
+            <field name="prefix">PM-</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <record id="seq_farm_cleaning_log" model="ir.sequence">
+            <field name="name">Cleaning Log</field>
+            <field name="code">farm.cleaning.log</field>
+            <field name="prefix">CLG-</field>
+            <field name="padding">5</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
     </data>
 </odoo>

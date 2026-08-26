@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Pest Monitor list view -->
+        <record id="view_farm_pest_monitor_tree" model="ir.ui.view">
+            <field name="name">farm.pest.monitor.tree</field>
+            <field name="model">farm.pest.monitor</field>
+            <field name="arch" type="xml">
+                <list string="Pest Monitoring" multi_edit="1" editable="bottom">
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="bench_id"/>
+                    <field name="pest_found"/>
+                    <field name="action_taken"/>
+                    <field name="performed_by"/>
+                    <field name="state" widget="badge"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Pest Monitor form view -->
+        <record id="view_farm_pest_monitor_form" model="ir.ui.view">
+            <field name="name">farm.pest.monitor.form</field>
+            <field name="model">farm.pest.monitor</field>
+            <field name="arch" type="xml">
+                <form string="Pest Monitoring">
+                    <header>
+                        <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_cancel" type="object" string="Cancel"
+                                invisible="state != 'confirmed'"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="ref" readonly="1"/>
+                                <field name="date"/>
+                                <field name="bench_id"/>
+                                <field name="pest_found"/>
+                            </group>
+                            <group>
+                                <field name="action_taken"/>
+                                <field name="performed_by"/>
+                                <field name="confirmed_by" readonly="1"/>
+                                <field name="state" widget="badge"/>
+                            </group>
+                        </group>
+                        <field name="notes" nolabel="1" placeholder="Notes about this monitoring..."/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Cleaning Log list view -->
+        <record id="view_farm_cleaning_log_tree" model="ir.ui.view">
+            <field name="name">farm.cleaning.log.tree</field>
+            <field name="model">farm.cleaning.log</field>
+            <field name="arch" type="xml">
+                <list string="Cleaning Logs" multi_edit="1" editable="bottom">
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="area"/>
+                    <field name="method"/>
+                    <field name="performed_by"/>
+                    <field name="state" widget="badge"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Cleaning Log form view -->
+        <record id="view_farm_cleaning_log_form" model="ir.ui.view">
+            <field name="name">farm.cleaning.log.form</field>
+            <field name="model">farm.cleaning.log</field>
+            <field name="arch" type="xml">
+                <form string="Cleaning Log">
+                    <header>
+                        <button name="action_confirm" type="object" string="Confirm" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_cancel" type="object" string="Cancel"
+                                invisible="state != 'confirmed'"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="ref" readonly="1"/>
+                                <field name="date"/>
+                                <field name="area"/>
+                                <field name="method"/>
+                            </group>
+                            <group>
+                                <field name="performed_by"/>
+                                <field name="confirmed_by" readonly="1"/>
+                                <field name="state" widget="badge"/>
+                            </group>
+                        </group>
+                        <field name="notes" nolabel="1" placeholder="Notes about this cleaning..."/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menus: Hydroponic → Pest Monitoring / Cleaning Logs -->
+        <record id="action_farm_pest_monitor" model="ir.actions.act_window">
+            <field name="name">Pest Monitoring</field>
+            <field name="res_model">farm.pest.monitor</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_pest_monitor"
+                  name="Pest Monitoring"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_pest_monitor"
+                  sequence="34"/>
+
+        <record id="action_farm_cleaning_log" model="ir.actions.act_window">
+            <field name="name">Cleaning Logs</field>
+            <field name="res_model">farm.cleaning.log</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_cleaning_log"
+                  name="Cleaning Logs"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_cleaning_log"
+                  sequence="35"/>
+
+    </data>
+</odoo>

@@ -13,3 +13,7 @@ access_farm_spoilage_disposal_user,farm.spoilage.disposal.user,model_farm_spoila
 access_farm_spoilage_disposal_manager,farm.spoilage.disposal.manager,model_farm_spoilage_disposal,base.group_system,1,1,1,1
 access_farm_nutrient_mix_user,farm.nutrient.mix.user,model_farm_nutrient_mix,base.group_user,1,1,1,0
 access_farm_nutrient_mix_manager,farm.nutrient.mix.manager,model_farm_nutrient_mix,base.group_system,1,1,1,1
+access_farm_pest_monitor_user,farm.pest.monitor.user,model_farm_pest_monitor,base.group_user,1,1,1,0
+access_farm_pest_monitor_manager,farm.pest.monitor.manager,model_farm_pest_monitor,base.group_system,1,1,1,1
+access_farm_cleaning_log_user,farm.cleaning.log.user,model_farm_cleaning_log,base.group_user,1,1,1,0
+access_farm_cleaning_log_manager,farm.cleaning.log.manager,model_farm_cleaning_log,base.group_system,1,1,1,1
