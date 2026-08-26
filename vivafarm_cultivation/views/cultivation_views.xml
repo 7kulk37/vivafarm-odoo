@@ -55,6 +55,9 @@
                                 class="btn-secondary"
                                 invisible="state in ('done', 'canceled')"
                                 confirm="Cancel this cultivation? Seeds will be returned if already germinated."/>
+                        <button name="action_traceability" string="Traceability" type="object"
+                                class="btn-secondary"
+                                invisible="state == 'draft'"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,germinated,transplanted,harvested,done"/>
                     </header>
                     <sheet>

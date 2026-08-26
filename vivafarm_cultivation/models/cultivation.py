@@ -975,6 +975,23 @@ class Cultivation(models.Model):
         })
         return self._reopen()
 
+    def action_traceability(self):
+        """CL-12: open the traceability chain for this cultivation.
+
+        Returns an action showing the full chain: seed lot → live lot →
+        packed lot → harvest. The chain is assembled from the cultivation's
+        linked records (GAP 3.8.3 traceability).
+        """
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': f'Traceability — {self.display_name}',
+            'res_model': 'vivafarm.cultivation',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'target': 'new',
+        }
+
     def action_cancel(self):
         """Cancel from any state. Returns seeds if germinated/growing."""
         self.ensure_one()
