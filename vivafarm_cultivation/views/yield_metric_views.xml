@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Yield Metric list view -->
+        <record id="view_farm_yield_metric_tree" model="ir.ui.view">
+            <field name="name">farm.yield.metric.tree</field>
+            <field name="model">farm.yield.metric</field>
+            <field name="arch" type="xml">
+                <list string="Yield Metrics" create="false" delete="false">
+                    <field name="crop_id"/>
+                    <field name="batch_count"/>
+                    <field name="total_kg"/>
+                    <field name="avg_kg_per_batch"/>
+                    <field name="avg_kg_per_plant"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Yield Metric form view -->
+        <record id="view_farm_yield_metric_form" model="ir.ui.view">
+            <field name="name">farm.yield.metric.form</field>
+            <field name="model">farm.yield.metric</field>
+            <field name="arch" type="xml">
+                <form string="Yield Metric">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="crop_id" readonly="1"/>
+                                <field name="batch_count" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="total_kg" readonly="1"/>
+                                <field name="avg_kg_per_batch" readonly="1"/>
+                                <field name="avg_kg_per_plant" readonly="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → Yield Metrics -->
+        <record id="action_farm_yield_metric" model="ir.actions.act_window">
+            <field name="name">Yield Metrics</field>
+            <field name="res_model">farm.yield.metric</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_yield_metric"
+                  name="Yield Metrics"
+                  parent="menu_vivafarm_cultivation"
+                  action="action_farm_yield_metric"
+                  sequence="45"/>
+
+    </data>
+</odoo>
