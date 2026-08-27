@@ -13,35 +13,40 @@
         </field>
     </record>
 
-    <!-- Settings page: Paperless archive section (Odoo 19 <setting> pattern,
-         inheriting mail's settings form like digest/sms do) -->
+    <!-- Settings page: Paperless archive — SEPARATE block on General Settings.
+         Inherits base_setup (the General page's own blocks: Users/Languages/
+         Companies/Contacts + the <div id="emails"/> placeholder). NOTE: mail's
+         view REPLACES that div with <block id="emails"> — so the xpath must
+         target the BLOCK, not the div (verified ParseError 2026-08-27). -->
     <record id="res_config_settings_view_form_paperless" model="ir.ui.view">
         <field name="name">res.config.settings.view.form.paperless</field>
         <field name="model">res.config.settings</field>
-        <field name="inherit_id" ref="mail.res_config_settings_view_form"/>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//setting[@id='restrict_template_rendering_setting']" position="before">
-                <setting id="paperless_archive" string="Paperless Archive"
-                         help="Archive signed documents into Paperless-ngx">
-                    <div class="content-group">
-                        <div>
-                            <label for="paperless_base_url" string="Base URL"/>
-                            <field name="paperless_base_url"/>
+            <xpath expr="//block[@id='emails']" position="before">
+                <block title="Paperless Archive" id="paperless_archive_setting_container">
+                    <setting id="paperless_archive" string="Paperless Archive"
+                             help="Archive signed documents into Paperless-ngx">
+                        <div class="content-group">
+                            <div>
+                                <label for="paperless_base_url" string="Base URL"/>
+                                <field name="paperless_base_url"/>
+                            </div>
+                            <div class="mt8">
+                                <label for="paperless_api_token" string="API Token"/>
+                                <field name="paperless_api_token" password="True"/>
+                            </div>
+                            <div class="mt8">
+                                <label for="paperless_document_type_id" string="Document Type ID"/>
+                                <field name="paperless_document_type_id"/>
+                            </div>
+                            <div class="mt8">
+                                <label for="paperless_tag_id" string="Tag ID"/>
+                                <field name="paperless_tag_id"/>
+                            </div>
                         </div>
-                        <div class="mt8">
-                            <label for="paperless_api_token" string="API Token"/>
-                            <field name="paperless_api_token" password="True"/>
-                        </div>
-                        <div class="mt8">
-                            <label for="paperless_document_type_id" string="Document Type ID"/>
-                            <field name="paperless_document_type_id"/>
-                        </div>
-                        <div class="mt8">
-                            <label for="paperless_tag_id" string="Tag ID"/>
-                            <field name="paperless_tag_id"/>
-                        </div>
-                    </div>
-                </setting>
+                    </setting>
+                </block>
             </xpath>
         </field>
     </record>
