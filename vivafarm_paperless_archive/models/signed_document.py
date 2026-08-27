@@ -36,6 +36,18 @@ class SignedDocumentPaperless(models.Model):
              "Paperless's own checksum is MD5 and not security-grade).")
     paperless_last_verified_at = fields.Datetime(
         string='Paperless Last Verified At', readonly=True, copy=False)
+    paperless_doc_url = fields.Char(
+        string='Paperless URL', compute='_compute_paperless_doc_url',
+        help='Direct link to the archived copy in Paperless.')
+
+    @api.depends('paperless_document_id')
+    def _compute_paperless_doc_url(self):
+        cfg = self._paperless_config()
+        base = cfg['base_url'].rstrip('/')
+        for rec in self:
+            rec.paperless_doc_url = (
+                '%s/documents/%d/' % (base, rec.paperless_document_id)
+                if rec.paperless_document_id else False)
 
     # ── Upload trigger (user decision: AUTO-upload) ──
     def write(self, vals):
@@ -244,6 +256,17 @@ class SignedDocumentPaperless(models.Model):
         return (ok, bad)
 
     # ── On-demand + batch verify (user decision) ──
+    def action_open_paperless(self):
+        """Open the archived copy in Paperless (deep link)."""
+        self.ensure_one()
+        if not self.paperless_doc_url:
+            raise ValueError('no Paperless document to open')
+        return {
+            'type': 'ir.actions.act_url',
+            'url': self.paperless_doc_url,
+            'target': 'new',
+        }
+
     def action_paperless_verify(self):
         """On-demand verify for the selected records (form/action button)."""
         for rec in self:

@@ -13,6 +13,26 @@
         </field>
     </record>
 
+    <!-- Signed-document form: Paperless deep link + View button -->
+    <record id="view_signed_document_paperless_form" model="ir.ui.view">
+        <field name="name">viva.signed.document.paperless.form</field>
+        <field name="model">viva.signed.document</field>
+        <field name="inherit_id" ref="vivafarm_document_sign.viva_signed_document_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='signed_attachment_id']" position="after">
+                <field name="paperless_document_id"/>
+                <field name="paperless_upload_state" widget="badge"/>
+                <field name="paperless_doc_url" widget="url"/>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button name="action_open_paperless" type="object"
+                        string="View in Paperless" class="btn-link"
+                        icon="fa-external-link"
+                        invisible="not paperless_document_id"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Settings page: Paperless archive — SEPARATE block on General Settings.
          Inherits base_setup (the General page's own blocks: Users/Languages/
          Companies/Contacts + the <div id="emails"/> placeholder). NOTE: mail's
