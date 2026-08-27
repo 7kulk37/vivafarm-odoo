@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Incoming Paperless events (webhook receipts) -->
+    <record id="action_paperless_incoming" model="ir.actions.act_window">
+        <field name="name">Paperless Incoming</field>
+        <field name="res_model">paperless.incoming.event</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_paperless_incoming_list" model="ir.ui.view">
+        <field name="name">paperless.incoming.event.list</field>
+        <field name="model">paperless.incoming.event</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="received_at"/>
+                <field name="paperless_document_id"/>
+                <field name="title"/>
+                <field name="document_type"/>
+                <field name="correspondent"/>
+                <field name="url" widget="url"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_paperless_incoming_form" model="ir.ui.view">
+        <field name="name">paperless.incoming.event.form</field>
+        <field name="model">paperless.incoming.event</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="received_at"/>
+                            <field name="paperless_document_id"/>
+                            <field name="title"/>
+                        </group>
+                        <group>
+                            <field name="document_type"/>
+                            <field name="correspondent"/>
+                            <field name="source_filename"/>
+                            <field name="created"/>
+                            <field name="url" widget="url"/>
+                        </group>
+                    </group>
+                    <group string="Raw Payload">
+                        <field name="payload" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <menuitem id="menu_paperless_incoming"
+              name="Paperless Incoming"
+              parent="account.menu_finance"
+              action="action_paperless_incoming"
+              sequence="97"/>
+</odoo>

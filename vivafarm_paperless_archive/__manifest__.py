@@ -28,6 +28,7 @@
         'views/paperless_document_views.xml',
         'views/paperless_proof_templates.xml',
         'views/paperless_search_views.xml',
+        'views/paperless_incoming_views.xml',
     ],
     'installable': True,
     'application': False,
