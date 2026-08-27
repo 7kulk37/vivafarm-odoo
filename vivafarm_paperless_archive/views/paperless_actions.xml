@@ -19,4 +19,13 @@
         <field name="state">code</field>
         <field name="code">model._paperless_verify_batch()</field>
     </record>
+
+    <!-- Backfill: archive signed docs that predate the module (state 'none') -->
+    <record id="action_paperless_backfill" model="ir.actions.server">
+        <field name="name">Paperless: Archive Old Signed Docs</field>
+        <field name="model_id" ref="vivafarm_document_sign.model_viva_signed_document"/>
+        <field name="binding_model_id" ref="vivafarm_document_sign.model_viva_signed_document"/>
+        <field name="state">code</field>
+        <field name="code">model._paperless_backfill()</field>
+    </record>
 </odoo>

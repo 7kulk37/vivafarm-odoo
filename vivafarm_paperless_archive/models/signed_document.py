@@ -131,13 +131,21 @@ class SignedDocumentPaperless(models.Model):
                             ('odoo_verify_url', 'url')):
             cf[client.ensure_custom_field(name, dtype)] = cf_values[name]
 
-        doc_id, _task_id = client.upload_pdf(
-            title=self._paperless_title(),
-            pdf_bytes=pdf_bytes,
-            custom_fields=cf,
-            document_type_id=cfg['document_type_id'] or None,
-            tag_ids=[cfg['tag_id']] if cfg['tag_id'] else None,
-        )
+        # Search-first adoption (design §5): Paperless does NOT reject
+        # duplicates by default, so a retry after a mid-upload blip would
+        # create a second copy. If a doc for this signed record already
+        # exists, adopt its id instead of uploading again.
+        existing = client.search_by_custom_field('odoo_signed_doc_id', self.id)
+        if existing:
+            doc_id = existing[0]
+        else:
+            doc_id, _task_id = client.upload_pdf(
+                title=self._paperless_title(),
+                pdf_bytes=pdf_bytes,
+                custom_fields=cf,
+                document_type_id=cfg['document_type_id'] or None,
+                tag_ids=[cfg['tag_id']] if cfg['tag_id'] else None,
+            )
         self.write({
             'paperless_document_id': doc_id,
             'paperless_upload_state': 'uploaded',
@@ -273,3 +281,24 @@ class SignedDocumentPaperless(models.Model):
                 })
                 bad += 1
         return (ok, bad, skipped)
+
+    # ── Backfill (records signed before the archive module existed) ──
+    @api.model
+    def _paperless_backfill(self, limit=200):
+        """Archive signed docs that predate the module (state 'none').
+
+        The upload trigger only fires on NEW writes of signed_attachment_id;
+        records signed before this module was installed sit in 'none'
+        forever. This flips them to 'pending' so the upload cron picks them
+        up. Idempotent: skips records that already have a Paperless doc id.
+        """
+        records = self.sudo().search([
+            ('paperless_upload_state', '=', 'none'),
+            ('signed_attachment_id', '!=', False),
+            ('state', '=', 'signed'),
+        ], limit=limit)
+        for rec in records:
+            if rec.paperless_document_id:
+                continue
+            rec.write({'paperless_upload_state': 'pending'})
+        return len(records)
