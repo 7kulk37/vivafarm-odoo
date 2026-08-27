@@ -100,6 +100,23 @@ class PaperlessClient:
                          params={'custom_field_query': q, 'page_size': 100})
         return [d['id'] for d in resp.json().get('results', [])]
 
+    def search_documents(self, query, limit=50):
+        """Full-text search; returns list of {id, title, doc_type, tags,
+        created, content} dicts (content truncated)."""
+        resp = self._get('/api/documents/',
+                         params={'query': query, 'page_size': limit})
+        out = []
+        for d in resp.json().get('results', []):
+            out.append({
+                'id': d.get('id'),
+                'title': d.get('title'),
+                'doc_type': (d.get('document_type') or {}).get('name')
+                if isinstance(d.get('document_type'), dict) else d.get('document_type'),
+                'created': d.get('created'),
+                'content': (d.get('content') or '')[:200],
+            })
+        return out
+
     # ── upload ──
     def upload_pdf(self, title, pdf_bytes, custom_fields=None,
                    document_type_id=None, tag_ids=None, created=None):

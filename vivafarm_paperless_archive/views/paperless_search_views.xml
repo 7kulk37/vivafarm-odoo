@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Paperless full-text search wizard -->
+    <record id="view_paperless_search_wizard_form" model="ir.ui.view">
+        <field name="name">paperless.search.wizard.form</field>
+        <field name="model">paperless.search.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Search Paperless">
+                <group>
+                    <field name="query" placeholder="e.g. INV/2026/00022 or vendor name"/>
+                    <button name="action_search" type="object" string="Search"
+                            class="btn-primary"/>
+                </group>
+                <group string="Results" colspan="2">
+                    <field name="result_count"/>
+                </group>
+                <field name="result_ids" colspan="2">
+                    <list>
+                        <field name="paperless_document_id"/>
+                        <field name="title"/>
+                        <field name="doc_type"/>
+                        <field name="created"/>
+                        <field name="url" widget="url"/>
+                    </list>
+                </field>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_paperless_search" model="ir.actions.act_window">
+        <field name="name">Search Paperless</field>
+        <field name="res_model">paperless.search.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_paperless_search"
+              name="Search Paperless"
+              parent="account.menu_finance"
+              action="action_paperless_search"
+              sequence="96"/>
+</odoo>

@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_paperless_document,access_paperless_document,model_paperless_document,account.group_account_user,1,1,1,0
+access_paperless_search_wizard,access_paperless_search_wizard,model_paperless_search_wizard,account.group_account_user,1,1,1,1
+access_paperless_search_result,access_paperless_search_result,model_paperless_search_result,account.group_account_user,1,1,1,1
