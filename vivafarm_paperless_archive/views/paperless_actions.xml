@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- On-demand + batch verify (user decision). The action runs on the
+         selected records via the Action gear menu; _paperless_verify_batch
+         scans uploaded/verified records. -->
+    <record id="action_paperless_verify" model="ir.actions.server">
+        <field name="name">Paperless: Verify</field>
+        <field name="model_id" ref="vivafarm_document_sign.model_viva_signed_document"/>
+        <field name="binding_model_id" ref="vivafarm_document_sign.model_viva_signed_document"/>
+        <field name="state">code</field>
+        <field name="code">records.action_paperless_verify()</field>
+    </record>
+
+    <!-- Batch verify everything (list Action menu) -->
+    <record id="action_paperless_verify_batch" model="ir.actions.server">
+        <field name="name">Paperless: Verify All Archived</field>
+        <field name="model_id" ref="vivafarm_document_sign.model_viva_signed_document"/>
+        <field name="binding_model_id" ref="vivafarm_document_sign.model_viva_signed_document"/>
+        <field name="state">code</field>
+        <field name="code">model._paperless_verify_batch()</field>
+    </record>
+</odoo>

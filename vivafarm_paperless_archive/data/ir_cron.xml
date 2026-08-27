@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Auto-upload + retry: pending/failed signed docs -> Paperless.
+         Every 5 minutes. Never blocks the sign flow: the cron calls
+         _cron_process_pending_uploads which swallows per-record errors. -->
+    <record id="cron_paperless_upload" model="ir.cron">
+        <field name="name">Paperless: Upload pending signed docs</field>
+        <field name="model_id" ref="vivafarm_document_sign.model_viva_signed_document"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_process_pending_uploads()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
+
+    <!-- Scheduled verify option (user decision): re-download + semantic
+         check of archived copies. Daily. -->
+    <record id="cron_paperless_verify" model="ir.cron">
+        <field name="name">Paperless: Verify archived copies</field>
+        <field name="model_id" ref="vivafarm_document_sign.model_viva_signed_document"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_verify_archived()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+</odoo>
