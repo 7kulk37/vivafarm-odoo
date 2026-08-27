@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Paperless Archive',
-    'version': '19.0.1.0.1',
+    'version': '19.0.1.0.2',
     'category': 'Accounting/Localizations',
     'summary': 'Archive signed & hashed documents into Paperless-ngx (immutable secondary copy)',
     'description': """
