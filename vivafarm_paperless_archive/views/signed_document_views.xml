@@ -44,6 +44,24 @@
                                 <label for="paperless_tag_id" string="Tag ID"/>
                                 <field name="paperless_tag_id"/>
                             </div>
+                            <div class="mt16">
+                                <label for="paperless_verify_enabled"
+                                       string="Scheduled Verify"/>
+                                <field name="paperless_verify_enabled"/>
+                                <div class="text-muted">
+                                    Automatically re-check archived copies for
+                                    integrity. Same control as the Scheduled
+                                    Action "Paperless: Verify archived copies".
+                                </div>
+                            </div>
+                            <div class="mt8" invisible="not paperless_verify_enabled">
+                                <label for="paperless_verify_interval"
+                                       string="Verify Every"/>
+                                <field name="paperless_verify_interval"
+                                       class="oe_inline"/>
+                                <field name="paperless_verify_interval_type"
+                                       class="oe_inline"/>
+                            </div>
                         </div>
                     </setting>
                 </block>
