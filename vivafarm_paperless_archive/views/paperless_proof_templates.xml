@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Public archived-copy proof page — no Odoo login required -->
+    <template id="paperless_proof_page" name="Paperless Archive Proof">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title>Paperless Archive Proof — VivaFarm</title>
+                <style>
+                    body { font-family: sans-serif; background: #f5f7fa; margin: 0; padding: 24px; }
+                    .card { max-width: 640px; margin: 0 auto; background: #fff; border-radius: 10px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 24px; }
+                    h1 { font-size: 20px; margin-top: 0; color: #1a2b3c; }
+                    .row { display: flex; justify-content: space-between; padding: 6px 0;
+                           border-bottom: 1px solid #eef1f4; font-size: 14px; }
+                    .row dt { color: #5b6b7a; }
+                    .row dd { margin: 0; font-weight: 500; text-align: right; word-break: break-all; }
+                    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px;
+                             font-size: 12px; font-weight: 700; }
+                    .badge-ok { background: #e6f4ea; color: #1e7e34; }
+                    .badge-fail { background: #fdecea; color: #b3261e; }
+                    .badge-warn { background: #fff4e5; color: #b45309; }
+                    .hash-line { font-family: monospace; font-size: 11px; }
+                    .disclaim { margin-top: 12px; padding: 10px 12px; border: 1px dashed #c3cdd8;
+                                border-radius: 8px; font-size: 12px; color: #5b6b7a;
+                                background: #fafbfc; line-height: 1.5; }
+                    .footer { margin-top: 24px; font-size: 11px; color: #8a97a5; text-align: center; }
+                    .reverify { margin-top: 20px; padding: 16px; border: 1px dashed #c3cdd8;
+                                border-radius: 8px; text-align: center; }
+                    .reverify button { margin-top: 10px; padding: 8px 18px; border: 0; border-radius: 6px;
+                                       background: #2e7d32; color: #fff; font-weight: 600; cursor: pointer; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h1>Paperless Archive Proof</h1>
+
+                    <div class="row"><dt>Document</dt><dd t-esc="document_number"/></div>
+                    <div class="row"><dt>Document Type</dt><dd t-esc="document_type"/></div>
+                    <div class="row"><dt>Verification Code</dt><dd class="hash-line" t-esc="verification_code"/></div>
+                    <div class="row"><dt>Signed At</dt><dd t-esc="signed_at"/></div>
+                    <div class="row"><dt>Archive State</dt><dd>
+                        <t t-if="paperless_upload_state in ('uploaded', 'verified')">
+                            <span class="badge badge-ok" t-esc="paperless_upload_state"/>
+                        </t>
+                        <t t-elif="paperless_upload_state == 'mismatch'">
+                            <span class="badge badge-fail">MISMATCH</span>
+                        </t>
+                        <t t-elif="paperless_upload_state == 'failed'">
+                            <span class="badge badge-fail">UPLOAD FAILED</span>
+                        </t>
+                        <t t-else="">
+                            <span class="badge badge-warn" t-esc="paperless_upload_state"/>
+                        </t>
+                    </dd></div>
+                    <div class="row"><dt>Paperless Document ID</dt><dd t-esc="paperless_document_id or '-'"/></div>
+                    <div class="row"><dt>Paperless Title</dt><dd t-esc="paperless_title or '-'"/></div>
+                    <div class="row"><dt>Uploaded At</dt><dd t-esc="paperless_uploaded_at or '-'"/></div>
+                    <div class="row"><dt>Uploaded SHA-256</dt><dd class="hash-line" t-esc="paperless_sha256_of_uploaded or '-'"/></div>
+                    <div class="row"><dt>Last Verified At</dt><dd t-esc="paperless_last_verified_at or '-'"/></div>
+                    <div class="row"><dt>Open in Paperless</dt><dd>
+                        <t t-if="paperless_doc_url"><a t-att-href="paperless_doc_url" target="_blank">View archived copy</a></t>
+                        <t t-else="">-</t>
+                    </dd></div>
+
+                    <t t-if="reverify_result">
+                        <div class="row"><dt>Re-verification</dt><dd>
+                            <t t-if="reverify_result['ok']">
+                                <span class="badge badge-ok">ARCHIVE COPY INTACT ✓</span>
+                            </t>
+                            <t t-else="">
+                                <span class="badge badge-fail">ARCHIVE COPY PROBLEM ✗</span>
+                            </t>
+                        </dd></div>
+                        <div class="row"><dt>Detail</dt><dd t-esc="reverify_result['error'] or reverify_result['state']"/></div>
+                    </t>
+
+                    <t t-if="paperless_upload_error">
+                        <div class="disclaim" t-esc="paperless_upload_error"/>
+                    </t>
+
+                    <div class="reverify" t-if="paperless_document_id">
+                        <p>Re-check the archived copy in Paperless now (downloads it back and verifies it is intact):</p>
+                        <form method="post">
+                            <button type="submit">Re-verify Archive Copy</button>
+                        </form>
+                    </div>
+
+                    <div class="disclaim">
+                        This page proves the signed document was archived into Paperless-ngx and
+                        that the archived copy is intact. Paperless OCRs born-digital PDFs into an
+                        archive derivative, so the archived copy is not byte-identical to the
+                        signed PDF; the authoritative integrity proof is the Odoo-side SHA-256
+                        and RSA signature on the <a t-att-href="'/v/%s' % verification_token">verification page</a>.
+                    </div>
+                </div>
+                <div class="footer">VivaFarm Odoo · Paperless-ngx archive proof</div>
+            </body>
+        </html>
+    </template>
+</odoo>

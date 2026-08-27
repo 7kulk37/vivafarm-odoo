@@ -26,6 +26,7 @@
         'views/paperless_actions.xml',
         'views/signed_document_views.xml',
         'views/paperless_document_views.xml',
+        'views/paperless_proof_templates.xml',
     ],
     'installable': True,
     'application': False,
