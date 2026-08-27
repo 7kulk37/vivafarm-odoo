@@ -6,6 +6,7 @@ Actions shows ("Paperless: Verify archived copies"). set_values() writes
 the cron; get_values() reads it back, so both UIs stay in sync.
 """
 from odoo import fields, models
+from odoo.exceptions import UserError
 
 
 class ResConfigSettingsPaperless(models.TransientModel):
@@ -65,3 +66,38 @@ class ResConfigSettingsPaperless(models.TransientModel):
                 'paperless_verify_interval_type': cron.interval_type,
             })
         return res
+
+    # ── Test Connection (same pattern as the mail-server test) ──
+    def button_paperless_test_connection(self):
+        """Verify URL + token against the Paperless API.
+
+        Uses the values typed in the form (not the saved config), so the
+        user can test before saving. Raises UserError with a readable
+        message on failure; returns a success message on success.
+        """
+        from odoo.addons.vivafarm_paperless_archive.services.paperless_client import (
+            PaperlessClient,
+        )
+        base_url = self.paperless_base_url or ''
+        token = self.paperless_api_token or ''
+        if not base_url or not token:
+            raise UserError('Enter the Paperless Base URL and API Token first.')
+        client = PaperlessClient(base_url, token, timeout=10)
+        try:
+            resp = client._get('/api/documents/', params={'page_size': 1})
+        except Exception as e:
+            raise UserError('Connection failed: %s' % e)
+        data = resp.json()
+        count = data.get('count', 0)
+        version = client.server_api_version or 'unknown'
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Paperless Connection OK',
+                'message': ('Connected to %s — %s documents, API v%s.'
+                            % (base_url, count, version)),
+                'type': 'success',
+                'sticky': False,
+            },
+        }

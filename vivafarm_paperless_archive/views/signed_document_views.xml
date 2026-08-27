@@ -44,6 +44,10 @@
                                 <label for="paperless_tag_id" string="Tag ID" class="col-lg-3"/>
                                 <field name="paperless_tag_id"/>
                             </div>
+                            <div class="mt8">
+                                <button type="object" name="button_paperless_test_connection"
+                                        string="Test Connection" icon="oi-arrow-right" class="btn-link"/>
+                            </div>
                         </div>
                     </setting>
                     <setting id="paperless_verify_setting" string="Scheduled Verify"
