@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Paperless Document list + form -->
+    <record id="action_paperless_document" model="ir.actions.act_window">
+        <field name="name">Paperless Documents</field>
+        <field name="res_model">paperless.document</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_paperless_document_list" model="ir.ui.view">
+        <field name="name">paperless.document.list</field>
+        <field name="model">paperless.document</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="model_id"/>
+                <field name="res_id"/>
+                <field name="document_date"/>
+                <field name="paperless_upload_state" widget="badge"/>
+                <field name="paperless_document_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_paperless_document_form" model="ir.ui.view">
+        <field name="name">paperless.document.form</field>
+        <field name="model">paperless.document</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="partner_id"/>
+                            <field name="document_date"/>
+                            <field name="source_filename"/>
+                        </group>
+                        <group>
+                            <field name="model_id"/>
+                            <field name="res_id"/>
+                            <field name="paperless_upload_state" widget="badge"/>
+                            <field name="paperless_document_id"/>
+                        </group>
+                    </group>
+                    <group string="File">
+                        <field name="file" widget="binary"/>
+                    </group>
+                    <group string="Paperless Archive">
+                        <field name="paperless_title"/>
+                        <field name="paperless_uploaded_at"/>
+                        <field name="paperless_sha256_of_uploaded"/>
+                        <field name="paperless_last_verified_at"/>
+                        <field name="paperless_upload_error"/>
+                    </group>
+                    <group string="Note">
+                        <field name="note"/>
+                    </group>
+                </sheet>
+                <div class="oe_button_box" name="buttons">
+                    <button name="action_paperless_verify" type="object"
+                            string="Verify" class="oe_stat_button"
+                            icon="fa-check"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <menuitem id="menu_paperless_document"
+              name="Paperless Documents"
+              parent="account.menu_finance"
+              action="action_paperless_document"
+              sequence="95"/>
+
+    <!-- Verify action (list Action gear) -->
+    <record id="action_paperless_document_verify" model="ir.actions.server">
+        <field name="name">Paperless: Verify</field>
+        <field name="model_id" ref="model_paperless_document"/>
+        <field name="binding_model_id" ref="model_paperless_document"/>
+        <field name="state">code</field>
+        <field name="code">records.action_paperless_verify()</field>
+    </record>
+</odoo>

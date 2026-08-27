@@ -162,6 +162,13 @@ class PaperlessClient:
                     doc_id = None
                 return doc_id, task_id
             if status in ('FAILURE', 'REVOKED'):
+                # Duplicate rejection (PAPERLESS_CONSUMER_DELETE_DUPLICATES
+                # = true): "Not consuming document.pdf: It is a duplicate of
+                # Title (#37)." — adopt the existing doc instead of failing.
+                import re
+                m = re.search(r'\(#(\d+)\)', last)
+                if m:
+                    return int(m.group(1)), task_id
                 raise PaperlessError('consumption %s: %s'
                                      % (status, last[:300]))
             time.sleep(1.5)

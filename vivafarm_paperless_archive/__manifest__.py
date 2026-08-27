@@ -21,9 +21,11 @@
     """,
     'depends': ['vivafarm_document_sign'],
     'data': [
+        'security/ir.model.access.csv',
         'data/ir_cron.xml',
         'views/paperless_actions.xml',
         'views/signed_document_views.xml',
+        'views/paperless_document_views.xml',
     ],
     'installable': True,
     'application': False,

@@ -13,6 +13,17 @@
         <field name="active">True</field>
     </record>
 
+    <!-- Unsigned/general document uploads (paperless.document) -->
+    <record id="cron_paperless_document_upload" model="ir.cron">
+        <field name="name">Paperless: Upload pending documents</field>
+        <field name="model_id" ref="model_paperless_document"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_process_pending_uploads()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
+
     <!-- Scheduled verify option (user decision): re-download + semantic
          check of archived copies. Daily. -->
     <record id="cron_paperless_verify" model="ir.cron">
