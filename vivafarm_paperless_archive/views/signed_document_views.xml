@@ -27,40 +27,43 @@
                 <block title="Paperless Archive" id="paperless_archive_setting_container">
                     <setting id="paperless_archive" string="Paperless Archive"
                              help="Archive signed documents into Paperless-ngx">
-                        <div class="content-group">
-                            <div>
-                                <label for="paperless_base_url" string="Base URL"/>
-                                <field name="paperless_base_url"/>
-                            </div>
-                            <div class="mt8">
-                                <label for="paperless_api_token" string="API Token"/>
-                                <field name="paperless_api_token" password="True"/>
-                            </div>
-                            <div class="mt8">
-                                <label for="paperless_document_type_id" string="Document Type ID"/>
-                                <field name="paperless_document_type_id"/>
-                            </div>
-                            <div class="mt8">
-                                <label for="paperless_tag_id" string="Tag ID"/>
-                                <field name="paperless_tag_id"/>
-                            </div>
-                            <div class="mt16">
-                                <label for="paperless_verify_enabled"
-                                       string="Scheduled Verify"/>
-                                <field name="paperless_verify_enabled"/>
-                                <div class="text-muted">
-                                    Automatically re-check archived copies for
-                                    integrity. Same control as the Scheduled
-                                    Action "Paperless: Verify archived copies".
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="content-group">
+                                    <div class="row mt16">
+                                        <label for="paperless_base_url" string="Base URL" class="col-lg-4"/>
+                                        <field name="paperless_base_url" class="col-lg-8"/>
+                                    </div>
+                                    <div class="row mt16">
+                                        <label for="paperless_api_token" string="API Token" class="col-lg-4"/>
+                                        <field name="paperless_api_token" password="True" class="col-lg-8"/>
+                                    </div>
+                                    <div class="row mt16">
+                                        <label for="paperless_document_type_id" string="Document Type ID" class="col-lg-4"/>
+                                        <field name="paperless_document_type_id" class="col-lg-8"/>
+                                    </div>
+                                    <div class="row mt16">
+                                        <label for="paperless_tag_id" string="Tag ID" class="col-lg-4"/>
+                                        <field name="paperless_tag_id" class="col-lg-8"/>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mt8" invisible="not paperless_verify_enabled">
-                                <label for="paperless_verify_interval"
-                                       string="Verify Every"/>
-                                <field name="paperless_verify_interval"
-                                       class="oe_inline"/>
-                                <field name="paperless_verify_interval_type"
-                                       class="oe_inline"/>
+                            <div class="col-lg-6">
+                                <div class="content-group">
+                                    <div class="row mt16">
+                                        <field name="paperless_verify_enabled" string="Scheduled Verify"/>
+                                    </div>
+                                    <div class="text-muted">
+                                        Automatically re-check archived copies for
+                                        integrity. Same control as the Scheduled
+                                        Action "Paperless: Verify archived copies".
+                                    </div>
+                                    <div class="row mt16" invisible="not paperless_verify_enabled">
+                                        <label for="paperless_verify_interval" string="Verify Every" class="col-lg-4"/>
+                                        <field name="paperless_verify_interval" class="col-lg-3"/>
+                                        <field name="paperless_verify_interval_type" class="col-lg-5"/>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </setting>
