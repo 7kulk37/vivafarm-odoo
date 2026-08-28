@@ -76,6 +76,19 @@ class PaperlessClient:
                                     resp.text[:300]))
         return resp
 
+    def _delete(self, path):
+        try:
+            resp = self._session.delete(self.base_url + path,
+                                        timeout=self.timeout)
+        except requests.RequestException as e:
+            raise PaperlessError('DELETE %s failed: %s' % (path, e))
+        self._record_server_version(resp)
+        if resp.status_code >= 400:
+            raise PaperlessError('DELETE %s -> HTTP %s: %s'
+                                 % (path, resp.status_code,
+                                    resp.text[:300]))
+        return resp
+
     # ── custom fields ──
     def ensure_custom_field(self, name, data_type):
         """Return the id of a custom field, creating it if missing.
@@ -197,6 +210,12 @@ class PaperlessClient:
         """Return the raw archived bytes for a document."""
         resp = self._get('/api/documents/%d/download/' % doc_id)
         return resp.content
+
+    def delete_document(self, doc_id):
+        """Delete a document (test cleanup — prevents adoption collisions
+        when record ids restart after a DB rebuild)."""
+        resp = self._delete('/api/documents/%d/' % doc_id)
+        return resp.status_code in (200, 204)
 
     def sha256(self, data):
         return hashlib.sha256(data).hexdigest()
