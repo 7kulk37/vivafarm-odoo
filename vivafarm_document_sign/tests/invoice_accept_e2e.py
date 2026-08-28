@@ -26,7 +26,16 @@ def check(name, cond, detail=''):
         print('  FAIL: %s %s' % (name, detail))
 
 # ── Setup: fresh posted invoice ──
-partner = env['res.partner'].search([('is_company', '=', True), ('email', '!=', False)], limit=1)
+# Pick a STANDARD-flow company partner (invoice_template_pdf_report_id unset)
+# so the acknowledgment signs the plain Invoice (ใบแจ้งหนี้) with
+# document_type='invoice' — the minimal-flow tax-invoice path is covered by
+# minimal_flow_test_2027 M6. A minimal-flow partner here would create
+# document_type='tax_invoice' and A3b/A4 would fail (partner-dependent test).
+partner = env['res.partner'].search([
+    ('is_company', '=', True),
+    ('email', '!=', False),
+    ('invoice_template_pdf_report_id', '=', False),
+], limit=1)
 product = env['product.product'].search([('sale_ok', '=', True)], limit=1)
 account = env['account.account'].search([('account_type', '=', 'income')], limit=1)
 journal = env['account.journal'].search([('type', '=', 'sale')], limit=1)

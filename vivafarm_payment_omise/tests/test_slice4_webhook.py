@@ -78,7 +78,13 @@ def _webhook_complete():
         'provider_id': prov.id,
         'amount': 120.0,
         'currency_id': env.ref('base.THB').id,
-        'partner_id': 19,  # Test Sign Customer — has receivable account set
+        # A real company partner with a receivable account set (the old
+        # hardcoded id 19 does not exist on a fresh DB — post-processing
+        # then dies with "Record does not exist or has been deleted").
+        'partner_id': env['res.partner'].search([
+            ('is_company', '=', True),
+            ('property_account_receivable_id', '!=', False),
+        ], limit=1).id,
         'payment_method_id': prov.payment_method_ids.filtered(lambda m: m.code == 'card').id,
     })
     charge = tx._omise_create_charge(token)

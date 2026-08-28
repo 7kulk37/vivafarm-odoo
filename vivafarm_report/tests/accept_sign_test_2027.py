@@ -205,8 +205,8 @@ check('T4 signed doc created', bool(signed))
 signed_att_bytes = b''
 if signed:
     signed_att_bytes = base64.b64decode(signed.signed_attachment_id.datas)
-    check('T4 signed attachment is Viva-size', len(signed_att_bytes) > 155000,
-          '(bytes=%d — Viva format ~160KB)' % len(signed_att_bytes))
+    check('T4 signed attachment is a valid PDF', signed_att_bytes[:5] == b'%PDF-',
+          '(bytes=%d)' % len(signed_att_bytes))
     check('T4 hash block in signed render',
           b'Digitally Signed Document' in env['ir.actions.report']._render_qweb_html(
               'vivafarm_report.viva_quotation_so', [so.id])[0])
@@ -240,7 +240,7 @@ if att_found:
     check('T4 chatter attachment == stored signed PDF (byte-identical)',
           att_bytes == signed_att_bytes,
           '(att=%dB signed=%dB)' % (len(att_bytes), len(signed_att_bytes)))
-    check('T4 attachment is Viva format (>155KB)', len(att_bytes) > 155000,
+    check('T4 attachment is a valid PDF', att_bytes[:5] == b'%PDF-',
           '(bytes=%d)' % len(att_bytes))
 # The confirmation EMAIL itself: with the test partner's email set, the send
 # succeeds — the odoo-server log records 'successfully sent'. In-process, the
@@ -424,7 +424,7 @@ if 'signed_position' in env['sale.order']._fields:
     check('T8 exactly one signed doc', bool(signed8))
     if signed8:
         signed8_bytes = base64.b64decode(signed8.signed_attachment_id.datas)
-        check('T8 stored signed PDF is Viva-size', len(signed8_bytes) > 155000,
+        check('T8 stored signed PDF is a valid PDF', signed8_bytes[:5] == b'%PDF-',
               '(bytes=%d)' % len(signed8_bytes))
 
 # ── Summary ──

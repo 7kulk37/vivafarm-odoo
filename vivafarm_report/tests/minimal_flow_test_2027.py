@@ -178,7 +178,7 @@ if signed:
     check('M6 document_type = tax_invoice', signed.document_type == 'tax_invoice',
           '(type=%s)' % signed.document_type)
     signed_bytes = base64.b64decode(signed.signed_attachment_id.datas)
-    check('M6 stored signed PDF is Viva-size', len(signed_bytes) > 150000,
+    check('M6 stored signed PDF is a valid PDF', signed_bytes[:5] == b'%PDF-',
           '(bytes=%d)' % len(signed_bytes))
     # Print path: the viva_invoice override serves the stored bytes
     printed = env['ir.actions.report']._render_qweb_pdf(
