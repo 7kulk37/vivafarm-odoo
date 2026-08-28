@@ -353,7 +353,13 @@ if prov:
                 check('L7 verify page', False, '(error: %s)' % repr(e)[:150])
 
 # ── L5b/L6: standard-flow plain invoice resolves on the shared branch ──
+# so_sign_test_2027 creates this partner but ROLLS BACK at the end — create
+# it here if missing (same pattern as the other suites).
 std = env['res.partner'].search([('name', '=', 'SO Sign Test Customer')], limit=1)
+if not std:
+    std = env['res.partner'].create({
+        'name': 'SO Sign Test Customer', 'is_company': True, 'lang': 'en_US',
+    })
 if std:
     inv_std = env['account.move'].create({
         'move_type': 'out_invoice',
