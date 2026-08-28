@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm Omise Payment Provider',
-    'version': '19.0.1.0.8',
+    'version': '19.0.1.0.9',
     'category': 'Accounting/Payment',
     'summary': 'Omise payment provider for card and PromptPay (Thailand)',
     'description': """
@@ -17,10 +17,13 @@ Test mode supported with Omise test keys.
     'license': 'LGPL-3',
     'depends': ['payment', 'account_payment'],
     'data': [
+        # inline_form template must load BEFORE the provider record that
+        # references it (ref="inline_form") — fresh-DB install aborts with
+        # "External ID not found" if the data file loads first.
+        'views/omise_templates.xml',
         'data/payment_provider_data.xml',
         'data/ir_cron.xml',
         'views/payment_provider_views.xml',
-        'views/omise_templates.xml',
     ],
     'assets': {
         'web.assets_frontend': [
