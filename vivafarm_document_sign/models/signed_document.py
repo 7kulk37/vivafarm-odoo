@@ -190,6 +190,32 @@ class VivaSignedDocument(models.Model):
                 vals['signed_at'] = fields.Datetime.now()
         return super().create(vals_list)
 
+    def _has_evidence(self):
+        """True when the record carries the two evidence legs a signed
+        document must have: the stored attachment (exact hashed bytes) and
+        the SHA-256. Audit finding L1 (2026-08-29): one record (SO/2026/00016)
+        reached state='signed' with NEITHER — its /v/<token> page wrongly
+        claimed 'SIGNED / VALID'. The verify page must show
+        INSUFFICIENT EVIDENCE for such records."""
+        self.ensure_one()
+        return bool(self.pdf_sha256 and self.signed_attachment_id)
+
+    def write(self, vals):
+        # Evidence-protection guard (audit L1): once a signed document has
+        # stored bytes + hash, do NOT allow clearing them — the whole
+        # verification claim rests on the immutable evidence pair.
+        protected = {'pdf_sha256', 'signed_attachment_id'}
+        for rec in self:
+            if rec.state == 'signed' and rec._has_evidence():
+                clearing = protected & set(vals)
+                if clearing:
+                    raise UserError(_(
+                        'The signed PDF and its hash are part of the '
+                        'immutable evidence and cannot be removed. '
+                        'Revoke the document instead if it must be '
+                        'invalidated.'))
+        return super().write(vals)
+
     @api.depends('document_number', 'revision', 'verification_token')
     def _compute_verification_code(self):
         import hashlib

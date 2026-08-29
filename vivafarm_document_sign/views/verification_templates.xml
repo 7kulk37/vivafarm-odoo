@@ -41,8 +41,9 @@
                     <div class="row"><dt>Revision</dt><dd t-esc="revision"/></div>
                     <div class="row"><dt>Verification Code</dt><dd class="hash-line" t-esc="verification_code"/></div>
                     <div class="row"><dt>Status</dt><dd>
-                        <t t-if="state == 'signed'"><span class="badge badge-ok">SIGNED / VALID</span></t>
-                        <t t-elif="state == 'revoked'"><span class="badge badge-fail">REVOKED</span></t>
+                        <t t-if="state == 'revoked'"><span class="badge badge-fail">REVOKED</span></t>
+                        <t t-elif="state == 'signed' and not has_evidence"><span class="badge badge-fail">SIGNED — INSUFFICIENT EVIDENCE</span></t>
+                        <t t-elif="state == 'signed'"><span class="badge badge-ok">SIGNED / VALID</span></t>
                         <t t-else=""><span class="badge badge-warn" t-esc="state"/></t>
                     </dd></div>
                     <div class="row"><dt>Signature</dt><dd>
@@ -60,6 +61,15 @@
                         <t t-else=""><span class="badge badge-ok" t-esc="certificate_type"/></t>
                     </dd></div>
                     <div class="row"><dt>PDF SHA-256</dt><dd class="hash-line" t-esc="pdf_sha256"/></div>
+                    <t t-if="state == 'signed' and not has_evidence">
+                        <div class="disclaim">
+                            This record is marked SIGNED but the stored evidence
+                            (signed PDF attachment and its SHA-256 hash) is
+                            missing from the archive. No verification of the
+                            document bytes is possible. Treat the document as
+                            NOT VERIFIED and contact the document owner.
+                        </div>
+                    </t>
                     <div class="row"><dt>Odoo Record</dt><dd>
                         <t t-if="odoo_record_locked"><span class="badge badge-ok">LOCKED</span></t>
                         <t t-else=""><span class="badge badge-fail">UNLOCKED</span></t>
