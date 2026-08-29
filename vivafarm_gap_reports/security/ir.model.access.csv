@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_gap_report_wizard,gap.report.wizard,model_gap_report_wizard,base.group_user,1,1,1,1
 access_training_record,farm.training.record,model_farm_training_record,base.group_user,1,1,1,1
+access_health_check,farm.health.check,model_farm_health_check,base.group_user,1,1,1,1

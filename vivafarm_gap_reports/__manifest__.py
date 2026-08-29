@@ -1,6 +1,6 @@
 {
     'name': 'VivaFarm GAP Reports',
-    'version': '19.0.1.0.22',
+    'version': '19.0.1.0.23',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Printable GAP audit reports: cultivation record, worker/input logs, material transformation, scrap, petty cash, lot traceability',
     'description': """
@@ -26,6 +26,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/training_record_views.xml',
+        'views/health_check_views.xml',
         'views/report_cultivation.xml',
         'views/report_worker_log.xml',
         'views/report_wage_sheet.xml',

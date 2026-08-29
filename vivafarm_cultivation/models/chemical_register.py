@@ -25,7 +25,7 @@ class FarmChemicalRegister(models.Model):
     )
     sds_on_file = fields.Boolean(
         string='SDS on File',
-        help='Safety Data Sheet filed (HSA 2535 / GAP 3.7.7)',
+        help='Safety Data Sheet filed (HSA 2535 / GAP 3.3.x chemical handling)',
     )
     last_use_date = fields.Date(
         string='Last Use Date',

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+    <record id="view_health_check_list" model="ir.ui.view">
+        <field name="name">farm.health.check.list</field>
+        <field name="model">farm.health.check</field>
+        <field name="arch" type="xml">
+            <list string="Health Checks">
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="result" widget="badge"
+                       decoration-success="result == 'pass'"
+                       decoration-danger="result == 'fail'"
+                       decoration-warning="result == 'follow_up'"/>
+                <field name="clinic"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'confirmed'"
+                       decoration-danger="state == 'canceled'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_health_check_form" model="ir.ui.view">
+        <field name="name">farm.health.check.form</field>
+        <field name="model">farm.health.check</field>
+        <field name="arch" type="xml">
+            <form string="Health Check">
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                            invisible="state != 'confirmed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id" options="{'no_create': True}"/>
+                            <field name="date"/>
+                            <field name="result"/>
+                            <field name="clinic"/>
+                        </group>
+                        <group>
+                            <field name="performed_by"/>
+                            <field name="confirmed_by" readonly="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes" placeholder="ผลการตรวจ ข้อจำกัด การติดตาม / Findings, restrictions, follow-up"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_health_check" model="ir.actions.act_window">
+        <field name="name">Health Checks</field>
+        <field name="res_model">farm.health.check</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_health_check"
+              name="Health Checks (ตรวจสุขภาพ)"
+              parent="hr.menu_hr_root"
+              action="action_health_check"
+              sequence="61"/>
+
+    </data>
+</odoo>
