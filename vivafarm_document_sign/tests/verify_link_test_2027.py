@@ -343,11 +343,11 @@ if prov:
                 check('L7 verify page renders', 'Document Verification' in html,
                       '(len=%d)' % len(html))
                 check('L7 page links Previous DN',
-                      dn_signed.document_number in html,
-                      '(expect %s)' % dn_signed.document_number)
+                      bool(dn_signed.document_number) and dn_signed.document_number in html,
+                      '(expect %r)' % dn_signed.document_number)
                 check('L7 page links Next receipt',
-                      receipt.document_number in html,
-                      '(expect %s)' % receipt.document_number)
+                      bool(receipt.document_number) and receipt.document_number in html,
+                      '(expect %r)' % receipt.document_number)
                 check('L7 no bare dash on Previous row',
                       'Previous Linked Document</dt><dd>-</dd>' not in html)
                 check('L7 no bare dash on Next row',
