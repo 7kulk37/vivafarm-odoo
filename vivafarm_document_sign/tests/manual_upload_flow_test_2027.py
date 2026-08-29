@@ -17,12 +17,15 @@ Checks:
   F7  Invoice route still returns upload_ok for BOTH (no 500 on posted moves)
 """
 import base64
+import os
 import hashlib
 import urllib.request
 import urllib.error
 import uuid
 
 from odoo import fields
+
+TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', TEST_HOST)
 
 PASS = 0
 FAIL = 0
@@ -59,7 +62,7 @@ def post(url, fields_dict, files):
         body += data + b'\r\n'
     body += ('--%s--\r\n' % boundary).encode()
     req = urllib.request.Request(url, data=body, method='POST')
-    req.add_header('Host', 'test_sign.stg.vivafarm')
+    req.add_header('Host', TEST_HOST)
     req.add_header('Content-Type', 'multipart/form-data; boundary=%s' % boundary)
     opener = urllib.request.build_opener(NoRedirect)
     try:
@@ -174,7 +177,7 @@ check('F5 distinct records', bool(rec_std) and bool(rec_min) and rec_std.id != r
 
 def verify_get(token):
     req = urllib.request.Request('http://127.0.0.1:8069/v/%s' % token,
-                                 headers={'Host': 'test_sign.stg.vivafarm'})
+                                 headers={'Host': TEST_HOST})
     return urllib.request.urlopen(req, timeout=30).read().decode()
 
 

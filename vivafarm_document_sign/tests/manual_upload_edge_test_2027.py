@@ -26,12 +26,15 @@ All HTTP probes use a NO-REDIRECT opener so we assert the Location header
 (303 + ?message=...) instead of depending on portal alert rendering.
 """
 import base64
+import os
 import hashlib
 import urllib.request
 import urllib.error
 import uuid
 
 from odoo import fields
+
+TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', TEST_HOST)
 
 PASS = 0
 FAIL = 0
@@ -72,7 +75,7 @@ def post(url, fields_dict, files):
         body += data + b'\r\n'
     body += ('--%s--\r\n' % boundary).encode()
     req = urllib.request.Request(url, data=body, method='POST')
-    req.add_header('Host', 'test_sign.stg.vivafarm')
+    req.add_header('Host', TEST_HOST)
     req.add_header('Content-Type', 'multipart/form-data; boundary=%s' % boundary)
     opener = urllib.request.build_opener(NoRedirect)
     try:

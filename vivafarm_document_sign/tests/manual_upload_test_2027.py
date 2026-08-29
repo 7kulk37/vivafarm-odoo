@@ -24,11 +24,14 @@ Checks:
       customer signed" wording)
 """
 import base64
+import os
 import hashlib
 import json
 import urllib.request
 import urllib.error
 from urllib.parse import urlencode
+
+TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', TEST_HOST)
 
 PASS = 0
 FAIL = 0
@@ -52,7 +55,7 @@ FILE_SHA = hashlib.sha256(FILE_BYTES).hexdigest()
 
 def http_get(url, headers=None):
     req = urllib.request.Request(url, method='GET')
-    req.add_header('Host', 'test_sign.stg.vivafarm')
+    req.add_header('Host', TEST_HOST)
     for k, v in (headers or {}).items():
         req.add_header(k, v)
     with urllib.request.urlopen(req, timeout=30) as resp:
@@ -73,7 +76,7 @@ def http_post_multipart(url, fields, files, headers=None):
         body += data + b'\r\n'
     body += ('--%s--\r\n' % boundary).encode()
     req = urllib.request.Request(url, data=body, method='POST')
-    req.add_header('Host', 'test_sign.stg.vivafarm')
+    req.add_header('Host', TEST_HOST)
     req.add_header('Content-Type', 'multipart/form-data; boundary=%s' % boundary)
     for k, v in (headers or {}).items():
         req.add_header(k, v)

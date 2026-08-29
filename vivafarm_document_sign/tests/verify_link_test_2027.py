@@ -26,8 +26,11 @@ shared-branch regression):
       receipt rows (end-to-end through the deployed controller)
 """
 import base64
+import os
 import json
 import urllib.request
+
+TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', TEST_HOST)
 
 PASS = 0
 FAIL = 0
@@ -48,7 +51,7 @@ SIGNATURE_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9
 
 def http_get(url, headers=None):
     req = urllib.request.Request(url, method='GET')
-    req.add_header('Host', 'test_sign.stg.vivafarm')
+    req.add_header('Host', TEST_HOST)
     for k, v in (headers or {}).items():
         req.add_header(k, v)
     with urllib.request.urlopen(req, timeout=30) as resp:

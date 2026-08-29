@@ -21,10 +21,13 @@ Checks:
   E5  verify page shows the disclaimer for the evidence-less record
 """
 import base64
+import os
 import hashlib
 import urllib.request
 
 from odoo.exceptions import UserError
+
+TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', TEST_HOST)
 
 PASS = 0
 FAIL = 0
@@ -42,7 +45,7 @@ def check(name, cond, detail=''):
 
 def http_get(url):
     req = urllib.request.Request(url, method='GET')
-    req.add_header('Host', 'test_sign.stg.vivafarm')
+    req.add_header('Host', TEST_HOST)
     with urllib.request.urlopen(req, timeout=30) as resp:
         return resp.read().decode()
 

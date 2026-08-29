@@ -33,6 +33,7 @@ Checks:
       confirmation template 21 still points at sale.report_saleorder
 """
 import base64
+import os
 import hashlib
 import json
 import sys
@@ -40,6 +41,8 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 
 from odoo.exceptions import UserError
+
+TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', TEST_HOST)
 
 PASS = 0
 FAIL = 0
@@ -75,7 +78,7 @@ def http_jsonrpc(url, payload, headers=None):
     data = json.dumps({'jsonrpc': '2.0', 'method': 'call', 'params': payload}).encode()
     req = urllib.request.Request(url, data=data, method='POST')
     req.add_header('Content-Type', 'application/json')
-    req.add_header('Host', 'test_sign.stg.vivafarm')
+    req.add_header('Host', TEST_HOST)
     for k, v in (headers or {}).items():
         req.add_header(k, v)
     with urllib.request.urlopen(req, timeout=30) as resp:
@@ -84,7 +87,7 @@ def http_jsonrpc(url, payload, headers=None):
 
 def http_get(url, headers=None):
     req = urllib.request.Request(url, method='GET')
-    req.add_header('Host', 'test_sign.stg.vivafarm')
+    req.add_header('Host', TEST_HOST)
     for k, v in (headers or {}).items():
         req.add_header(k, v)
     with urllib.request.urlopen(req, timeout=30) as resp:
@@ -97,7 +100,7 @@ def http_status(method, url, payload=None):
     from urllib.parse import urlparse
     u = urlparse(url)
     conn = http.client.HTTPConnection(u.hostname, u.port, timeout=30)
-    headers = {'Host': 'test_sign.stg.vivafarm', 'Content-Type': 'application/json'}
+    headers = {'Host': TEST_HOST, 'Content-Type': 'application/json'}
     body = None
     if payload is not None:
         body = json.dumps({'jsonrpc': '2.0', 'method': 'call', 'params': payload}).encode()

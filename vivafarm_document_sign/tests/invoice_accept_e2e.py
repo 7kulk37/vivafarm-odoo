@@ -11,8 +11,11 @@ signature (base64 PNG), verifies:
   A6  lock: financial edit blocked after sign
 """
 import base64
+import os
 import json
 import urllib.request
+
+TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', TEST_HOST)
 PASS = 0
 FAIL = 0
 
@@ -76,7 +79,7 @@ try:
     }).encode()
     req = urllib.request.Request(url, data=payload, method='POST', headers={
         'Content-Type': 'application/json',
-        'Host': 'test_sign.stg.vivafarm',
+        'Host': TEST_HOST,
     })
     resp = json.loads(urllib.request.urlopen(req, timeout=30).read().decode())
     result = resp.get('result', {})
@@ -111,7 +114,7 @@ except Exception as e:
 # ── A5: verify page renders ──
 try:
     vurl = 'http://127.0.0.1:8069/v/%s' % signed.verification_token
-    vreq = urllib.request.Request(vurl, headers={'Host': 'test_sign.stg.vivafarm'})
+    vreq = urllib.request.Request(vurl, headers={'Host': TEST_HOST})
     vhtml = urllib.request.urlopen(vreq).read().decode()
     check('A5 verify page renders', 'Digitally Signed' in vhtml or 'เอกสารลงลายมือชื่อดิจิทัล' in vhtml or 'Verification' in vhtml)
     check('A5b verify page has doc number', inv.name in vhtml)
