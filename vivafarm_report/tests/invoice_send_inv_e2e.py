@@ -21,7 +21,21 @@ def check(name, cond, detail=''):
         print('  FAIL: %s %s' % (name, detail))
 
 # ── Setup: fresh posted invoice ──
-partner = env['res.partner'].search([('is_company', '=', True), ('email', '!=', False)], limit=1)
+# Pick a STANDARD partner (no invoice_template_pdf_report_id) — a
+# minimal-flow partner would force the tax-invoice report and break E1/E4b
+# (2026-08-29: the first company-with-email partner on a fresh test_sign
+# was a minimal-flow partner, wizard defaulted to report 654 not 655).
+partner = env['res.partner'].search([
+    ('is_company', '=', True),
+    ('email', '!=', False),
+    ('invoice_template_pdf_report_id', '=', False),
+], limit=1)
+if not partner:
+    partner = env['res.partner'].create({
+        'name': 'Send INV Standard Partner',
+        'is_company': True,
+        'email': 'sendinv@example.com',
+    })
 product = env['product.product'].search([('sale_ok', '=', True)], limit=1)
 account = env['account.account'].search([('account_type', '=', 'income')], limit=1)
 journal = env['account.journal'].search([('type', '=', 'sale')], limit=1)
