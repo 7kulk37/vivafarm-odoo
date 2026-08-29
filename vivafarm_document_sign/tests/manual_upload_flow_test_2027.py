@@ -25,7 +25,7 @@ import uuid
 
 from odoo import fields
 
-TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', TEST_HOST)
+TEST_HOST = os.environ.get('VIVAFARM_TEST_HOST', 'test_sign.stg.vivafarm')
 
 PASS = 0
 FAIL = 0
