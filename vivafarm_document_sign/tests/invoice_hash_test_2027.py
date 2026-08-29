@@ -48,6 +48,29 @@ inv = env['account.move'].search([
     ('id', 'not in', _already_sealed),
     ('partner_id', 'in', _standard_partner_ids),
 ], order='id desc', limit=1)
+# Test isolation (2026-08-29): earlier suites commit their fixtures, so a
+# fresh test_sign may have NO unsigned standard-partner invoice left. Create
+# one (same pattern as verify_link_test) instead of failing the whole suite.
+if not inv:
+    std_partner = env['res.partner'].search([
+        ('invoice_template_pdf_report_id', '=', False),
+    ], limit=1)
+    if not std_partner:
+        std_partner = env['res.partner'].create({
+            'name': 'Hash Test Standard Partner',
+            'is_company': True,
+        })
+    inv = env['account.move'].create({
+        'move_type': 'out_invoice',
+        'partner_id': std_partner.id,
+        'invoice_date': '2026-08-19',
+        'invoice_line_ids': [(0, 0, {
+            'name': 'Hash test line',
+            'quantity': 1.0,
+            'price_unit': 100.0,
+        })],
+    })
+    inv.action_post()
 print('INV', inv.id, inv.name)
 
 # ── H1: method exists ──
