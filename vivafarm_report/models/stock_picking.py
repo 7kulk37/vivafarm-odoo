@@ -119,8 +119,19 @@ class StockPicking(models.Model):
         the picking transitions to 'done' (stock ledger decrements). Clears
         the in_transit flag first so the compute shows 'done', not
         'in_transit'.
+
+        Year-scoped naming: vivafarm_account creates sale/purchase pickings
+        with a name=False sentinel and only fills it in button_validate().
+        The customer-sign path bypasses button_validate entirely, so the
+        name must be assigned here — otherwise the signed-DN render and
+        chatter attachment ('%s.pdf' % name) crash on bool + str.
         """
         self.ensure_one()
+        # Sentinel-created sale/purchase pickings still carry name=False.
+        # The year-scoping lives in vivafarm_account (not a dependency —
+        # defensive hasattr so report-only DBs keep working).
+        if hasattr(self, '_ensure_year_scoped_name'):
+            self._ensure_year_scoped_name()
         self.write({'in_transit': False})
         for move in self.move_ids:
             if move.state != 'done' and move.state != 'cancel':
