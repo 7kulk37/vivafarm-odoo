@@ -1038,7 +1038,7 @@ class Cultivation(models.Model):
                     'location_id': prod_loc.id,
                     'location_dest_id': stock_loc.id,
                     'company_id': self.env.company.id,
-                    'date': self.harvest_date,
+                    'date': self.harvest_date or self.plant_date,
                     'procure_method': 'make_to_stock',
                     'move_line_ids': [(0, 0, {
                         'product_id': self.seed_lot_id.product_id.id,
