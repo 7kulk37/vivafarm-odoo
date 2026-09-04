@@ -18,7 +18,8 @@
                     <field name="worker_name"/>
                     <field name="task_description"/>
                     <field name="safety_briefing" widget="boolean_fa"/>
-                    <field name="wage_amount" sum="Total" optional="show"/>
+                    <field name="wage_amount" sum="Total" optional="show"
+                           invisible="worker_type == 'owner_family'"/>
                     <field name="working_hours" sum="Total"/>
                     <field name="performed_by" optional="show"/>
                     <field name="confirmed_by" optional="show"/>

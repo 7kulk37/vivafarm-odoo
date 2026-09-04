@@ -44,8 +44,12 @@ class StockPicking(models.Model):
         readonly=True)
 
     def _sealed_document(self):
-        """The ONE seal record for this delivery, any channel."""
-        return self.env['viva.signed.document'].search([
+        """The ONE seal record for this delivery, any channel.
+
+        sudo: same integrity-check rationale as
+        ``vivafarm_document_sign/models/account_move.py``.
+        """
+        return self.env['viva.signed.document'].sudo().search([
             ('picking_id', '=', self.id),
             ('document_type', '=', 'delivery_note'),
         ], limit=1)

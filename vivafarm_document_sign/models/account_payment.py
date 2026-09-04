@@ -31,8 +31,15 @@ class AccountPayment(models.Model):
         readonly=True)
 
     def _sealed_document(self):
-        """The ONE seal record for this payment (receipt or slip), any channel."""
-        return self.env['viva.signed.document'].search([
+        """The ONE seal record for this payment (receipt or slip), any channel.
+
+        sudo: same integrity-check rationale as
+        ``vivafarm_document_sign/models/account_move.py`` — the lookup is an
+        integrity check, not a user action, so it must not be gated on
+        access. The signed-document access rule still protects read/write
+        from the UI.
+        """
+        return self.env['viva.signed.document'].sudo().search([
             ('payment_id', '=', self.id),
             ('document_type', 'in', ('payment_receipt', 'payment_slip')),
         ], limit=1)

@@ -47,8 +47,12 @@ class AccountMove(models.Model):
         return self.env['viva.signed.document'].search([('move_id', 'in', self.ids)])
 
     def _sealed_document(self):
-        """The ONE seal record for this move (invoice or tax_invoice), any channel."""
-        return self.env['viva.signed.document'].search([
+        """The ONE seal record for this move (invoice or tax_invoice), any channel.
+
+        sudo: see ``write()`` docstring. The signed-document lookup is an
+        integrity check, not a user action — must not be gated on access.
+        """
+        return self.env['viva.signed.document'].sudo().search([
             ('move_id', '=', self.id),
             ('document_type', 'in', ('invoice', 'tax_invoice')),
         ], limit=1)
@@ -58,7 +62,16 @@ class AccountMove(models.Model):
         return bool(self._sealed_document())
 
     def write(self, vals):
-        """Reject substance changes on signed invoices (server-side lock)."""
+        """Reject substance changes on signed invoices (server-side lock).
+
+        IMPORTANT: the signed-document lookup MUST use sudo(). It is an
+        integrity check, not a user action — gating it on user access would
+        block posting any invoice for users who lack signed-document
+        visibility (e.g. the founder without 'Show Full Accounting Features').
+        The access rule still protects the records themselves (read/write
+        from the UI); only the integrity check inside account.move.write
+        bypasses it.
+        """
         signed = self.filtered(lambda m: m._is_signed())
         if signed:
             protected_changed = set(vals.keys()) & PROTECTED_FIELDS

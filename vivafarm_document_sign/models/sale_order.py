@@ -46,8 +46,11 @@ class SaleOrder(models.Model):
         Scoped by document_type='sale_order' — the delivery_note's chain
         link (sale_order_id on the DN record) must NOT count as this order's
         own seal (review seam fix, 2026-08-24).
+
+        sudo: same integrity-check rationale as
+        ``vivafarm_document_sign/models/account_move.py``.
         """
-        return self.env['viva.signed.document'].search([
+        return self.env['viva.signed.document'].sudo().search([
             ('sale_order_id', '=', self.id),
             ('document_type', '=', 'sale_order'),
         ], limit=1)
