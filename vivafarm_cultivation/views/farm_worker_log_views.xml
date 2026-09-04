@@ -14,10 +14,11 @@
                            decoration-danger="state == 'canceled'"/>
                     <field name="auto_recalculation_enabled" widget="boolean_toggle" readonly="1" optional="show"/>
                     <field name="date"/>
+                    <field name="worker_type"/>
                     <field name="worker_name"/>
                     <field name="task_description"/>
                     <field name="safety_briefing" widget="boolean_fa"/>
-                    <field name="wage_amount" sum="Total"/>
+                    <field name="wage_amount" sum="Total" optional="show"/>
                     <field name="working_hours" sum="Total"/>
                     <field name="performed_by" optional="show"/>
                     <field name="confirmed_by" optional="show"/>
@@ -53,10 +54,11 @@
                         <group>
                             <group>
                                 <field name="date"/>
+                                <field name="worker_type"/>
                                 <field name="worker_name"/>
-                                <field name="worker_id_number"/>
+                                <field name="worker_id_number" required="worker_type == 'hired'"/>
                                 <field name="working_hours"/>
-                                <field name="wage_amount"/>
+                                <field name="wage_amount" invisible="worker_type != 'hired'" required="worker_type == 'hired'"/>
                             </group>
                             <group>
                                 <field name="safety_briefing"/>

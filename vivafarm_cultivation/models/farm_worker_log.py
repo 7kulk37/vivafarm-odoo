@@ -25,9 +25,24 @@ class FarmWorkerLog(models.Model):
         required=True,
         help="Worker's full name as shown on ID card",
     )
+    worker_type = fields.Selection(
+        [
+            ('owner_family', 'Owner / Family (no wage accrual)'),
+            ('hired', 'Hired Worker (wage accrued, PND 1 Kor)'),
+        ],
+        string='Worker Type',
+        default='owner_family',
+        required=True,
+        help=(
+            'Thai law: only GENUINE HIRED WORKER wages are deductible '
+            '(มาตรา 40(8)) and only they accrue Dr 113400 WIP / Cr 222100. '
+            'Owner/family labor is the return on the business — record it '
+            'for GAP traceability only, never as a wage (consult 2026-09-04).'
+        ),
+    )
     worker_id_number = fields.Char(
         string='ID Number',
-        help='National ID number (for GAP worker registration)',
+        help='National ID number (GAP worker registration; required for hired workers / PND 1 Kor)',
     )
     task_description = fields.Text(
         string='Task Description',
@@ -43,7 +58,7 @@ class FarmWorkerLog(models.Model):
         string='Wage (THB)',
         digits=(8, 0),
         default=350.0,
-        help='Daily wage in Thai Baht',
+        help='Daily wage in Thai Baht (hired workers only; owner/family logs carry no wage)',
     )
     working_hours = fields.Float(
         string='Working Hours',
@@ -122,27 +137,45 @@ class FarmWorkerLog(models.Model):
     def action_confirm(self):
         """Confirm the worker log. Only works from draft state.
 
-        CL-05: confirming a production worker log CAPITALIZES the wage into
-        WIP (Dr 113400 / Cr 222100) — labor is a conversion cost, not a
+        CL-05: confirming a production HIRED-worker log CAPITALIZES the wage
+        into WIP (Dr 113400 / Cr 222100) — labor is a conversion cost, not a
         period expense. It flows to FG at harvest and to COGS on sale.
 
-        CL-38: a worker cannot be paid twice for the same date — the same
-        worker_name + date is blocked at confirm.
+        Owner/family logs (worker_type = 'owner_family') are GAP-only
+        records: no wage, no accrual JE, no 222100 liability — their labor
+        is the return on the business, not a deductible cost (Thai law,
+        มาตรา 40(8); consult 2026-09-04).
+
+        CL-38: a HIRED worker cannot be paid twice for the same date — the
+        same worker_name + date is blocked at confirm (owner logs are exempt:
+        the family can help with the same task a hired worker does).
         """
         for record in self:
             if record.state != 'draft':
                 raise UserError(f'Can only confirm draft worker logs. Log {record.display_name} is in state "{record.state}".')
+            if record.worker_type == 'hired':
+                if not (record.worker_id_number or '').strip():
+                    raise UserError(
+                        f'Hired worker {record.worker_name} needs an ID Number before confirm — '
+                        'it is required for the PND 1 Kor withholding register. '
+                        'If this is owner/family labor, set Worker Type to Owner/Family (no accrual).'
+                    )
+                if not record.wage_amount or record.wage_amount <= 0:
+                    raise UserError(f'Hired worker {record.worker_name} needs a positive wage amount.')
             dup = self.search([
                 ('worker_name', '=', record.worker_name),
                 ('date', '=', record.date),
                 ('state', '=', 'confirmed'),
+                ('worker_type', '=', 'hired'),
                 ('id', '!=', record.id),
             ], limit=1)
             if dup:
                 raise UserError(
-                    f'Duplicate wage log: {record.worker_name} already has a confirmed log for {record.date} '
+                    f'Duplicate wage log: {record.worker_name} already has a confirmed HIRED log for {record.date} '
                     f'({dup.display_name}). A worker cannot be paid twice for the same day.'
                 )
+        # Zero the wage on owner/family logs so no wage can hide in reports
+        self.filtered(lambda r: r.worker_type == 'owner_family').write({'wage_amount': 0.0})
         self.write({'state': 'confirmed', 'confirmed_by': self.env.user.id})
         for record in self:
             record._post_labor_accrual()
@@ -153,9 +186,16 @@ class FarmWorkerLog(models.Model):
     def _post_labor_accrual(self):
         """Capitalize the wage into WIP: Dr 113400 / Cr 222100 (CL-05).
 
+        Thai-law gate (2026-09-04 consult): ONLY hired-worker logs accrue.
+        Owner/family logs are GAP-only records — accruing their labor would
+        create a false 222100 liability and claim a non-deductible cost.
         Idempotent — a second call on the same log does nothing.
         """
         self.ensure_one()
+        if self.worker_type != 'hired':
+            return
+        if not self.wage_amount or self.wage_amount <= 0:
+            return
         wip_acc = self.env['account.account'].search([('code', '=', '113400')], limit=1)
         liab_acc = self.env['account.account'].search([('code', '=', '222100')], limit=1)
         stock_journal = self.env.company.account_stock_journal_id
@@ -220,7 +260,7 @@ class FarmWorkerLog(models.Model):
         product = self._get_direct_labor_product()
         if not product:
             raise UserError('Direct Labor Allocation product not found. Run setup to create it.')
-        logs = self.search([('state', '=', 'confirmed')])
+        logs = self.search([('state', '=', 'confirmed'), ('worker_type', '=', 'hired')])
         if not logs:
             product.product_tmpl_id.standard_price = 0.0
             return 0.0
