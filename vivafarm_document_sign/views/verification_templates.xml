@@ -42,6 +42,7 @@
                     <div class="row"><dt>Verification Code</dt><dd class="hash-line" t-esc="verification_code"/></div>
                     <div class="row"><dt>Status</dt><dd>
                         <t t-if="state == 'revoked'"><span class="badge badge-fail">REVOKED</span></t>
+                        <t t-elif="underlying_voided"><span class="badge badge-fail">VOIDED — document cancelled/re-issued</span></t>
                         <t t-elif="state == 'signed' and not has_evidence"><span class="badge badge-fail">SIGNED — INSUFFICIENT EVIDENCE</span></t>
                         <t t-elif="state == 'signed'"><span class="badge badge-ok">SIGNED / VALID</span></t>
                         <t t-else=""><span class="badge badge-warn" t-esc="state"/></t>

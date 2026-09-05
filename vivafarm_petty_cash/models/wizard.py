@@ -121,7 +121,18 @@ class VivafarmPettyCashReplenishWizard(models.TransientModel):
         for w in self:
             total = sum(w.voucher_ids.mapped('amount'))
             w.total_disbursed = total
-            w.expected_balance = (w.fund_id.float_ceiling or 0.0) - total
+            # Audit 2026-09-05 (odoo eng P2): expected drawer cash must count
+            # ALL open vouchers of the fund, not just the selected subset —
+            # a partial replenish showed a phantom over-count for the
+            # unselected open vouchers.
+            all_open = w.env['vivafarm.petty.cash.voucher'].search([
+                ('fund_id', '=', w.fund_id.id),
+                ('state', 'in', ('draft', 'submitted')),
+            ]) if w.fund_id else w.env['vivafarm.petty.cash.voucher']
+            # vouchers already in the selection are 'being reconciled now';
+            # other open vouchers stay in the drawer until replenished.
+            other_open = all_open.filtered(lambda v: v not in w.voucher_ids)
+            w.expected_balance = (w.fund_id.float_ceiling or 0.0) - total - sum(other_open.mapped('amount'))
             if w.counted_balance:
                 w.variance = w.counted_balance - w.expected_balance
             else:
@@ -140,6 +151,16 @@ class VivafarmPettyCashReplenishWizard(models.TransientModel):
         if not self.voucher_ids:
             raise UserError(_('Select at least one voucher to replenish.'))
         for v in self.voucher_ids:
+            # Audit 2026-09-05 (odoo eng P1): the Many2many domain is
+            # client-side only and bypassable via API/context — a fund2
+            # voucher replenished against fund1 credited fund1's petty-cash
+            # account for fund2's spending. Enforce fund ownership
+            # server-side.
+            if v.fund_id != self.fund_id:
+                raise UserError(_(
+                    'Voucher %s belongs to fund "%s", not "%s". '
+                    'Replenishment vouchers must belong to the fund being replenished.'
+                ) % (v.name, v.fund_id.name, self.fund_id.name))
             if v.state == 'cancelled':
                 raise UserError(_(
                     'Voucher %s is cancelled and cannot be replenished.'

@@ -1,5 +1,9 @@
+import logging
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 #: Maximum number of product line items that fit on a single A4 sheet for the
 #: VivaFarm tax invoice. Calibrated on staging with the real business layout
@@ -477,6 +481,18 @@ class AccountMove(models.Model):
             'ref': False,
         })
         new_invoice.action_post()
+        # Auto-sign the replacement (audit 2026-09-05, lawyer P1): the
+        # revision chain stayed incomplete until a manual sign — a reissued
+        # tax invoice could be sent/printed unsigned. The new invoice has
+        # the same customer/report config, so the minimal-flow sign seam
+        # applies immediately on post.
+        if hasattr(new_invoice, '_hash_invoice_accepted'):
+            try:
+                new_invoice.with_context(invoice_include_signature=True)._hash_invoice_accepted()
+            except Exception:
+                # Signing requires the PKI backend; if unavailable, do not
+                # block the compliant re-issue — the manual sign path remains.
+                _logger.warning('Auto-sign of reissued invoice %s failed', new_invoice.name, exc_info=True)
         # reissue_count is non-stored; a new chain member does not change
         # any field on the existing members, so invalidate their cache to
         # keep the count fresh in the same session.

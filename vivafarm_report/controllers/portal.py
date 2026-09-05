@@ -98,6 +98,12 @@ class VivaSalePortal(CustomerPortal):
             return {'error': 'The order is not in a state requiring customer signature.'}
         if not signature:
             return {'error': 'Signature is missing.'}
+        # Server-side identity validation (audit 2026-09-05, lawyer P1):
+        # only the JS form enforced a non-empty signer name; a direct API
+        # call could sign with name=None, leaving a signed document with no
+        # "who accepted" evidence (weakens CCC §456 written evidence).
+        if not name or not str(name).strip():
+            return {'error': 'Signer name is required.'}
 
         try:
             order_sudo.write({
@@ -246,6 +252,12 @@ class VivaSalePortal(CustomerPortal):
             return {'error': 'The delivery note is not in transit.'}
         if not signature:
             return {'error': 'Signature is missing.'}
+        # Server-side identity validation (audit 2026-09-05, lawyer P1):
+        # only the JS form enforced a non-empty signer name; a direct API
+        # call could sign with name=None, leaving a signed document with no
+        # "who accepted" evidence (weakens CCC §456 written evidence).
+        if not name or not str(name).strip():
+            return {'error': 'Signer name is required.'}
 
         try:
             picking_sudo.write({
@@ -454,6 +466,12 @@ class VivaSalePortal(CustomerPortal):
             return {'error': 'The invoice is not in a state requiring acknowledgment.'}
         if not signature:
             return {'error': 'Signature is missing.'}
+        # Server-side identity validation (audit 2026-09-05, lawyer P1):
+        # only the JS form enforced a non-empty signer name; a direct API
+        # call could sign with name=None, leaving a signed document with no
+        # "who accepted" evidence (weakens CCC §456 written evidence).
+        if not name or not str(name).strip():
+            return {'error': 'Signer name is required.'}
 
         try:
             invoice_sudo.write({

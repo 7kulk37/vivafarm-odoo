@@ -162,13 +162,30 @@ class FarmWorkerLog(models.Model):
                     )
                 if not record.wage_amount or record.wage_amount <= 0:
                     raise UserError(f'Hired worker {record.worker_name} needs a positive wage amount.')
+            # Audit 2026-09-05 (odoo eng P1): Odoo Char '=' is case-sensitive
+            # and does not trim, so 'WORKER X' / '  Worker X  ' bypassed the
+            # exact-match check and double-paid a worker for the same day.
+            # Compare on a canonical form: lower-cased, whitespace-stripped.
+            _nm = (record.worker_name or '').strip().lower()
             dup = self.search([
-                ('worker_name', '=', record.worker_name),
+                ('worker_name', 'in', [_nm, record.worker_name or '']),
                 ('date', '=', record.date),
                 ('state', '=', 'confirmed'),
                 ('worker_type', '=', 'hired'),
                 ('id', '!=', record.id),
-            ], limit=1)
+            ])
+            if not dup:
+                # SQL canonical match: ILIKE ignores case, no trim in SQL —
+                # use LOWER(BTRIM()) on both sides for full normalization.
+                self.env.cr.execute("""
+                    SELECT id FROM farm_worker_log
+                    WHERE LOWER(BTRIM(worker_name)) = %s
+                      AND date = %s AND state = 'confirmed'
+                      AND worker_type = 'hired' AND id != %s
+                    LIMIT 1
+                """, [_nm, record.date, record.id])
+                dup_ids = [row[0] for row in self.env.cr.fetchall()]
+                dup = self.browse(dup_ids)
             if dup:
                 raise UserError(
                     f'Duplicate wage log: {record.worker_name} already has a confirmed HIRED log for {record.date} '

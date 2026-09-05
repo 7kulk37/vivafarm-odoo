@@ -50,6 +50,21 @@ class VivaVerificationController(http.Controller):
             'next_linked': self._get_next_linked_document(signed),
         }
 
+        # Void/revocation propagation (audit 2026-09-05, lawyer P1): the
+        # signed doc's own state stays 'signed' after the underlying invoice
+        # is voided (button_cancel is not blocked on signed moves), so the
+        # page rendered a green VALID badge for a legally-voided tax
+        # invoice. An inspector must see VOIDED when the linked move is
+        # cancelled or the doc was revoked.
+        linked_move_state = signed.move_id.state if signed.move_id else None
+        linked_so_state = signed.sale_order_id.state if signed.sale_order_id else None
+        underlying_voided = (signed.state == 'revoked'
+                             or linked_move_state == 'cancel'
+                             or linked_so_state == 'cancel')
+        result['underlying_voided'] = underlying_voided
+        if underlying_voided:
+            result['state'] = 'revoked'
+
         # Signature verification (independent of upload — always shown).
         # Hash-only documents (payment_receipt) have NO signature — the
         # page shows "HASH RECORD (SELLER-SIDE)" instead of a signature badge.
