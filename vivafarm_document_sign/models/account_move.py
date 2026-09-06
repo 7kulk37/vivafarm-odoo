@@ -142,12 +142,21 @@ class AccountMove(models.Model):
         # already sealed (manual hand-signed upload first, or a prior digital
         # sign), return it. Never overwrite a manual hash-only record with
         # RSA signature fields (review seam fix, 2026-08-24).
+        # E4 (audit 2026-09-06): skip records WITHOUT evidence — the L10
+        # auto-sign path pre-creates the record before signing, so a PKI
+        # failure during reissue leaves an evidence-less skeleton that this
+        # early-return would otherwise hand back forever (verify page shows
+        # 'SIGNED — INSUFFICIENT EVIDENCE' permanently, retry impossible).
         existing = self.env['viva.signed.document'].search([
             ('move_id', '=', self.id),
             ('document_type', '=', doc_type),
         ], limit=1)
-        if existing:
+        if existing and existing._has_evidence():
             return existing
+        if existing:
+            # Skeleton from a failed sign: unlink and re-create cleanly so
+            # the retry completes the evidence chain.
+            existing.unlink()
 
         # 1. Pre-create the record (token + identity known before rendering)
         # DB-layer race (same class as the SO/DN paths, guard 3): a

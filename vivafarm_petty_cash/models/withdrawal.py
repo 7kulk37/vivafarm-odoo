@@ -103,7 +103,8 @@ class VivafarmPettyCashWithdrawal(models.Model):
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code(
-                    'vivafarm.petty.cash.withdrawal'
+                    'vivafarm.petty.cash.withdrawal',
+                    sequence_date=vals.get('date'),
                 ) or _('New')
         return super().create(vals_list)
 

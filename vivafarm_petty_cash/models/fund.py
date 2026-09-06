@@ -283,8 +283,13 @@ class VivafarmPettyCashVoucher(models.Model):
                     seq_code = 'vivafarm.petty.cash.voucher.receipt'
                 elif vals.get('voucher_type') == 'general':
                     seq_code = 'vivafarm.petty.cash.voucher.general'
+                # E3 (audit 2026-09-06): pass the voucher's own date so the
+                # %(year)s/%(month)s prefix comes from the voucher date, not
+                # server-today — a voucher dated 2027 created in 2026 (or any
+                # backdated/rebuild scenario) otherwise gets a 2026 number.
                 vals['name'] = self.env['ir.sequence'].next_by_code(
-                    seq_code
+                    seq_code,
+                    sequence_date=vals.get('date'),
                 ) or _('New')
         return super().create(vals_list)
 
