@@ -2,9 +2,10 @@
 <odoo>
     <data>
 
-        <!-- Hydroponic root menu -->
+        <!-- Hydroponic root menu (own icon — do NOT borrow stock's box icon, which
+             duplicates Inventory in the main menu) -->
         <menuitem id="menu_farm_root" name="Hydroponic"
-                  sequence="90" web_icon="stock,static/description/icon.png"/>
+                  sequence="90" web_icon="vivafarm_cultivation,static/description/icon.png"/>
 
         <!-- List View -->
         <record id="vivafarm_cultivation_list" model="ir.ui.view">

@@ -1,6 +1,6 @@
 {
     'name': 'Hydroponic Farm Logs',
-    'version': '1.1.0',
+    'version': '1.1.1',
     'category': 'Manufacturing/Agriculture',
     'summary': 'Daily farm input logs and worker logs for hydroponic GAP compliance',
     'description': """

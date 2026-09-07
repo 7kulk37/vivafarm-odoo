@@ -96,11 +96,13 @@
         </record>
 
         <!-- Menu - top level under Hydroponic -->
-        <menuitem id="menu_farm_root" name="Hydroponic"
-                  sequence="90" web_icon="stock,static/description/icon.png"/>
+        <!-- Reference the root menu owned by vivafarm_cultivation — do NOT redefine
+             menu_farm_root here (same xmlid in two modules without a dependency = latent
+             conflict; farm_logs does not depend on cultivation, so resolve via module
+             qualification). -->
         <menuitem id="menu_farm_input_log"
                   name="Input Logs (EC/pH)"
-                  parent="menu_farm_root"
+                  parent="vivafarm_cultivation.menu_farm_root"
                   action="action_farm_input_log"
                   sequence="20"/>
 
