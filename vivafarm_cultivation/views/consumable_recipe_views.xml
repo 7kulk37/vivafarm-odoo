@@ -84,9 +84,9 @@
 
         <menuitem id="menu_consumable_recipe"
                   name="Consumable Recipes"
-                  parent="menu_farm_root"
+                  parent="menu_farm_recipes_group"
                   action="action_consumable_recipe"
-                  sequence="35"/>
+                  sequence="20"/>
 
     </data>
 </odoo>

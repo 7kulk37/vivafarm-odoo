@@ -40,9 +40,9 @@
 
         <menuitem id="menu_farm_location"
                   name="Location Recipes"
-                  parent="menu_farm_root"
+                  parent="menu_farm_recipes_group"
                   action="action_farm_location"
-                  sequence="39"/>
+                  sequence="30"/>
 
     </data>
 </odoo>

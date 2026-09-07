@@ -12,7 +12,7 @@
 
         Part of the Hydroponic infrastructure for Thai GAP compliance.
     """,
-    'depends': ['stock'],
+    'depends': ['stock', 'vivafarm_cultivation'],
     'data': [
         'security/ir.model.access.csv',
         'views/farm_input_log_views.xml',

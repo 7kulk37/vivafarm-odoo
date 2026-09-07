@@ -161,5 +161,16 @@
                   action="action_vivafarm_cultivation"
                   sequence="10"/>
 
+        <!-- Section groups (no action): Logs and Recipes gather their sibling
+             items two levels deep so the root menu stays scannable. -->
+        <menuitem id="menu_farm_logs_group"
+                  name="Logs"
+                  parent="menu_farm_root"
+                  sequence="20"/>
+        <menuitem id="menu_farm_recipes_group"
+                  name="Recipes"
+                  parent="menu_farm_root"
+                  sequence="35"/>
+
     </data>
 </odoo>

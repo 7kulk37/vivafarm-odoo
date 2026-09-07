@@ -96,9 +96,9 @@
         <!-- Menu -->
         <menuitem id="menu_farm_input_log"
                   name="Input Logs (EC/pH)"
-                  parent="menu_farm_root"
+                  parent="menu_farm_logs_group"
                   action="action_farm_input_log"
-                  sequence="20"/>
+                  sequence="10"/>
 
     </data>
 </odoo>

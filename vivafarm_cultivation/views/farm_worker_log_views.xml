@@ -157,12 +157,12 @@
             </field>
         </record>
 
-        <!-- Menu - top level under Hydroponic -->
+        <!-- Menu - under Logs group -->
         <menuitem id="menu_farm_worker_log"
                   name="Worker Logs"
-                  parent="menu_farm_root"
+                  parent="menu_farm_logs_group"
                   action="action_farm_worker_log"
-                  sequence="30"/>
+                  sequence="20"/>
 
     </data>
 </odoo>
