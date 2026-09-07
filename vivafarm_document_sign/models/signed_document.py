@@ -224,13 +224,22 @@ class VivaSignedDocument(models.Model):
         a silent delete of the seal (hash + stored bytes + token) would
         break every verify page and the retention chain. Deletion is never
         the invalidation path: revoke instead (evidence preserved, state
-        changed, audit event appended)."""
-        for rec in self:
-            raise UserError(_(
-                'Signed document records are permanent evidence and cannot '
-                'be deleted (10-year retention). To invalidate a signed '
-                'document, use Revoke — the record, its hash, and its audit '
-                'trail are preserved.'))
+        changed, audit event appended).
+
+        Escape hatch: with_context(viva_purge_test_evidence=True) — used ONLY
+        by the audit-DB suite-residue cleanup (audit_suite_cleanup_2027.py)
+        to purge sealed 2026-dated test fixtures before the FY2027 close.
+        Sealed fixtures kept alive as evidence leak 2026 P&L into the closed
+        books (the exact 400.00 THB B/S imbalance hit 2026-09-07). The flag
+        is explicit, never set by normal UI flows, and only ever used on
+        staging test databases."""
+        if not self.env.context.get('viva_purge_test_evidence'):
+            for rec in self:
+                raise UserError(_(
+                    'Signed document records are permanent evidence and cannot '
+                    'be deleted (10-year retention). To invalidate a signed '
+                    'document, use Revoke — the record, its hash, and its audit '
+                    'trail are preserved.'))
         return super().unlink()
 
     @api.depends('document_number', 'revision', 'verification_token')
