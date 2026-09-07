@@ -172,16 +172,17 @@
                   parent="menu_farm_root"
                   sequence="35"/>
 
-        <!-- Cultivation submenu groups (no action): daily GAP ops evidence vs
-             accountant year-end/tax controls. -->
+        <!-- Standalone root sections (no action): daily GAP ops evidence vs
+             accountant year-end/tax controls — siblings of Cultivation, not
+             buried under it. -->
         <menuitem id="menu_farm_ops_group"
                   name="Operation Controls"
-                  parent="menu_vivafarm_cultivation"
-                  sequence="50"/>
+                  parent="menu_farm_root"
+                  sequence="15"/>
         <menuitem id="menu_farm_financial_group"
                   name="Financial Controls"
-                  parent="menu_vivafarm_cultivation"
-                  sequence="60"/>
+                  parent="menu_farm_root"
+                  sequence="18"/>
 
     </data>
 </odoo>
