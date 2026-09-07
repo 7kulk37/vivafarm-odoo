@@ -57,9 +57,9 @@
         </record>
         <menuitem id="menu_farm_recall_drill"
                   name="Recall Drills"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_recall_drill"
-                  sequence="43"/>
+                  sequence="90"/>
 
     </data>
 </odoo>

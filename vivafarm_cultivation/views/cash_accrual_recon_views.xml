@@ -46,9 +46,9 @@
         </record>
         <menuitem id="menu_farm_cash_accrual_recon"
                   name="Cash vs Accrual"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_financial_group"
                   action="action_farm_cash_accrual_recon"
-                  sequence="38"/>
+                  sequence="10"/>
 
     </data>
 </odoo>

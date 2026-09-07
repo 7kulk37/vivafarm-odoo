@@ -74,9 +74,9 @@
         </record>
         <menuitem id="menu_farm_nutrient_mix"
                   name="Nutrient Mixes"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_nutrient_mix"
-                  sequence="33"/>
+                  sequence="20"/>
 
     </data>
 </odoo>

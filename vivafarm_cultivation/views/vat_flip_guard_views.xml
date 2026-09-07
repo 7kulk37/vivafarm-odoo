@@ -50,9 +50,9 @@
         </record>
         <menuitem id="menu_farm_vat_flip_guard"
                   name="VAT Flip Guard"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_financial_group"
                   action="action_farm_vat_flip_guard"
-                  sequence="39"/>
+                  sequence="20"/>
 
     </data>
 </odoo>

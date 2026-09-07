@@ -71,9 +71,9 @@
         </record>
         <menuitem id="menu_farm_spoilage_disposal"
                   name="Spoilage Disposals"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_spoilage_disposal"
-                  sequence="32"/>
+                  sequence="10"/>
 
     </data>
 </odoo>

@@ -172,5 +172,16 @@
                   parent="menu_farm_root"
                   sequence="35"/>
 
+        <!-- Cultivation submenu groups (no action): daily GAP ops evidence vs
+             accountant year-end/tax controls. -->
+        <menuitem id="menu_farm_ops_group"
+                  name="Operation Controls"
+                  parent="menu_vivafarm_cultivation"
+                  sequence="50"/>
+        <menuitem id="menu_farm_financial_group"
+                  name="Financial Controls"
+                  parent="menu_vivafarm_cultivation"
+                  sequence="60"/>
+
     </data>
 </odoo>

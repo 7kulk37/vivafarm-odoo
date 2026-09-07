@@ -55,9 +55,9 @@
         </record>
         <menuitem id="menu_farm_year_end_closure"
                   name="Year-End Closure"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_financial_group"
                   action="action_farm_year_end_closure"
-                  sequence="40"/>
+                  sequence="30"/>
 
     </data>
 </odoo>

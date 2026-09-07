@@ -108,9 +108,9 @@
         </record>
         <menuitem id="menu_farm_pest_monitor"
                   name="Pest Monitoring"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_pest_monitor"
-                  sequence="34"/>
+                  sequence="30"/>
 
         <record id="action_farm_cleaning_log" model="ir.actions.act_window">
             <field name="name">Cleaning Logs</field>
@@ -119,9 +119,9 @@
         </record>
         <menuitem id="menu_farm_cleaning_log"
                   name="Cleaning Logs"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_cleaning_log"
-                  sequence="35"/>
+                  sequence="40"/>
 
     </data>
 </odoo>

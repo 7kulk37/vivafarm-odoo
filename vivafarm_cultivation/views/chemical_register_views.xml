@@ -57,9 +57,9 @@
         </record>
         <menuitem id="menu_farm_chemical_register"
                   name="Chemical Register"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_chemical_register"
-                  sequence="36"/>
+                  sequence="50"/>
 
     </data>
 </odoo>

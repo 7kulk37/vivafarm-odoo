@@ -48,9 +48,9 @@
         </record>
         <menuitem id="menu_farm_nrv_guard"
                   name="NRV Guard"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_financial_group"
                   action="action_farm_nrv_guard"
-                  sequence="42"/>
+                  sequence="50"/>
 
     </data>
 </odoo>

@@ -48,9 +48,9 @@
         </record>
         <menuitem id="menu_farm_yield_metric"
                   name="Yield Metrics"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_yield_metric"
-                  sequence="45"/>
+                  sequence="80"/>
 
     </data>
 </odoo>

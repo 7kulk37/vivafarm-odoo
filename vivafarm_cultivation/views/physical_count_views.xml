@@ -62,9 +62,9 @@
         </record>
         <menuitem id="menu_farm_physical_count"
                   name="Physical Counts"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_financial_group"
                   action="action_farm_physical_count"
-                  sequence="41"/>
+                  sequence="40"/>
 
     </data>
 </odoo>

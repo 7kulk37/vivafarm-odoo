@@ -60,9 +60,9 @@
         </record>
         <menuitem id="menu_farm_temperature_log"
                   name="Temperature Logs"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_temperature_log"
-                  sequence="46"/>
+                  sequence="70"/>
 
     </data>
 </odoo>

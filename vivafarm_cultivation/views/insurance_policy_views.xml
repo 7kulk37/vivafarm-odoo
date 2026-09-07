@@ -56,9 +56,9 @@
         </record>
         <menuitem id="menu_farm_insurance_policy"
                   name="Insurance Policies"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_financial_group"
                   action="action_farm_insurance_policy"
-                  sequence="44"/>
+                  sequence="60"/>
 
     </data>
 </odoo>

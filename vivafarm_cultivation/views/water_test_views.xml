@@ -67,9 +67,9 @@
         </record>
         <menuitem id="menu_farm_water_test"
                   name="Water Tests"
-                  parent="menu_vivafarm_cultivation"
+                  parent="menu_farm_ops_group"
                   action="action_farm_water_test"
-                  sequence="37"/>
+                  sequence="60"/>
 
     </data>
 </odoo>
