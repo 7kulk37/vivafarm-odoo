@@ -61,6 +61,21 @@ class FarmChemicalRegister(models.Model):
                 continue
             record.phi_elapsed = (record.last_use_date + timedelta(days=record.phi_days)) <= today
 
+    def _phi_end_date(self):
+        """The date the pre-harvest interval ends (last use + PHI days).
+
+        Date-coherent helper for the harvest guard (CUL-PHI-01): the stored
+        phi_elapsed flag compares against SERVER-today, which is wrong when
+        documents are dated inside the fiscal year (2027) while the server
+        runs in 2026. The harvest guard must ask 'had the PHI elapsed by the
+        HARVEST date', not 'has it elapsed by today'.
+        Returns None when no PHI applies (never used, or phi_days = 0).
+        """
+        self.ensure_one()
+        if not self.last_use_date or not self.phi_days:
+            return None
+        return self.last_use_date + timedelta(days=self.phi_days)
+
     @api.model
     def create(self, vals_list):
         if isinstance(vals_list, dict):

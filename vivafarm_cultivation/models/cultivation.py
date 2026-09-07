@@ -564,6 +564,24 @@ class Cultivation(models.Model):
             raise UserError('Enter a harvest date.')
         if not self.packed_product_id:
             raise UserError('Select a packed product.')
+        # CUL-PHI-01 (GAP 3.3.x / มกษ. 9001-2564 chemical handling): harvest
+        # is blocked while ANY chemical's pre-harvest interval is still
+        # running AS OF THE HARVEST DATE. Date-coherent: compare against
+        # harvest_date, not server-today (a 2027-dated harvest must not be
+        # judged by 2026 server time). phi_days = 0 or no last_use_date →
+        # no PHI applies. มกษ. F-06: an inspector reading the chemical
+        # register next to the harvest record must never find produce
+        # harvested inside the pre-harvest interval.
+        for chem in self.env['farm.chemical.register'].search([('active', '=', True)]):
+            phi_end = chem._phi_end_date()
+            if phi_end and self.harvest_date < phi_end:
+                raise UserError(
+                    f'Harvest blocked: chemical "{chem.name}" was last used on '
+                    f'{chem.last_use_date} with a {chem.phi_days}-day pre-harvest '
+                    f'interval — PHI ends {phi_end}, which is AFTER the harvest '
+                    f'date {self.harvest_date}. Harvesting produce inside the PHI '
+                    f'window violates GAP chemical-handling rules (มกษ. 9001-2564). '
+                    f'Harvest on or after {phi_end}, or correct the register.')
         # CL-23: zero-yield batch (full failure / all spoil) is allowed —
         # packed_kg = 0 with spoilage_units = total plants. The WIP is
         # written off to a period loss at action_done, not capitalized.

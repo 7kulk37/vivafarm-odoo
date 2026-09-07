@@ -216,6 +216,23 @@ class VivaSignedDocument(models.Model):
                         'invalidated.'))
         return super().write(vals)
 
+    def unlink(self):
+        """Retention guard (manual-audit L-10, 2026-09-07): signed-document
+        records are statutory evidence (CCC §456/17 10-year retention,
+        ม.65 bis tax records, ETA electronic-record integrity). The audit
+        log model already blocks unlink; the seal record itself did NOT —
+        a silent delete of the seal (hash + stored bytes + token) would
+        break every verify page and the retention chain. Deletion is never
+        the invalidation path: revoke instead (evidence preserved, state
+        changed, audit event appended)."""
+        for rec in self:
+            raise UserError(_(
+                'Signed document records are permanent evidence and cannot '
+                'be deleted (10-year retention). To invalidate a signed '
+                'document, use Revoke — the record, its hash, and its audit '
+                'trail are preserved.'))
+        return super().unlink()
+
     @api.depends('document_number', 'revision', 'verification_token')
     def _compute_verification_code(self):
         import hashlib
