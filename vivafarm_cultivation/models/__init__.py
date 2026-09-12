@@ -4,6 +4,7 @@ from . import material_transformation
 from . import consumable_recipe
 from . import farm_input_log
 from . import farm_worker_log
+from . import farm_worker
 from . import stock_lot
 from . import farm_location
 from . import stock_move
