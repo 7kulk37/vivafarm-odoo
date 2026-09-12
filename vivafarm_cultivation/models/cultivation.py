@@ -1024,7 +1024,7 @@ class Cultivation(models.Model):
                 'Done and the packed lot is created.')
         return self.env['ir.actions.report']._get_report_from_name(
             'vivafarm_gap_reports.report_lot_traceability'
-        ).report_action(self.packed_lot_id)
+        ).report_action(self.packed_lot_id.ids)
 
     def action_cancel(self):
         """Cancel from any state. Returns seeds if germinated/growing."""
