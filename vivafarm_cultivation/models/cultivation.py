@@ -1007,21 +1007,24 @@ class Cultivation(models.Model):
         return self._reopen()
 
     def action_traceability(self):
-        """CL-12: open the traceability chain for this cultivation.
+        """CL-12/CL-41: open the REAL traceability chain for this cultivation.
 
-        Returns an action showing the full chain: seed lot → live lot →
-        packed lot → harvest. The chain is assembled from the cultivation's
-        linked records (GAP 3.8.3 traceability).
+        Before CL-41 this just re-opened the same form (a stub) — the
+        button showed nothing you couldn't already see. Now it renders
+        the packed lot's traceability PDF (GAP 5.6): seed lot → live
+        lot → packed lot → move history → customers, the document an
+        inspector asks for. Only meaningful once packed (state=done
+        and a packed lot exists); before that there is no chain yet.
         """
         self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': f'Traceability — {self.display_name}',
-            'res_model': 'vivafarm.cultivation',
-            'view_mode': 'form',
-            'res_id': self.id,
-            'target': 'new',
-        }
+        if not self.packed_lot_id:
+            raise UserError(
+                f'{self.display_name}: no packed lot yet — the '
+                'traceability chain exists once the batch is Marked '
+                'Done and the packed lot is created.')
+        return self.env['ir.actions.report']._get_report_from_name(
+            'vivafarm_gap_reports.report_lot_traceability'
+        ).report_action(self.packed_lot_id)
 
     def action_cancel(self):
         """Cancel from any state. Returns seeds if germinated/growing."""
