@@ -89,11 +89,6 @@
                                         <t t-else="">Packer (GAP 3.8.1)</t>
                                     </td>
                                     <td t-esc="r['packer'] + ((' · ' + r['packer_id_number']) if r['packer_id_number'] else '')"/>
-                                    <td class="text-muted">
-                                        <t t-if="lang == 'th_TH'">น้ำหนัก (กก.)</t>
-                                        <t t-else="">Packed Kg</t>
-                                    </td>
-                                    <td t-esc="r['packed_kg'] or 0.0"/>
                                 </tr>
                             </tbody>
                         </table>
