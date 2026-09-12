@@ -20,10 +20,15 @@ class FarmWorkerLog(models.Model):
         default=fields.Date.context_today,
         index=True,
     )
-    worker_name = fields.Char(
-        string='Worker Name',
+    # CL-40: worker identity from the roster (dropdown), not free text —
+    # GAP worker registration wants one consistent person across records,
+    # and the CL-38 duplicate-wage guard matches on the roster ID.
+    worker_id = fields.Many2one(
+        'farm.worker',
+        string='Worker',
         required=True,
-        help="Worker's full name as shown on ID card",
+        ondelete='restrict',
+        help="Worker as registered on the farm roster (ID-card name)",
     )
     worker_type = fields.Selection(
         [
@@ -109,14 +114,14 @@ class FarmWorkerLog(models.Model):
         compute='_compute_auto_recalculation_enabled',
     )
 
-    @api.depends('date', 'worker_name')
+    @api.depends('date', 'worker_id')
     def _compute_display_name(self):
         for record in self:
             parts = []
             if record.date:
                 parts.append(str(record.date))
-            if record.worker_name:
-                parts.append(record.worker_name)
+            if record.worker_id:
+                parts.append(record.worker_id.name)
             record.display_name = ' / '.join(parts) if parts else 'New Worker Log'
 
     @api.depends()
@@ -147,48 +152,33 @@ class FarmWorkerLog(models.Model):
         มาตรา 40(8); consult 2026-09-04).
 
         CL-38: a HIRED worker cannot be paid twice for the same date — the
-        same worker_name + date is blocked at confirm (owner logs are exempt:
+        same worker + date is blocked at confirm (owner logs are exempt:
         the family can help with the same task a hired worker does).
         """
         for record in self:
             if record.state != 'draft':
                 raise UserError(f'Can only confirm draft worker logs. Log {record.display_name} is in state "{record.state}".')
             if record.worker_type == 'hired':
-                if not (record.worker_id_number or '').strip():
+                if not (record.worker_id.worker_id_number or '').strip():
                     raise UserError(
-                        f'Hired worker {record.worker_name} needs an ID Number before confirm — '
+                        f'Hired worker {record.worker_id.name} needs an ID Number on the roster before confirm — '
                         'it is required for the PND 1 Kor withholding register. '
                         'If this is owner/family labor, set Worker Type to Owner/Family (no accrual).'
                     )
                 if not record.wage_amount or record.wage_amount <= 0:
-                    raise UserError(f'Hired worker {record.worker_name} needs a positive wage amount.')
-            # Audit 2026-09-05 (odoo eng P1): Odoo Char '=' is case-sensitive
-            # and does not trim, so 'WORKER X' / '  Worker X  ' bypassed the
-            # exact-match check and double-paid a worker for the same day.
-            # Compare on a canonical form: lower-cased, whitespace-stripped.
-            _nm = (record.worker_name or '').strip().lower()
+                    raise UserError(f'Hired worker {record.worker_id.name} needs a positive wage amount.')
+            # CL-40: roster identity makes the dup check exact — same
+            # worker_id + date cannot confirm twice (CL-38 rule, now by ID).
             dup = self.search([
-                ('worker_name', 'in', [_nm, record.worker_name or '']),
+                ('worker_id', '=', record.worker_id.id),
                 ('date', '=', record.date),
                 ('state', '=', 'confirmed'),
                 ('worker_type', '=', 'hired'),
                 ('id', '!=', record.id),
             ])
-            if not dup:
-                # SQL canonical match: ILIKE ignores case, no trim in SQL —
-                # use LOWER(BTRIM()) on both sides for full normalization.
-                self.env.cr.execute("""
-                    SELECT id FROM farm_worker_log
-                    WHERE LOWER(BTRIM(worker_name)) = %s
-                      AND date = %s AND state = 'confirmed'
-                      AND worker_type = 'hired' AND id != %s
-                    LIMIT 1
-                """, [_nm, record.date, record.id])
-                dup_ids = [row[0] for row in self.env.cr.fetchall()]
-                dup = self.browse(dup_ids)
             if dup:
                 raise UserError(
-                    f'Duplicate wage log: {record.worker_name} already has a confirmed HIRED log for {record.date} '
+                    f'Duplicate wage log: {record.worker_id.name} already has a confirmed HIRED log for {record.date} '
                     f'({dup.display_name}). A worker cannot be paid twice for the same day.'
                 )
         # Zero the wage on owner/family logs so no wage can hide in reports

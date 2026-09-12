@@ -104,11 +104,7 @@
                                 <field name="target_harvest_date" readonly="1"/>
                                 <field name="harvest_date"
                                        readonly="state not in ('transplanted', 'harvested')"/>
-                                <field name="harvest_time"
-                                       readonly="state not in ('transplanted', 'harvested')"/>
-                                <field name="packer_name"
-                                       readonly="state not in ('transplanted', 'harvested')"/>
-                                <field name="pack_time"
+                                <field name="packer_id"
                                        readonly="state not in ('transplanted', 'harvested')"/>
                                 <field name="packed_kg"
                                        readonly="state not in ('transplanted', 'harvested')"/>

@@ -23,8 +23,9 @@ class GapReportWizard(models.TransientModel):
     ], string='Report', required=True, default='worker_log')
     date_from = fields.Date(string='From', required=True)
     date_to = fields.Date(string='To', required=True)
-    worker_name = fields.Char(
-        string='Worker Name',
+    worker_id = fields.Many2one(
+        'farm.worker',
+        string='Worker',
         help='Leave empty for all workers')
     bench_id = fields.Many2one(
         'farm.location',
@@ -80,15 +81,15 @@ class ReportWorkerLog(models.AbstractModel):
             ('date', '>=', wizard.date_from),
             ('date', '<=', wizard.date_to),
         ]
-        if wizard.worker_name:
-            domain.append(('worker_name', 'ilike', wizard.worker_name))
-        logs = self.env['farm.worker.log'].search(domain, order='date, worker_name, id')
+        if wizard.worker_id:
+            domain.append(('worker_id', '=', wizard.worker_id.id))
+        logs = self.env['farm.worker.log'].search(domain, order='date, worker_id, id')
         currency = self.env.company.currency_id
         rows = []
         for log in logs:
             rows.append({
                 'date': log.date,
-                'worker': log.worker_name,
+                'worker': log.worker_id.name,
                 'id_number': log.worker_id_number or '',
                 'task': log.task_description or '',
                 'hours': log.working_hours,
@@ -186,17 +187,17 @@ class ReportWageSheet(models.AbstractModel):
             ('date', '>=', wizard.date_from),
             ('date', '<=', wizard.date_to),
         ]
-        if wizard.worker_name:
-            domain.append(('worker_name', 'ilike', wizard.worker_name))
+        if wizard.worker_id:
+            domain.append(('worker_id', '=', wizard.worker_id.id))
         logs = self.env['farm.worker.log'].search(
-            domain, order='worker_name, date, id')
+            domain, order='worker_id, date, id')
         currency = self.env.company.currency_id
 
         # Group by worker, keep insertion order (first seen).
         workers = []
         by_name = {}
         for log in logs:
-            name = log.worker_name
+            name = log.worker_id.name
             if name not in by_name:
                 by_name[name] = {
                     'worker': name,
@@ -228,5 +229,5 @@ class ReportWageSheet(models.AbstractModel):
             'date_from': wizard.date_from,
             'date_to': wizard.date_to,
             'report_type': wizard.report_type,
-            'worker_filter': wizard.worker_name or '',
+            'worker_filter': wizard.worker_id.name or '',
         }

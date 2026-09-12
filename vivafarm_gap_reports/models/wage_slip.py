@@ -24,12 +24,20 @@ class ReportWageSlip(models.AbstractModel):
         rows = []
         for exp in expenses:
             worker_name = exp.employee_id.name or ''
+            # CL-40: logs carry a roster worker_id now. Match the hr.employee
+            # to the roster by ID number first (exact), fallback to name.
             week_start = exp.date - timedelta(days=6)
-            logs = self.env['farm.worker.log'].search([
-                ('worker_name', '=', worker_name),
-                ('date', '>=', week_start),
-                ('date', '<=', exp.date),
-            ], order='date')
+            domain = [('date', '>=', week_start), ('date', '<=', exp.date)]
+            worker = self.env['farm.worker'].search(
+                [('worker_id_number', '=', exp.employee_id.identification_id or '')],
+                limit=1) if exp.employee_id.identification_id else self.env['farm.worker']
+            if worker:
+                logs = self.env['farm.worker.log'].search(
+                    domain + [('worker_id', '=', worker.id)], order='date')
+            else:
+                logs = self.env['farm.worker.log'].search(
+                    domain + [('worker_id', 'in', self.env['farm.worker'].search(
+                        [('name', '=', worker_name)]).ids)], order='date')
             log_rows = [{
                 'date': log.date,
                 'task': log.task_description or '',

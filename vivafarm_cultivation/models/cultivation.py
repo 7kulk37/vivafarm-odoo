@@ -90,7 +90,12 @@ class Cultivation(models.Model):
     transplant_amount = fields.Integer(string='Transplant Amount', default=240)
 
     # Harvest
-    harvest_date = fields.Date(string='Harvest Date')
+    # CL-40: ONE user-entered harvest datetime — date drives the PHI gate,
+    # stock picking dates and JE dates (they need a date), time is extra
+    # evidence on the F-07. Packing happens in the same motion on this farm,
+    # so the separate pack event/timestamps are gone; the packed picking
+    # still carries its own system timestamp for traceability.
+    harvest_date = fields.Datetime(string='Harvest Date & Time')
     packed_product_id = fields.Many2one(
         'product.product', string='Packed Product',
         domain="[('name', 'ilike', '(Packed)')]")
@@ -126,18 +131,12 @@ class Cultivation(models.Model):
     harvested_date = fields.Datetime(string='Harvested Date', readonly=True)
     done_date = fields.Datetime(string='Done Date', readonly=True)
     canceled_date = fields.Datetime(string='Canceled Date', readonly=True)
-    # CL-18: F-07 harvest + pack multi-event (GAP 3.5.1/3.6.1)
-    harvest_time = fields.Datetime(
-        string='Harvest Time',
-        help='When the harvest started',
-    )
-    packer_name = fields.Char(
+    # CL-40: packer is now a roster dropdown (farm.worker) — GAP 3.8.1
+    # signature needs a consistent person identity, not free text.
+    packer_id = fields.Many2one(
+        'farm.worker',
         string='Packer',
         help='Worker who packed the produce (GAP 3.8.1 signature)',
-    )
-    pack_time = fields.Datetime(
-        string='Pack Time',
-        help='When the produce was packed',
     )
 
     # Stock moves
@@ -294,7 +293,7 @@ class Cultivation(models.Model):
         nursery = self.nursery_id.name or ''
         bench = self.bench_id.name or ''
         # YY-WW from harvest date (fallback plant date) — shelf-pointable window
-        anchor = self.harvest_date or self.plant_date
+        anchor = self.harvest_date.date() if self.harvest_date else self.plant_date
         yyww = fields.Date.from_string(anchor).strftime('%y%W') if anchor else '0000'
         return f'{crop_code}-{yyww}-{seq:03d}-{weight_g:04d}-{nursery}{bench}'
 
@@ -574,7 +573,7 @@ class Cultivation(models.Model):
         # harvested inside the pre-harvest interval.
         for chem in self.env['farm.chemical.register'].search([('active', '=', True)]):
             phi_end = chem._phi_end_date()
-            if phi_end and self.harvest_date < phi_end:
+            if phi_end and self.harvest_date.date() < phi_end:
                 raise UserError(
                     f'Harvest blocked: chemical "{chem.name}" was last used on '
                     f'{chem.last_use_date} with a {chem.phi_days}-day pre-harvest '
@@ -612,7 +611,7 @@ class Cultivation(models.Model):
         if not daily_rate:
             return 0.0
         start = self.plant_date
-        end = self.harvest_date
+        end = self.harvest_date.date() if self.harvest_date else False
         if not start or not end:
             return 0.0
         duration = (end - start).days + 1
@@ -666,7 +665,7 @@ class Cultivation(models.Model):
             'location_id': stock_loc.id,
             'location_dest_id': prod_loc.id,
             'company_id': self.env.company.id,
-            'date': self.harvest_date,
+            'date': self.harvest_date.date(),
             'procure_method': 'make_to_stock',
             'move_line_ids': [(0, 0, {
                 'product_id': live_lot.product_id.id,
@@ -688,7 +687,7 @@ class Cultivation(models.Model):
             'location_id': prod_loc.id,
             'location_dest_id': packed_loc.id,
             'company_id': self.env.company.id,
-            'date': self.harvest_date,
+            'date': self.harvest_date.date(),
             'procure_method': 'make_to_stock',
         }
 
@@ -703,7 +702,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': spoilage_loc.id,
                 'company_id': self.env.company.id,
-                'date': self.harvest_date,
+                'date': self.harvest_date.date(),
                 'procure_method': 'make_to_stock',
                 'move_line_ids': [(0, 0, {
                     'product_id': live_lot.product_id.id,
@@ -726,7 +725,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
-                'date': self.harvest_date,
+                'date': self.harvest_date.date(),
                 'procure_method': 'make_to_stock',
             })
 
@@ -739,7 +738,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
-                'date': self.harvest_date,
+                'date': self.harvest_date.date(),
                 'procure_method': 'make_to_stock',
             })
 
@@ -752,7 +751,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
-                'date': self.harvest_date,
+                'date': self.harvest_date.date(),
                 'procure_method': 'make_to_stock',
             })
 
@@ -872,7 +871,7 @@ class Cultivation(models.Model):
             ], limit=1)
             if not existing:
                 self.env['farm.spoilage.disposal'].create({
-                    'date': self.harvest_date or fields.Date.today(),
+                    'date': self.harvest_date.date() if self.harvest_date else fields.Date.today(),
                     'cultivation_id': self.id,
                     'lot_id': self.live_lot_id.id if self.live_lot_id else False,
                     'quantity': self.spoilage_units,
@@ -917,7 +916,7 @@ class Cultivation(models.Model):
                 'location_id': stock_loc.id,
                 'location_dest_id': prod_loc.id,
                 'company_id': self.env.company.id,
-                'date': self.harvest_date,
+                'date': self.harvest_date.date(),
                 'procure_method': 'make_to_stock',
                 'move_line_ids': [(0, 0, {
                     'product_id': live_lot.product_id.id,
@@ -946,7 +945,7 @@ class Cultivation(models.Model):
                 'location_id': prod_loc.id,
                 'location_dest_id': spoilage_loc.id,
                 'company_id': self.env.company.id,
-                'date': self.harvest_date,
+                'date': self.harvest_date.date(),
                 'procure_method': 'make_to_stock',
                 'move_line_ids': [(0, 0, {
                     'product_id': live_lot.product_id.id,
@@ -973,7 +972,7 @@ class Cultivation(models.Model):
         if loss_acc and stock_journal and loss_amount > 0:
             je = self.env['account.move'].create({
                 'journal_id': stock_journal.id,
-                'date': self.harvest_date,
+                'date': self.harvest_date.date(),
                 'ref': f'ZERO-YIELD-LOSS-{self.id}',
                 'line_ids': [
                     (0, 0, {'account_id': loss_acc.id, 'debit': loss_amount, 'credit': 0.0,
@@ -991,7 +990,7 @@ class Cultivation(models.Model):
         ], limit=1)
         if not existing:
             self.env['farm.spoilage.disposal'].create({
-                'date': self.harvest_date or fields.Date.today(),
+                'date': self.harvest_date.date() if self.harvest_date else fields.Date.today(),
                 'cultivation_id': self.id,
                 'lot_id': live_lot.id,
                 'quantity': total_units,
@@ -1056,7 +1055,7 @@ class Cultivation(models.Model):
                     'location_id': prod_loc.id,
                     'location_dest_id': stock_loc.id,
                     'company_id': self.env.company.id,
-                    'date': self.harvest_date or self.plant_date,
+                    'date': self.harvest_date.date() if self.harvest_date else self.plant_date,
                     'procure_method': 'make_to_stock',
                     'move_line_ids': [(0, 0, {
                         'product_id': self.seed_lot_id.product_id.id,

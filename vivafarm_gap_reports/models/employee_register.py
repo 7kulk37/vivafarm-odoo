@@ -35,8 +35,13 @@ class ReportEmployeeRegister(models.AbstractModel):
             if version and version.date_start:
                 start = version.date_start
             # Wage rate from worker logs
+            # CL-40: by roster worker (ID number first, name fallback).
+            _w = self.env['farm.worker'].search(
+                [('worker_id_number', '=', emp.identification_id or '')],
+                limit=1) if emp.identification_id else self.env['farm.worker']
             logs = self.env['farm.worker.log'].search(
-                [('worker_name', '=', emp.name)])
+                [('worker_id', 'in', (_w | self.env['farm.worker'].search(
+                    [('name', '=', emp.name)])).ids)])
             total_wage = sum(log.wage_amount or 0.0 for log in logs)
             total_hours = sum(log.working_hours or 0.0 for log in logs)
             rate = (total_wage / total_hours) if total_hours else 0.0

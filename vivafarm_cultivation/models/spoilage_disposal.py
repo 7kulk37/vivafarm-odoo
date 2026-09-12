@@ -63,8 +63,10 @@ class FarmSpoilageDisposal(models.Model):
         string='Disposed To',
         help='Where it went (waste bin, feed buyer, compost)',
     )
-    worker_name = fields.Char(
+    worker_id = fields.Many2one(
+        'farm.worker',
         string='Disposed By',
+        ondelete='restrict',
         help='Worker who performed the disposal (GAP 3.8.1 signature)',
     )
     photo_attachment_id = fields.Many2one(

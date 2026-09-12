@@ -15,7 +15,7 @@
                     <field name="auto_recalculation_enabled" widget="boolean_toggle" readonly="1" optional="show"/>
                     <field name="date"/>
                     <field name="worker_type"/>
-                    <field name="worker_name"/>
+                    <field name="worker_id"/>
                     <field name="task_description"/>
                     <field name="safety_briefing" widget="boolean_fa"/>
                     <field name="wage_amount" sum="Total" optional="show"
@@ -56,7 +56,7 @@
                             <group>
                                 <field name="date"/>
                                 <field name="worker_type"/>
-                                <field name="worker_name"/>
+                                <field name="worker_id"/>
                                 <field name="worker_id_number" required="worker_type == 'hired'"/>
                                 <field name="working_hours"/>
                                 <field name="wage_amount" invisible="worker_type != 'hired'" required="worker_type == 'hired'"/>
@@ -133,7 +133,7 @@
             <field name="model">farm.worker.log</field>
             <field name="arch" type="xml">
                 <search>
-                    <field name="worker_name"/>
+                    <field name="worker_id"/>
                     <field name="date"/>
                     <field name="state"/>
                 </search>

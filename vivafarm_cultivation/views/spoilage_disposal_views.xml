@@ -19,7 +19,7 @@
                     <field name="is_loss" widget="boolean_fa" optional="show"/>
                     <field name="reason"/>
                     <field name="destination"/>
-                    <field name="worker_name"/>
+                    <field name="worker_id"/>
                     <field name="state" widget="badge"/>
                 </list>
             </field>
@@ -53,7 +53,7 @@
                             <group>
                                 <field name="reason"/>
                                 <field name="destination"/>
-                                <field name="worker_name"/>
+                                <field name="worker_id"/>
                                 <field name="photo_attachment_id" widget="many2one_attachment"/>
                                 <field name="state" widget="badge"/>
                             </group>
