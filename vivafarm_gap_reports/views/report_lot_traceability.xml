@@ -110,19 +110,19 @@
                         <table class="table table-sm o_main_table" style="table-layout: fixed;">
                             <thead>
                                 <tr>
-                                    <th style="width: 18%;">
+                                    <th style="width: 22%; white-space: nowrap;">
                                         <t t-if="lang == 'th_TH'">วันที่</t>
                                         <t t-else="">Date</t>
                                     </th>
-                                    <th style="width: 14%;">
+                                    <th style="width: 18%; white-space: nowrap;">
                                         <t t-if="lang == 'th_TH'">เอกสาร</t>
                                         <t t-else="">Document</t>
                                     </th>
-                                    <th style="width: 17%;">
+                                    <th style="width: 14%;">
                                         <t t-if="lang == 'th_TH'">จาก</t>
                                         <t t-else="">From</t>
                                     </th>
-                                    <th style="width: 17%;">
+                                    <th style="width: 15%;">
                                         <t t-if="lang == 'th_TH'">ไปยัง</t>
                                         <t t-else="">To</t>
                                     </th>
@@ -134,7 +134,7 @@
                                         <t t-if="lang == 'th_TH'">สถานะ</t>
                                         <t t-else="">State</t>
                                     </th>
-                                    <th style="width: 16%;">
+                                    <th style="width: 11%;">
                                         <t t-if="lang == 'th_TH'">คู่ค้า</t>
                                         <t t-else="">Partner</t>
                                     </th>
