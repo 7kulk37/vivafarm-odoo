@@ -49,10 +49,10 @@
                                     </td>
                                     <td t-esc="r['cultivation'] or ''"/>
                                     <td class="text-muted">
-                                        <t t-if="lang == 'th_TH'">พืช</t>
-                                        <t t-else="">Crop</t>
+                                        <t t-if="lang == 'th_TH'">น้ำหนัก (กก.)</t>
+                                        <t t-else="">Packed Kg</t>
                                     </td>
-                                    <td t-esc="r['crop'] or ''"/>
+                                    <td t-esc="r['packed_kg'] or 0.0"/>
                                 </tr>
                                 <tr>
                                     <td class="text-muted">
