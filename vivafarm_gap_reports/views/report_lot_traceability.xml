@@ -85,6 +85,11 @@
                                     </td>
                                     <td t-esc="r['harvest_date'] or ''"/>
                                     <td class="text-muted">
+                                        <t t-if="lang == 'th_TH'">ผู้บรรจุ (GAP 3.8.1)</t>
+                                        <t t-else="">Packer (GAP 3.8.1)</t>
+                                    </td>
+                                    <td t-esc="r['packer'] + ((' · ' + r['packer_id_number']) if r['packer_id_number'] else '')"/>
+                                    <td class="text-muted">
                                         <t t-if="lang == 'th_TH'">น้ำหนัก (กก.)</t>
                                         <t t-else="">Packed Kg</t>
                                     </td>

@@ -60,6 +60,11 @@ class ReportLotTraceability(models.AbstractModel):
                 'bench': (cul.bench_id.name or '') if cul else '',
                 'plant_date': cul.plant_date if cul else '',
                 'harvest_date': cul.harvest_date if cul else '',
+                # CL-41: packer + harvest time are the GAP 3.8.1 signature
+                # evidence on the F-07 — the report must show WHO.
+                'packer': cul.packer_id.name if cul and cul.packer_id else '',
+                'packer_id_number': (cul.packer_id.worker_id_number
+                                     if cul and cul.packer_id else ''),
                 'packed_kg': cul.packed_kg if cul else 0.0,
                 'move_rows': move_rows,
                 'customers': sorted(customers),
