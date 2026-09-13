@@ -15,8 +15,8 @@
                     <field name="date"/>
                     <field name="reading_time" optional="show"/>
                     <field name="bench_id"/>
-                    <field name="crop_id"/>
-                    <field name="lot_id"/>
+                    <field name="lot_id" readonly="1"/>
+                    <field name="cl42_batch_choice" optional="hide"/>
                     <field name="ec_value"/>
                     <field name="ph_value"/>
                     <field name="is_out_of_band" widget="boolean_fa" optional="show"/>
@@ -70,7 +70,8 @@
                 <search>
                     <field name="date"/>
                     <field name="bench_id"/>
-                    <field name="lot_id"/>
+                    <field name="lot_id" readonly="1"/>
+                    <field name="cl42_batch_choice" optional="hide"/>
                     <field name="state"/>
                 </search>
             </field>

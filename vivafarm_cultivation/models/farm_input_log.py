@@ -57,11 +57,21 @@ class FarmInputLog(models.Model):
         domain="[('location_type', 'in', ('nursery', 'bench'))]",
         help='Nursery or NFT bench location',
     )
+    # CL-42: the worker picks Location only. The batch is derived at
+    # confirm time from the CL-26 one-batch-per-bench invariant and STORED
+    # (a live compute would rewrite history when a bench is reassigned).
     lot_id = fields.Many2one(
         'stock.lot',
         string='Batch (Lot)',
-        required=True,
-        help='Farm batch on this bench (YYWW-BENCH)',
+        readonly=True,
+        help='Auto-mapped from the location at confirm (GAP 3.8.3 chain)',
+    )
+    cl42_batch_choice = fields.Many2one(
+        'vivafarm.cultivation',
+        string='Batch (nursery only)',
+        help='Only when >1 germinated batch shares a nursery: pick which '
+             'one this reading belongs to. Leave empty on benches — the '
+             'bench batch is derived automatically.',
     )
     crop_id = fields.Many2one(
         'product.product',
@@ -81,7 +91,7 @@ class FarmInputLog(models.Model):
         help='pH reading',
     )
     nutrient_adjustment = fields.Float(
-        string='Nutrient (ml)',
+        string='Each Nutrient (ml)',
         digits=(6, 1),
         default=0.0,
         help='Nutrient concentrate added in ml',
@@ -177,15 +187,77 @@ class FarmInputLog(models.Model):
                     raise UserError(f'Cannot edit a {record.state} input log. Only draft logs can be modified.')
         return super().write(vals)
 
+    @api.model
+    def _cl42_batch_candidates(self, cultivation=None, location=None):
+        """CL-42 (option B): candidate batches for a nursery-phase log.
+
+        Returns the germinated cultivations sharing the nursery — the ONLY
+        ambiguous case. Benches never call this (CL-26 invariant gives a
+        unique batch). Used by the confirm guard and the view domain.
+        """
+        loc = location or (cultivation.bench_id if cultivation else False)
+        if not loc or loc.location_type != 'nursery':
+            return self.env['vivafarm.cultivation']
+        return self.env['vivafarm.cultivation'].search([
+            ('nursery_id', '=', loc.id),
+            ('state', '=', 'germinated'),
+        ])
+
+    def _cl42_map_batch(self):
+        """Resolve + store the batch from the location (CL-42).
+
+        Bench: CL-26 one-batch-per-bench → unique growing/transplanted/
+        harvested cultivation on that bench. Nursery: needs an explicit
+        cl42_batch_choice when >1 germinated batch shares it (option B).
+        """
+        self.ensure_one()
+        Cul = self.env['vivafarm.cultivation']
+        loc = self.bench_id
+        if loc.location_type == 'bench':
+            culs = Cul.search([
+                ('bench_id', '=', loc.id),
+                ('state', 'in', ('growing', 'transplanted', 'harvested')),
+            ])
+            if not culs:
+                raise UserError(
+                    f'No batch on {loc.name} — transplant a batch to this '
+                    'bench first (or correct the location).')
+            if len(culs) > 1:  # defensive: CL-26 should make this impossible
+                raise UserError(
+                    f'{loc.name} unexpectedly hosts {len(culs)} active '
+                    'batches — fix the data before confirming.')
+            self.lot_id = culs[0].live_lot_id
+            return
+        # nursery phase (option B)
+        cands = self._cl42_batch_candidates(location=loc)
+        if not cands:
+            raise UserError(
+                f'No germinated batch at nursery {loc.name} — germinate '
+                'first (or correct the location).')
+        if len(cands) == 1:
+            self.lot_id = cands[0].live_lot_id
+            return
+        if not self.cl42_batch_choice:
+            raise UserError(
+                f'{len(cands)} germinated batches share nursery {loc.name} '
+                '— pick the Batch (nursery only) this reading belongs to.')
+        if self.cl42_batch_choice not in cands:
+            raise UserError(
+                'Selected batch is not germinated at this nursery.')
+        self.lot_id = self.cl42_batch_choice.live_lot_id
+
     def action_confirm(self):
         """Confirm the input log. Only works from draft state.
 
         CL-08: confirm binds the confirming user as the digital signature
         (GAP 3.8.1) — the record becomes immutable.
+        CL-42: the batch is mapped from the location here and stored.
         """
         for record in self:
             if record.state != 'draft':
                 raise UserError(f'Can only confirm draft input logs. Log {record.display_name} is in state "{record.state}".')
+        for record in self:
+            record._cl42_map_batch()
         self.write({'state': 'confirmed', 'confirmed_by': self.env.user.id})
         return True
 
