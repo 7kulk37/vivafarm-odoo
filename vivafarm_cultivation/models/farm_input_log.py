@@ -195,7 +195,12 @@ class FarmInputLog(models.Model):
         ambiguous case. Benches never call this (CL-26 invariant gives a
         unique batch). Used by the confirm guard and the view domain.
         """
-        loc = location or (cultivation.bench_id if cultivation else False)
+        # germinated batches sit at the NURSERY (bench_id is only set at
+        # transplant), so the nursery comes from cultivation.nursery_id
+        if cultivation is not None and not isinstance(cultivation, bool):
+            loc = cultivation.nursery_id
+        else:
+            loc = location
         if not loc or loc.location_type != 'nursery':
             return self.env['vivafarm.cultivation']
         return self.env['vivafarm.cultivation'].search([
