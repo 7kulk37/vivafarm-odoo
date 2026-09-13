@@ -41,3 +41,6 @@ access_farm_temperature_log_user,farm.temperature.log.user,model_farm_temperatur
 access_farm_temperature_log_manager,farm.temperature.log.manager,model_farm_temperature_log,base.group_system,1,1,1,1
 access_farm_worker_user,farm.worker.user,model_farm_worker,base.group_user,1,1,1,0
 access_farm_worker_manager,farm.worker.manager,model_farm_worker,base.group_system,1,1,1,1
+
+access_farm_probe_calibration_user,farm.probe.calibration.user,model_farm_probe_calibration,base.group_user,1,1,1,0
+access_farm_probe_calibration_manager,farm.probe.calibration.manager,model_farm_probe_calibration,base.group_system,1,1,1,1
