@@ -19,11 +19,9 @@ class FarmInputLog(models.Model):
         default=fields.Date.context_today,
         index=True,
     )
-    # CL-27: F-04 reading time (GAP 3.5.1 — when the reading was taken)
-    reading_time = fields.Datetime(
-        string='Reading Time',
-        help='When the EC/pH reading was taken (GAP 3.5.1)',
-    )
+    # CL-44: the reading-time field REMOVED — GAP 4.11 needs the DATE + record content,
+    # not time-of-day; the 10 AM stability rule is practice, and Odoo's
+    # automatic create_date is the tamper-proof evidence of when it was logged.
     # CL-27: EC/pH probe calibration trail (GAP 3.5.2)
     probe_last_calibrated = fields.Date(
         string='Probe Last Calibrated',

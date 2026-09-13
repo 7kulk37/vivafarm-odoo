@@ -13,7 +13,6 @@
                            decoration-success="state == 'confirmed'"
                            decoration-danger="state == 'canceled'"/>
                     <field name="date"/>
-                    <field name="reading_time" optional="show"/>
                     <field name="bench_id"/>
                     <field name="lot_id" readonly="1"/>
                     <field name="cl42_batch_choice" optional="hide"/>
