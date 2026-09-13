@@ -22,15 +22,8 @@ class FarmInputLog(models.Model):
     # CL-44: the reading-time field REMOVED — GAP 4.11 needs the DATE + record content,
     # not time-of-day; the 10 AM stability rule is practice, and Odoo's
     # automatic create_date is the tamper-proof evidence of when it was logged.
-    # CL-27: EC/pH probe calibration trail (GAP 3.5.2)
-    probe_last_calibrated = fields.Date(
-        string='Probe Last Calibrated',
-        help='Date the EC/pH probe was last calibrated',
-    )
-    probe_calibration_due = fields.Date(
-        string='Probe Calibration Due',
-        help='Date the probe calibration expires (typically +30 days)',
-    )
+    # CL-45: probe calibration moved OUT of the daily log — it is a per-instrument,
+    # per-year event (GAP 4.15), recorded under Operation Controls → Probe Calibrations.
     # CL-28: out-of-band detection (GAP 3.5.1). CL-43: the re-check trio
     # (same-row EC/pH/time) is REMOVED — the farm's practice corrects by
     # next morning (readings only before 10 AM; ambient heat destabilizes

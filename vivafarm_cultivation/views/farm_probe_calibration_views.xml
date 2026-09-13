@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- CL-45: GAP 4.15 (รอง) — precision instruments must be accuracy-checked
+             at least once per year. One record per probe per calibration event.
+             Recorded from Operation Controls, NOT from the daily input log. -->
+
+        <record id="view_farm_probe_calibration_list" model="ir.ui.view">
+            <field name="name">farm.probe.calibration.list</field>
+            <field name="model">farm.probe.calibration</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="display_name"/>
+                    <field name="probe_name"/>
+                    <field name="calibrated_on"/>
+                    <field name="next_due"/>
+                    <field name="notes" optional="hide"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_farm_probe_calibration_form" model="ir.ui.view">
+            <field name="name">farm.probe.calibration.form</field>
+            <field name="model">farm.probe.calibration</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group string="Calibration Event">
+                                <field name="probe_name"
+                                       placeholder="e.g. EC/pH meter #1"/>
+                                <field name="calibrated_on"/>
+                                <field name="next_due"/>
+                            </group>
+                        </group>
+                        <group string="Notes">
+                            <field name="notes" nolabel="1"
+                                   placeholder="Buffer solutions used, who did it, reference photo..."/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu: Hydroponic → Operation Controls → Probe Calibrations -->
+        <record id="action_farm_probe_calibration" model="ir.actions.act_window">
+            <field name="name">Probe Calibrations</field>
+            <field name="res_model">farm.probe.calibration</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        <menuitem id="menu_farm_probe_calibration"
+                  name="Probe Calibrations"
+                  parent="menu_farm_ops_group"
+                  action="action_farm_probe_calibration"
+                  sequence="65"/>
+    </data>
+</odoo>

@@ -23,8 +23,6 @@
                     <field name="acid_adjustment"/>
                     <field name="raw_water_liters"/>
                     <field name="mixing_liters"/>
-                    <field name="probe_last_calibrated" optional="show"/>
-                    <field name="probe_calibration_due" optional="show"/>
                     <button name="action_confirm" type="object"
                             string="Confirm"
                             icon="fa-check"
