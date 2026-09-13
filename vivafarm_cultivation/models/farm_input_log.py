@@ -33,22 +33,15 @@ class FarmInputLog(models.Model):
         string='Probe Calibration Due',
         help='Date the probe calibration expires (typically +30 days)',
     )
-    # CL-28: out-of-band detection + correction trio (GAP 3.5.1)
+    # CL-28: out-of-band detection (GAP 3.5.1). CL-43: the re-check trio
+    # (same-row EC/pH/time) is REMOVED — the farm's practice corrects by
+    # next morning (readings only before 10 AM; ambient heat destabilizes
+    # EC/pH), so the evidence pair is Day-1 flagged log + Day-2 clean log.
+    # GAP 4.11 needs monitor+record+corrective evidence: the two dated rows
+    # plus a note on the Day-1 row ("adjusted acid +100 ml") carry it.
     is_out_of_band = fields.Boolean(
         string='Out of Band', compute='_compute_out_of_band', store=True,
         help='True when EC or pH is outside the recipe target band',
-    )
-    recheck_ec_value = fields.Float(
-        string='Re-check EC', digits=(4, 2),
-        help='EC after correction (re-check reading)',
-    )
-    recheck_ph_value = fields.Float(
-        string='Re-check pH', digits=(3, 1),
-        help='pH after correction (re-check reading)',
-    )
-    recheck_time = fields.Datetime(
-        string='Re-check Time',
-        help='When the re-check reading was taken',
     )
     bench_id = fields.Many2one(
         'farm.location',
