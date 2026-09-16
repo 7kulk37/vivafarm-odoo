@@ -30,21 +30,29 @@ class FarmWorkerLog(models.Model):
         ondelete='restrict',
         help="Worker as registered on the farm roster (ID-card name)",
     )
+    # CL-46: worker_type is DERIVED from the roster flag (readonly) — picking
+    # the person IS picking the type; no separate dropdown to disagree with.
     worker_type = fields.Selection(
         [
             ('owner_family', 'Owner / Family (no wage accrual)'),
             ('hired', 'Hired Worker (wage accrued, PND 1 Kor)'),
         ],
         string='Worker Type',
-        default='owner_family',
-        required=True,
+        compute='_compute_worker_type',
+        store=True,
         help=(
-            'Thai law: only GENUINE HIRED WORKER wages are deductible '
-            '(มาตรา 40(8)) and only they accrue Dr 113400 WIP / Cr 222100. '
-            'Owner/family labor is the return on the business — record it '
-            'for GAP traceability only, never as a wage (consult 2026-09-04).'
+            'Derived from the Worker Roster flag (Owner / Family). Thai law: '
+            'only GENUINE HIRED WORKER wages are deductible (มาตรา 40(8)) and '
+            'only they accrue Dr 113400 WIP / Cr 222100. Owner/family labor is '
+            'the return on the business — GAP traceability only (consult 2026-09-04).'
         ),
     )
+
+    @api.depends('worker_id')
+    def _compute_worker_type(self):
+        for rec in self:
+            rec.worker_type = 'owner_family' if (
+                rec.worker_id and rec.worker_id.is_owner_family) else 'hired'
     worker_id_number = fields.Char(
         string='ID Number',
         help='National ID number (GAP worker registration; required for hired workers / PND 1 Kor)',
@@ -98,10 +106,15 @@ class FarmWorkerLog(models.Model):
         help='Auto-generated reference number',
     )
     # CL-08: GAP 3.8.1 signature pair — who did the work + who confirmed
+    # CL-46: GAP 3.8.1 signature — auto-fills from the roster person; only
+    # type a different name when someone ELSE did the work (shared task).
     performed_by = fields.Char(
         string='Performed By',
-        help='Worker who performed the task (GAP 3.8.1 signature)',
+        help='Worker who performed the task (GAP 3.8.1 signature). '
+             'Leave empty = the roster person did it; the name is filled '
+             'automatically at save.',
     )
+
     confirmed_by = fields.Many2one(
         'res.users',
         string='Confirmed By',
@@ -360,9 +373,13 @@ class FarmWorkerLog(models.Model):
 
     @api.model
     def create(self, vals_list):
+        """ref sequence (CL-05) + performed_by auto-signature (CL-46)."""
         if isinstance(vals_list, dict):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
                 vals['ref'] = self.env['ir.sequence'].next_by_code('farm.worker.log') or '/'
+            if not vals.get('performed_by') and vals.get('worker_id'):
+                vals['performed_by'] = self.env['farm.worker'].browse(
+                    vals['worker_id']).name
         return super(FarmWorkerLog, self).create(vals_list)
