@@ -26,6 +26,17 @@ class FarmWorker(models.Model):
         default=False,
         help="Tick for the owner or a family member — their logs are GAP-only "
              "records, no wage accrual, no PND 1 Kor (Thai law มาตรา 40(8))")
+    # CL-47: hr.employee twin for the hr.expense wage-payment flow — created
+    # automatically for hired workers, never typed by hand. Read-only link;
+    # farm.worker stays the single entry point for people.
+    employee_id = fields.Many2one(
+        'hr.employee',
+        string='Linked Employee',
+        readonly=True,
+        copy=False,
+        help='Auto-created for hired workers so the wage-expense flow has a '
+             'payer. Owner/family members get NO employee record (มาตรา 40(8): '
+             'family labor is never a wage).')
     worker_id_number = fields.Char(
         string='ID Number',
         help='National ID number (GAP worker registration; required '
@@ -37,3 +48,38 @@ class FarmWorker(models.Model):
         ('worker_id_number_unique', 'unique(worker_id_number)',
          'This ID number is already on the roster.'),
     ]
+
+    def _sync_employee(self):
+        """CL-47: one-way sync to hr.employee — hired workers get an employee
+        record (hr.expense payer); owner/family members get none (family labor
+        is never employment, มาตรา 40(8)). Create-once + name propagation only."""
+        HrEmployee = self.env['hr.employee'].sudo()
+        for rec in self:
+            if rec.is_owner_family:
+                # flag flipped to family: archive the stale employee stub if any
+                posted = self.env['hr.expense'].sudo().search_count(
+                    [('employee_id', '=', rec.employee_id.id),
+                     ('state', '!=', 'draft')])
+                if rec.employee_id and not posted:
+                    rec.employee_id.active = False
+                    rec.employee_id = False
+                continue
+            if not rec.employee_id:
+                existing = HrEmployee.search([('name', '=', rec.name)], limit=1)
+                rec.employee_id = existing or HrEmployee.create({'name': rec.name})
+            elif rec.employee_id.name != rec.name:
+                rec.employee_id.name = rec.name
+
+    @api.model
+    def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
+        recs = super().create(vals_list)
+        recs._sync_employee()
+        return recs
+
+    def write(self, vals):
+        res = super().write(vals)
+        if {'name', 'is_owner_family'} & set(vals):
+            self._sync_employee()
+        return res

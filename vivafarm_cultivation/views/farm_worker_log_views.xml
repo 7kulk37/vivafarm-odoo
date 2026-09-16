@@ -194,6 +194,8 @@
                                 <field name="name"/>
                                 <field name="is_owner_family"/>
                                 <field name="worker_id_number"/>
+                                <field name="employee_id"
+                                       invisible="is_owner_family"/>
                             </group>
                         </group>
                         <group string="Notes">
