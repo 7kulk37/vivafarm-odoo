@@ -292,8 +292,8 @@ class FarmWorkerLog(models.Model):
         ])
         total_days = 0
         for cul in cultivations:
-            start = cul.plant_date
-            end = cul.harvest_date
+            start = fields.Date.to_date(cul.plant_date)
+            end = fields.Date.to_date(cul.harvest_date)
             if start and end:
                 total_days += (end - start).days + 1
 
