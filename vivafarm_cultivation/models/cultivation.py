@@ -151,15 +151,10 @@ class Cultivation(models.Model):
 
     @api.model
     def _next_reference(self):
-        last = self.search([('name', '!=', 'Draft')], order='id desc', limit=1)
-        if last and last.name and last.name.startswith('CUL-'):
-            try:
-                num = int(last.name.split('-')[1]) + 1
-            except (IndexError, ValueError):
-                num = 1
-        else:
-            num = 1
-        return f'CUL-{num:03d}'
+        # CL-48: CUL/YYYY/00000 via a real ir.sequence (year reset through
+        # use_date_range). Replaces the hand-rolled last-record increment,
+        # which broke on any reordering and never reset at year end.
+        return self.env['ir.sequence'].next_by_code('vivafarm.cultivation') or 'Draft'
 
     @api.onchange('seed_lot_id')
     def _onchange_seed_lot(self):

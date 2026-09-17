@@ -5,88 +5,109 @@
         <record id="seq_farm_input_log" model="ir.sequence">
             <field name="name">Farm Input Log</field>
             <field name="code">farm.input.log</field>
-            <field name="prefix">IL-</field>
+            <field name="prefix">IL/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_worker_log" model="ir.sequence">
             <field name="name">Farm Worker Log</field>
             <field name="code">farm.worker.log</field>
-            <field name="prefix">WL-</field>
+            <field name="prefix">WL/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_material_transformation" model="ir.sequence">
             <field name="name">Material Transformation</field>
             <field name="code">material.transformation</field>
-            <field name="prefix">MT-</field>
+            <field name="prefix">MT/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_spoilage_disposal" model="ir.sequence">
             <field name="name">Spoilage Disposal</field>
             <field name="code">farm.spoilage.disposal</field>
-            <field name="prefix">SD-</field>
+            <field name="prefix">SD/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_nutrient_mix" model="ir.sequence">
             <field name="name">Nutrient Mix</field>
             <field name="code">farm.nutrient.mix</field>
-            <field name="prefix">NM-</field>
+            <field name="prefix">NM/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_pest_monitor" model="ir.sequence">
             <field name="name">Pest Monitor</field>
             <field name="code">farm.pest.monitor</field>
-            <field name="prefix">PM-</field>
+            <field name="prefix">PM/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_cleaning_log" model="ir.sequence">
             <field name="name">Cleaning Log</field>
             <field name="code">farm.cleaning.log</field>
-            <field name="prefix">CLG-</field>
+            <field name="prefix">CLG/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_chemical_register" model="ir.sequence">
             <field name="name">Chemical Register</field>
             <field name="code">farm.chemical.register</field>
-            <field name="prefix">CH-</field>
+            <field name="prefix">CH/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_water_test" model="ir.sequence">
             <field name="name">Water Test</field>
             <field name="code">farm.water.test</field>
-            <field name="prefix">WT-</field>
+            <field name="prefix">WT/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_physical_count" model="ir.sequence">
             <field name="name">Physical Count</field>
             <field name="code">farm.physical.count</field>
-            <field name="prefix">PC-</field>
+            <field name="prefix">PC/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
         <record id="seq_farm_temperature_log" model="ir.sequence">
             <field name="name">Temperature Log</field>
             <field name="code">farm.temperature.log</field>
-            <field name="prefix">TL-</field>
+            <field name="prefix">TL/%(year)s/</field>
             <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
+            <field name="company_id" eval="False"/>
+        </record>
+
+
+        <record id="seq_vivafarm_cultivation" model="ir.sequence">
+            <field name="name">Cultivation Record</field>
+            <field name="code">vivafarm.cultivation</field>
+            <field name="prefix">CUL/%(year)s/</field>
+            <field name="padding">5</field>
+            <field name="use_date_range" eval="True"/>
             <field name="company_id" eval="False"/>
         </record>
 
