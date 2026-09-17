@@ -103,7 +103,7 @@ class FarmPestMonitor(models.Model):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
-                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.pest.monitor') or '/'
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.pest.monitor', sequence_date=vals.get('date')) or '/'
         return super(FarmPestMonitor, self).create(vals_list)
 
 
@@ -203,5 +203,5 @@ class FarmCleaningLog(models.Model):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
-                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.cleaning.log') or '/'
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.cleaning.log', sequence_date=vals.get('date')) or '/'
         return super(FarmCleaningLog, self).create(vals_list)

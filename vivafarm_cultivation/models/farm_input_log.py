@@ -273,5 +273,5 @@ class FarmInputLog(models.Model):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
-                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.input.log') or '/'
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.input.log', sequence_date=vals.get('date')) or '/'
         return super(FarmInputLog, self).create(vals_list)

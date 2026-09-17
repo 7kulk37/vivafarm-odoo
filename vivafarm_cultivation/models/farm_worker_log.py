@@ -378,7 +378,7 @@ class FarmWorkerLog(models.Model):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
-                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.worker.log') or '/'
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.worker.log', sequence_date=vals.get('date')) or '/'
             if not vals.get('performed_by') and vals.get('worker_id'):
                 vals['performed_by'] = self.env['farm.worker'].browse(
                     vals['worker_id']).name

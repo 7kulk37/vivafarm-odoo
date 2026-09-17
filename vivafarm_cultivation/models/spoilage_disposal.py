@@ -154,5 +154,5 @@ class FarmSpoilageDisposal(models.Model):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
-                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.spoilage.disposal') or '/'
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.spoilage.disposal', sequence_date=vals.get('date')) or '/'
         return super(FarmSpoilageDisposal, self).create(vals_list)

@@ -121,5 +121,5 @@ class FarmNutrientMix(models.Model):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
-                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.nutrient.mix') or '/'
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.nutrient.mix', sequence_date=vals.get('date')) or '/'
         return super(FarmNutrientMix, self).create(vals_list)

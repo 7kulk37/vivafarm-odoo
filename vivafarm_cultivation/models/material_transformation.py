@@ -529,5 +529,5 @@ class MaterialTransformation(models.Model):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
-                vals['ref'] = self.env['ir.sequence'].next_by_code('material.transformation') or '/'
+                vals['ref'] = self.env['ir.sequence'].next_by_code('material.transformation', sequence_date=vals.get('date')) or '/'
         return super(MaterialTransformation, self).create(vals_list)

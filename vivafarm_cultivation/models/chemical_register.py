@@ -82,7 +82,7 @@ class FarmChemicalRegister(models.Model):
             vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get('ref'):
-                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.chemical.register') or '/'
+                vals['ref'] = self.env['ir.sequence'].next_by_code('farm.chemical.register', sequence_date=vals.get('date')) or '/'
         return super(FarmChemicalRegister, self).create(vals_list)
 
     def action_use(self):

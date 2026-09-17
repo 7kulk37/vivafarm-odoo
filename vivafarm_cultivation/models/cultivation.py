@@ -154,7 +154,10 @@ class Cultivation(models.Model):
         # CL-48: CUL/YYYY/00000 via a real ir.sequence (year reset through
         # use_date_range). Replaces the hand-rolled last-record increment,
         # which broke on any reordering and never reset at year end.
-        return self.env['ir.sequence'].next_by_code('vivafarm.cultivation') or 'Draft'
+        # CL-49: year range follows the record's BUSINESS date (plant_date),
+        # not the action date — a backdated batch must land in its own year.
+        return self.env['ir.sequence'].next_by_code(
+            'vivafarm.cultivation', sequence_date=self.plant_date) or 'Draft'
 
     @api.onchange('seed_lot_id')
     def _onchange_seed_lot(self):
