@@ -1,4 +1,6 @@
 from odoo import api, models
+from odoo.exceptions import UserError
+from odoo import _
 from odoo.tools import format_amount
 from odoo.tools.misc import format_date
 
@@ -49,13 +51,22 @@ class ReportWhtAttach(models.AbstractModel):
         lines = report_pnd3._get_wht_lines(wizard, tag_name)
         currency = self.env.company.currency_id
         rows = []
+        skipped = []
         for l in lines:
             bill = l.move_id
+            partner = bill.partner_id
+            # S8 guards: non-resident payees file ภ.ง.ด.54, not PND3/53;
+            # Thai payees must carry a Tax ID (defense-in-depth — the VS-03
+            # _post guard already blocks no-vat Thai bills).
+            if partner.viva_non_resident:
+                continue
+            if not partner.vat:
+                skipped.append(partner.name)
+                continue
             pay_date = report_pnd3._payment_date_in_period(bill, wizard)
             ratio = report_pnd3._payment_ratio_in_period(bill, wizard)
             income_type = self._get_income_type(l.tax_line_id)
             th, en = self.INCOME_LABELS[income_type]
-            partner = bill.partner_id
             # What the payment was for: the bill's vendor reference (the
             # vendor's own invoice number) — the "จ่ายเป็นค่าอะไร" note.
             purpose = bill.ref or bill.name or ''
@@ -81,6 +92,10 @@ class ReportWhtAttach(models.AbstractModel):
                 'cond': '1',
             })
         rows.sort(key=lambda r: (r['pay_date'] or wizard.date_from, r['partner']))
+        if skipped:
+            raise UserError(_(
+                'ใบแนบ: payee(s) without Tax ID cannot appear on ภ.ง.ด.3/53: %s. '
+                'Set the Tax ID on the contact first (VS-03).') % ', '.join(sorted(set(skipped))))
         return rows
 
     @api.model
