@@ -8,7 +8,8 @@ class AccountPaymentRegister(models.TransientModel):
         """After reconciliation, raise WHT reminders + certs for paid bills (VS-05).
 
         The withholding obligation is incurred at payment (มาตรา 50); the
-        certificate must be issued "immediately" (มาตรา 50 ทวิ) and the
+        certificate must be issued immediately at each withholding
+        (มาตรา 50(3)(4) — ประกาศฉบับที่ 62 ข้อ 2) and the
         withheld tax remitted with the monthly ภ.ง.ด.3/53 return by the
         7th of the following month (15th e-filing — the extension applies
         to the remittance because it is filed with the return per มาตรา 59).

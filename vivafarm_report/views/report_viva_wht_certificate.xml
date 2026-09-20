@@ -1,36 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        VivaFarm Withholding Tax Certificate (หนังสือรับรองการหักภาษี ณ ที่จ่าย)
-        — custom report bound to account.move (vendor bills with WHT lines).
-        Issued to the payee within 7 days of payment (มาตรา 50 ทวิ).
-        Single copy (the payee keeps it as proof of tax credit).
-        Standard Viva header, title in the body.
+        VivaFarm Withholding Tax Certificate (หนังสือรับรองการหักภาษี ณ ที่จ่าย
+        ตามมาตรา 50 ทวิ แห่งประมวลรัษฎากร) — custom report bound to account.move
+        (vendor bills with WHT lines). Content-conformant per ประกาศอธิบดีฯ
+        ฉบับที่ 62 ข้อ 2: sequential number, TWO copies (ฉบับที่ 1 = attach to
+        the PND return, ฉบับที่ 2 = payee keeps), income type per row,
+        net-paid line. Both copies on one A4 (top/bottom half).
     -->
 
-    <!-- ── Content: Viva WHT Certificate Document ── -->
+    <!-- ── Content: Viva WHT Certificate Document (single copy block) ── -->
     <template id="viva_wht_certificate_document"
               name="VivaFarm WHT Certificate Document">
         <t t-call="vivafarm_report.external_layout_viva">
             <t t-set="is_wht_certificate" t-value="True"/>
             <t t-set="o" t-value="o.with_context(lang=lang)"/>
+            <t t-set="copy_label" t-value="copy_label or ''"/>
 
             <div class="page">
-                <h3 t-att-style="'margin-top: 0; margin-bottom: 6px; text-align: left; color: %s;' % (o.company_id.primary_color or '#000000')">
-                    <strong style="font-size: 24px;">
-                        <t t-if="lang == 'th_TH'">หนังสือรับรองการหักภาษี ณ ที่จ่าย</t>
-                        <t t-else="">Withholding Tax Certificate</t>
+                <div style="font-size: 12px; margin-bottom: 2px;">
+                    <strong t-esc="copy_label"/>
+                </div>
+                <h3 t-att-style="'margin-top: 0; margin-bottom: 2px; text-align: left; color: %s;' % (o.company_id.primary_color or '#000000')">
+                    <strong style="font-size: 20px;">
+                        <t t-if="lang == 'th_TH'">หนังสือรับรองการหักภาษี ณ ที่จ่าย ตามมาตรา 50 ทวิ แห่งประมวลรัษฎากร</t>
+                        <t t-else="">Withholding Tax Certificate (Section 50 bis, Revenue Code)</t>
                     </strong>
                 </h3>
+                <div style="font-size: 12px; margin-bottom: 6px;">
+                    <t t-if="lang == 'th_TH'">เลขที่หนังสือรับรอง: <strong t-esc="cert_number or '-'" /></t>
+                    <t t-else="">Certificate No.: <strong t-esc="cert_number or '-'" /></t>
+                </div>
 
                 <!-- Payer / Payee blocks -->
                 <div class="row" style="margin: 0 0 8px 0;">
                     <div class="col-6" style="width: 50%; padding-right: 3px;">
-                        <strong style="font-size: 15px;">
+                        <strong style="font-size: 14px;">
                             <t t-if="lang == 'th_TH'">ผู้จ่ายเงิน</t>
                             <t t-else="">Payer</t>
                         </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
+                        <div style="font-size: 13px; line-height: 1.3;">
                             <div t-field="o.company_id.name"/>
                             <div t-if="o.company_id.street or o.company_id.street2">
                                 <span t-field="o.company_id.street"/><t t-if="o.company_id.street and o.company_id.street2">, </t><span t-field="o.company_id.street2"/>
@@ -43,11 +52,11 @@
                         </div>
                     </div>
                     <div class="col-6" style="width: 50%; padding-left: 3px;">
-                        <strong style="font-size: 15px;">
+                        <strong style="font-size: 14px;">
                             <t t-if="lang == 'th_TH'">ผู้ถูกหักภาษี</t>
                             <t t-else="">Payee</t>
                         </strong>
-                        <div style="font-size: 14px; line-height: 1.35;">
+                        <div style="font-size: 13px; line-height: 1.3;">
                             <div t-field="o.partner_id.name"/>
                             <div t-if="o.partner_id.street or o.partner_id.street2">
                                 <span t-field="o.partner_id.street"/><t t-if="o.partner_id.street and o.partner_id.street2">, </t><span t-field="o.partner_id.street2"/>
@@ -63,71 +72,49 @@
 
                 <!-- Info row: bill no + date -->
                 <div class="row" style="margin: 0 0 8px 0;">
-                    <div class="col-4" style="width: 33%; padding-right: 3px;">
-                        <strong style="font-size: 13px;">
-                            <t t-if="lang == 'th_TH'">เลขที่เอกสาร</t>
-                            <t t-else="">Document No.</t>
+                    <div class="col-6" style="width: 50%; padding-right: 3px;">
+                        <strong style="font-size: 12px;">
+                            <t t-if="lang == 'th_TH'">ออกหนังสือรับรองฉบับนี้ ณ วันที่</t>
+                            <t t-else="">Issued on</t>
                         </strong>
-                        <div style="font-size: 13px;"><span t-field="o.name"/></div>
-                    </div>
-                    <div class="col-4" style="width: 33%; padding-right: 3px;">
-                        <strong style="font-size: 13px;">
-                            <t t-if="lang == 'th_TH'">วันที่</t>
-                            <t t-else="">Date</t>
-                        </strong>
-                        <div style="font-size: 13px;">
-                            <t t-if="lang == 'th_TH'"><span t-esc="o._get_thai_date_display('invoice_date')"/></t>
-                            <t t-else=""><span t-field="o.invoice_date"/></t>
-                            <t t-if="payment_date and payment_date != o.invoice_date">
-                                <t t-if="lang == 'th_TH'"> (ชำระเมื่อ <span t-esc="payment_date_th"/>)</t>
-                                <t t-else=""> (paid <span t-esc="payment_date"/>)</t>
-                            </t>
+                        <div style="font-size: 12px;">
+                            <span t-esc="payment_date_th or payment_date or ''"/>
                         </div>
                     </div>
-                    <div class="col-4" style="width: 33%; padding-left: 3px;">
-                        <strong style="font-size: 13px;">
-                            <t t-if="lang == 'th_TH'">ประเภทเงินได้</t>
-                            <t t-else="">Income Type</t>
+                    <div class="col-6" style="width: 50%; padding-left: 3px;">
+                        <strong style="font-size: 12px;">
+                            <t t-if="lang == 'th_TH'">เอกสารอ้างอิง</t>
+                            <t t-else="">Reference</t>
                         </strong>
-                        <div style="font-size: 13px;">
-                            <t t-set="income_type" t-value="rows[0]['income_type'] if rows else 'service'"/>
-                            <t t-if="income_type == 'rent'">
-                                <t t-if="lang == 'th_TH'">ค่าเช่า (มาตรา 40(5))</t>
-                                <t t-else="">Rent (Section 40(5))</t>
-                            </t>
-                            <t t-elif="income_type == 'advertising'">
-                                <t t-if="lang == 'th_TH'">ค่าบริการโฆษณา (มาตรา 40(8))</t>
-                                <t t-else="">Advertising (Section 40(8))</t>
-                            </t>
-                            <t t-elif="income_type == 'transport'">
-                                <t t-if="lang == 'th_TH'">ค่าขนส่ง (มาตรา 40(8))</t>
-                                <t t-else="">Transport (Section 40(8))</t>
-                            </t>
-                            <t t-else="">
-                                <t t-if="lang == 'th_TH'">ค่าบริการ (มาตรา 40(8))</t>
-                                <t t-else="">Service (Section 40(8))</t>
-                            </t>
-                        </div>
+                        <div style="font-size: 12px;"><span t-field="o.name"/></div>
                     </div>
                 </div>
 
-                <!-- WHT line table -->
+                <!-- WHT line table (income type per row — one row per WHT tax) -->
                 <table class="table table-sm table-bordered" style="margin-top: 4px;">
                     <thead>
                         <tr>
-                            <th class="text-center" style="width: 8%;">
-                                <t t-if="lang == 'th_TH'">ข้อ</t>
+                            <th class="text-center" style="width: 6%;">
+                                <t t-if="lang == 'th_TH'">ลำดับ</t>
                                 <t t-else="">No.</t>
                             </th>
-                            <th style="width: 42%;">
-                                <t t-if="lang == 'th_TH'">รายการ</t>
-                                <t t-else="">Description</t>
+                            <th style="width: 24%;">
+                                <t t-if="lang == 'th_TH'">ประเภทเงินได้ (จ่ายเป็นค่า)</t>
+                                <t t-else="">Income Type</t>
                             </th>
-                            <th class="text-end" style="width: 25%;">
-                                <t t-if="lang == 'th_TH'">จำนวนเงิน</t>
-                                <t t-else="">Amount</t>
+                            <th style="width: 22%;">
+                                <t t-if="lang == 'th_TH'">วันที่จ่าย</t>
+                                <t t-else="">Date Paid</t>
                             </th>
-                            <th class="text-end" style="width: 25%;">
+                            <th class="text-end" style="width: 16%;">
+                                <t t-if="lang == 'th_TH'">จำนวนเงินที่จ่าย</t>
+                                <t t-else="">Amount Paid</t>
+                            </th>
+                            <th class="text-center" style="width: 10%;">
+                                <t t-if="lang == 'th_TH'">อัตรา %</t>
+                                <t t-else="">Rate %</t>
+                            </th>
+                            <th class="text-end" style="width: 16%;">
                                 <t t-if="lang == 'th_TH'">ภาษีที่หัก</t>
                                 <t t-else="">Tax Withheld</t>
                             </th>
@@ -138,41 +125,40 @@
                             <tr>
                                 <td class="text-center"><t t-esc="wht_index + 1"/></td>
                                 <td>
+                                    <span t-esc="wht['income_type_label_th'] if lang == 'th_TH' else wht['income_type_label']"/>
                                     <span t-esc="wht['tax']"/>
-                                    <t t-if="lang == 'th_TH'"> (อัตรา <t t-esc="'%g' % wht['rate']"/>%)</t>
-                                    <t t-else=""> (rate <t t-esc="'%g' % wht['rate']"/>%)</t>
                                 </td>
+                                <td><span t-esc="payment_date_th if lang == 'th_TH' else payment_date"/></td>
                                 <td class="text-end"><span t-esc="wht['base_fmt']"/></td>
+                                <td class="text-center"><t t-esc="'%g' % wht['rate']"/></td>
                                 <td class="text-end"><span t-esc="wht['wht_fmt']"/></td>
                             </tr>
                         </t>
                     </tbody>
                     <tfoot>
                         <tr class="fw-bold">
-                            <td colspan="2" class="text-end">
+                            <td colspan="3" class="text-end">
                                 <t t-if="lang == 'th_TH'">รวม</t>
                                 <t t-else="">Total</t>
                             </td>
                             <td class="text-end"><span t-esc="total_base"/></td>
+                            <td/>
                             <td class="text-end"><span t-esc="total_wht"/></td>
+                        </tr>
+                        <tr class="fw-bold">
+                            <td colspan="3" class="text-end">
+                                <t t-if="lang == 'th_TH'">จำนวนเงินสุทธิที่จ่ายให้ผู้ถูกหักภาษี</t>
+                                <t t-else="">Net amount paid to payee</t>
+                            </td>
+                            <td class="text-end" colspan="3"><span t-esc="total_net"/></td>
                         </tr>
                     </tfoot>
                 </table>
 
-                <!-- Declaration note -->
-                <div style="margin: 10px 0 8px 0; font-size: 13px; line-height: 1.5; color: #333;">
-                    <t t-if="lang == 'th_TH'">
-                        ข้าพเจ้าได้หักภาษี ณ ที่จ่าย ตามรายการข้างต้น และจะนำส่งต่อกรมสรรพากรภายในกำหนดเวลา
-                    </t>
-                    <t t-else="">
-                        We have withheld tax as listed above and will remit it to the Revenue Department within the prescribed time.
-                    </t>
-                </div>
-
                 <!-- Signature blocks -->
-                <div class="row" style="margin: 16px 0 0 0;">
+                <div class="row" style="margin: 12px 0 0 0;">
                     <div class="col-6" style="width: 50%; padding-right: 3px;">
-                        <div style="font-size: 13px; line-height: 1.5;">
+                        <div style="font-size: 12px; line-height: 1.4;">
                             <div>
                                 <t t-if="lang == 'th_TH'">ลงชื่อ .................................................. ผู้จ่ายเงิน</t>
                                 <t t-else="">Signature .................................................. Payer</t>
@@ -182,17 +168,17 @@
                                 <t t-else="">( .................................................. )</t>
                             </div>
                             <div style="margin-top: 2px;">
-                                <t t-if="lang == 'th_TH'">ตำแหน่ง ..................................................</t>
-                                <t t-else="">Position ..................................................</t>
-                            </div>
-                            <div style="margin-top: 2px;">
-                                <t t-if="lang == 'th_TH'">วันที่ ..................................................</t>
-                                <t t-else="">Date ..................................................</t>
+                                <t t-if="lang == 'th_TH'">ประทับตรา (ถ้ามี)</t>
+                                <t t-else="">Company seal (if any)</t>
                             </div>
                         </div>
                     </div>
                     <div class="col-6" style="width: 50%; padding-left: 3px;">
-                        <div style="font-size: 13px; line-height: 1.5;">
+                        <div style="font-size: 13px; line-height: 1.4;">
+                            <div>
+                                <t t-if="lang == 'th_TH'">ได้รับหนังสือรับรองและเงินสุทธิแล้ว</t>
+                                <t t-else="">Received the certificate and net payment</t>
+                            </div>
                             <div>
                                 <t t-if="lang == 'th_TH'">ลงชื่อ .................................................. ผู้รับ</t>
                                 <t t-else="">Signature .................................................. Recipient</t>
@@ -201,10 +187,6 @@
                                 <t t-if="lang == 'th_TH'">( .................................................. )</t>
                                 <t t-else="">( .................................................. )</t>
                             </div>
-                            <div style="margin-top: 2px;">
-                                <t t-if="lang == 'th_TH'">วันที่ ..................................................</t>
-                                <t t-else="">Date ..................................................</t>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -212,13 +194,22 @@
         </t>
     </template>
 
-    <!-- ── Wrapper: one certificate per bill ── -->
+    <!-- ── Wrapper: ONE A4, two copies stacked top/bottom (ฉบับที่ 62 ข้อ 2) ── -->
     <template id="report_viva_wht_certificate"
               name="VivaFarm Withholding Tax Certificate">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
-                <t t-set="lang" t-value="o.partner_id.lang or o.company_id.partner_id.lang"/>
-                <t t-call="vivafarm_report.viva_wht_certificate_document"/>
+                <!-- Statutory Thai form: always render Thai regardless of
+                     partner lang (ประกาศฉบับที่ 62 ข้อ 3 allows Thai) -->
+                <t t-set="lang" t-value="'th_TH'"/>
+                <div style="page-break-after: always;">
+                    <t t-set="copy_label" t-value="(lang == 'th_TH' and 'ฉบับที่ 1 (สำหรับผู้ถูกหักภาษี ณ ที่จ่าย ใช้แนบพร้อมกับแบบแสดงรายการภาษี)' or 'Copy 1 (for the withholding payee, to attach to the tax return)')"/>
+                    <div style="border-bottom: 1px dashed #999; padding-bottom: 6px; margin-bottom: 6px;">
+                        <t t-call="vivafarm_report.viva_wht_certificate_document"/>
+                    </div>
+                    <t t-set="copy_label" t-value="(lang == 'th_TH' and 'ฉบับที่ 2 (สำหรับผู้ถูกหักภาษี ณ ที่จ่าย เก็บไว้เป็นหลักฐาน)' or 'Copy 2 (for the withholding payee to keep as evidence)')"/>
+                    <t t-call="vivafarm_report.viva_wht_certificate_document"/>
+                </div>
             </t>
         </t>
     </template>

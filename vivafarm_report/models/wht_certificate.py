@@ -37,17 +37,26 @@ class ReportVivaWhtCertificate(models.AbstractModel):
 
     @api.model
     def _get_wht_lines(self, move, ratio=1.0):
-        """Return WHT lines of a bill: [{tax, rate, base, base_fmt, wht, wht_fmt, income_type}].
+        """Return WHT lines of a bill: [{tax, rate, base, base_fmt, wht, wht_fmt,
+        income_type, income_type_label, income_type_label_th}].
 
         ``ratio`` scales the rows to a payment slice (VS-10): a partial
         payment withholds only on the paid portion (มาตรา 50 — withhold at
         every payment), so the cert shows the slice, not the whole bill.
         """
+        labels = {
+            'rent': ('Rent (Section 40(5))', 'ค่าเช่า (มาตรา 40(5))'),
+            'advertising': ('Advertising (Section 40(8))', 'ค่าบริการโฆษณา (มาตรา 40(8))'),
+            'transport': ('Transport (Section 40(8))', 'ค่าขนส่ง (มาตรา 40(8))'),
+            'service': ('Service (Section 40(8))', 'ค่าบริการ (มาตรา 40(8))'),
+        }
         currency = move.currency_id or self.env.company.currency_id
         lines = move.line_ids.filtered(
             lambda l: l.tax_line_id and l.tax_line_id.amount < 0)
         rows = []
         for l in lines:
+            income_type = self._get_income_type(l.tax_line_id)
+            label_en, label_th = labels[income_type]
             rows.append({
                 'tax': l.tax_line_id.name,
                 'rate': -l.tax_line_id.amount,
@@ -55,7 +64,9 @@ class ReportVivaWhtCertificate(models.AbstractModel):
                 'base_fmt': format_amount(self.env, l.tax_base_amount * ratio, currency),
                 'wht': -l.balance * ratio,
                 'wht_fmt': format_amount(self.env, -l.balance * ratio, currency),
-                'income_type': self._get_income_type(l.tax_line_id),
+                'income_type': income_type,
+                'income_type_label': label_en,
+                'income_type_label_th': label_th,
             })
         return rows
 
@@ -93,6 +104,19 @@ class ReportVivaWhtCertificate(models.AbstractModel):
             from odoo.tools.misc import format_date
             day_month = format_date(self.env, payment_date, lang_code='th_TH', date_format='dd/MMM')
             payment_date_th = '%s/%s' % (day_month, payment_date.year + 543)
+        # Certificate serial: the reminder issued for this payment+bill
+        # (ประกาศฉบับที่ 62 ข้อ 2 — sequential number). Falls back to the
+        # bill's first reminder (standalone print of a paid bill).
+        cert_number = False
+        if payment:
+            cert_number = self.env['viva.wht.reminder'].search([
+                ('payment_id', '=', payment.id),
+                ('bill_id', '=', moves[0].id),
+            ], limit=1).cert_number
+        if not cert_number:
+            cert_number = self.env['viva.wht.reminder'].search([
+                ('bill_id', '=', moves[0].id),
+            ], limit=1).cert_number if moves else False
         return {
             'doc_ids': moves.ids,
             'doc_model': self._name,
@@ -100,6 +124,9 @@ class ReportVivaWhtCertificate(models.AbstractModel):
             'rows': rows,
             'payment_date': payment_date,
             'payment_date_th': payment_date_th,
+            'cert_number': cert_number,
             'total_base': format_amount(self.env, sum(r['base'] for r in rows), currency),
             'total_wht': format_amount(self.env, sum(r['wht'] for r in rows), currency),
+            'total_net': format_amount(
+                self.env, sum(r['base'] for r in rows) - sum(r['wht'] for r in rows), currency),
         }
