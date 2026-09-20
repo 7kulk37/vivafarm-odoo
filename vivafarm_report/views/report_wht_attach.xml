@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        ใบแนบ ภ.ง.ด.3 / ภ.ง.ด.53 — per-payee WHT attachment schedule.
+        Official-layout filing worksheet (R2 design §4): rendered from the
+        tax.report.wizard, one row per payee-payment, totals tying to the
+        cover. Keyed as the working paper for New e-Filing (no RD-Prep .txt
+        at this scale).
+    -->
+
+    <!-- ใบแนบ (full page, standalone or appended after the cover) -->
+    <template id="report_wht_attach"
+              name="Thai WHT Attachment Schedule (ใบแนบ ภ.ง.ด.3/53)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="w">
+                <div class="page">
+                    <h3 style="margin-top: 0; text-align: center;">
+                        <t t-if="pnd_type == 'pnd3'">ใบแนบ ภ.ง.ด.3</t>
+                        <t t-else="">ใบแนบ ภ.ง.ด.53</t>
+                    </h3>
+                    <div style="font-size: 13px; margin-bottom: 6px;">
+                        <div>
+                            ชื่อผู้มีหน้าที่หักภาษี ณ ที่จ่าย: <strong t-esc="company.name"/>
+                        </div>
+                        <div>
+                            เลขประจำตัวผู้เสียภาษี: <strong t-esc="company.vat or ''"/>
+                              ประจำเดือน <t t-esc="thai_period"/>
+                        </div>
+                    </div>
+                    <table class="table table-sm table-bordered" style="font-size: 11px;">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 4%;">ลำดับที่</th>
+                                <th style="width: 20%;">ประเภทเงินได้ พึงประเมินที่จ่าย</th>
+                                <th style="width: 22%;">ชื่อผู้มีเงินได้</th>
+                                <th style="width: 12%;">เลขประจำตัวผู้เสียภาษี</th>
+                                <th class="text-center" style="width: 8%;">วันที่จ่าย</th>
+                                <th class="text-end" style="width: 12%;">จำนวนเงินที่จ่าย</th>
+                                <th class="text-center" style="width: 6%;">อัตรา %</th>
+                                <th class="text-end" style="width: 12%;">ภาษีที่หัก</th>
+                                <th class="text-center" style="width: 4%;">เงื่อนไข</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="rows" t-as="r">
+                                <tr>
+                                    <td class="text-center"><t t-esc="r_index + 1"/></td>
+                                    <td><span t-esc="r['income_label']"/> <span style="font-size: 10px;" t-esc="r['purpose']"/></td>
+                                    <td>
+                                        <span t-esc="r['partner']"/><br/>
+                                        <span style="font-size: 10px;" t-esc="r['address']"/>
+                                    </td>
+                                    <td><span t-esc="r['vat']"/></td>
+                                    <td class="text-center"><span t-esc="r['pay_date_th']"/></td>
+                                    <td class="text-end"><span t-esc="r['amount_fmt']"/></td>
+                                    <td class="text-center"><span t-esc="r['rate']"/></td>
+                                    <td class="text-end"><span t-esc="r['wht_fmt']"/></td>
+                                    <td class="text-center"><span t-esc="r['cond']"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-bold">
+                                <td colspan="5" class="text-end">รวม</td>
+                                <td class="text-end"><span t-esc="total_amount"/></td>
+                                <td/>
+                                <td class="text-end"><span t-esc="total_wht"/></td>
+                                <td/>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div style="font-size: 12px; margin-top: 8px;">
+                        ใบแนบที่แนบมาพร้อมนี้ จำนวน <strong t-esc="n_rows"/> ราย จำนวน <strong t-esc="n_sheets"/> แผ่น
+                    </div>
+                    <div style="font-size: 12px; margin-top: 24px;">
+                        ลงชื่อ .................................................. ผู้จ่ายเงิน
+                        <br/>( .................................................. )
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_wht_attach" model="ir.actions.report">
+        <field name="name">Thai WHT Attachment Schedule (ใบแนบ ภ.ง.ด.3/53)</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_wht_attach</field>
+        <field name="report_file">vivafarm_report.report_wht_attach</field>
+        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="print_report_name">'ใบแนบ_%s_%s' % (object.register_type, object.date_from)</field>
+    </record>
+</odoo>

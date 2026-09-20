@@ -24,3 +24,4 @@ from . import pnd_return
 from . import account_payment_register
 from . import tax_report_wizard
 from . import cost_of_cultivation_wizard
+from . import wht_attach
