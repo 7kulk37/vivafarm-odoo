@@ -56,6 +56,14 @@ class VivaWhtReminder(models.Model):
              'vendor credit note (VS-11). Link the return picking here to '
              'complete the evidence trail.',
     )
+    cert_number = fields.Char(
+        string='Certificate No.',
+        copy=False,
+        help='Sequential number of the 50 ทวิ withholding-tax certificate '
+             'issued for this payment (ประกาศอธิบดี ฉบับที่ 62 ข้อ 2 — '
+             'certificates carry a sequential number). Allocated at payment '
+             'time; stable across reprints (ใบแทน reuses the same number).',
+    )
 
     @api.model
     def _compute_remit_due(self, payment_date):
@@ -100,6 +108,10 @@ class VivaWhtReminder(models.Model):
             'de_minimis_note': note,
         })
         # Attach the WHT certificate PDF to the payment (one per bill).
+        # ประกาศฉบับที่ 62 ข้อ 2: certificates carry a sequential number —
+        # allocate it BEFORE the render so the template prints it.
+        reminder.cert_number = self.env['ir.sequence'].with_company(
+            reminder.company_id).next_by_code('viva.wht.cert')
         try:
             # Render by report NAME (string), not the action record — the
             # l10n_th _pre_render_qweb_pdf override calls _get_report on the
