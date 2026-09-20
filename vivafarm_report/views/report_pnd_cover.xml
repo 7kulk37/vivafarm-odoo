@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        ภ.ง.ด.3 / ภ.ง.ด.53 COVER (ใบปะหน้า) — official-layout filing worksheet.
+        Fields per the official form (R2 design §5): payer block, month + พ.ศ.,
+        ยื่นปกติ/ยื่นเพิ่มเติม, มาตรา checkboxes (defaults manual [P]), 4 summary
+        lines, ใบแนบ counts, TCL note, certification signature block.
+        S6: rendered via the wrapper report_pnd_full which appends the ใบแนบ page.
+    -->
+
+    <template id="pnd_cover_fields" name="PND Cover Shared Fields">
+        <t t-set="cover_lines" t-value="cover_lines"/>
+    </template>
+
+    <template id="report_pnd3_full" name="Thai PND3 Full (cover + ใบแนบ)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="w">
+                <t t-set="pnd_type" t-value="'pnd3'"/>
+                <t t-set="pnd_form_name" t-value="'ภ.ง.ด.3'"/>
+                <t t-set="maratras" t-value="'มาตรา 3 เตรส และมาตรา 48 ทวิ และการเสียภาษีตามมาตรา 50 (3)(4)(5) แห่งประมวลรัษฎากร'"/>
+                <t t-set="pnd_tag" t-value="'PND3'"/>
+                <t t-call="vivafarm_report.report_pnd_cover"/>
+                <t t-call="vivafarm_report.report_wht_attach"/>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_pnd53_full" name="Thai PND53 Full (cover + ใบแนบ)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="w">
+                <t t-set="pnd_type" t-value="'pnd53'"/>
+                <t t-set="pnd_form_name" t-value="'ภ.ง.ด.53'"/>
+                <t t-set="maratras" t-value="'มาตรา 3 เตรส และมาตรา 69 ทวิ และการเสียภาษีตามมาตรา 65 จัตวา แห่งประมวลรัษฎากร'"/>
+                <t t-set="pnd_tag" t-value="'PND53'"/>
+                <t t-call="vivafarm_report.report_pnd_cover"/>
+                <t t-call="vivafarm_report.report_wht_attach"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- The cover page itself (shared by PND3/53; values from the existing
+         report_pnd3/report_pnd53 data models, passed as cover_*) -->
+    <template id="report_pnd_cover" name="PND Cover Page (official layout)">
+        <div class="page">
+            <h3 style="margin: 0 0 4px 0; text-align: center;">
+                <t t-esc="'แบบ ' + pnd_form_name"/>
+            </h3>
+            <div style="font-size: 12px; text-align: center; margin-bottom: 10px;">
+                แบบยื่นรายการภาษีเงินได้หัก ณ ที่จ่าย ตาม<t t-esc="maratras"/>
+            </div>
+
+            <!-- Payer block -->
+            <div style="font-size: 13px; margin-bottom: 8px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 55%;">
+                            <div>ชื่อผู้มีหน้าที่หักภาษี ณ ที่จ่าย <strong t-esc="cover_company.name"/></div>
+                            <div style="font-size: 12px;" t-esc="cover_address"/>
+                            <div>เลขประจำตัวผู้เสียภาษี <strong t-esc="cover_company.vat or ''"/></div>
+                            <div style="font-size: 12px;">สาขาที่ ............  สรรพากรพื้นที่ ....................</div>
+                        </td>
+                        <td style="width: 45%; vertical-align: top;">
+                            <div>ยื่นแบบ ภ.ง.ด. <strong t-esc="pnd_form_name"/></div>
+                            <div>ประจำเดือน <strong t-esc="thai_month"/> พ.ศ. <strong t-esc="thai_year"/></div>
+                            <div style="margin-top: 4px;">
+                                ☑ ยื่นปกติ    ☐ ยื่นเพิ่มเติม ครั้งที่ ............
+                            </div>
+                            <div style="margin-top: 4px;">
+                                ยื่นรายการสรุป ณ วันที่ ..................
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- มาตรา checkboxes -->
+            <div style="font-size: 13px; margin: 8px 0;">
+                <strong>นำส่งภาษีหัก ณ ที่จ่าย ตามมาตรา:</strong>
+                <t t-if="pnd_type == 'pnd3'">
+                    <span style="margin-left: 12px;">☐ มาตรา 3 เตรส</span>
+                    <span style="margin-left: 12px;">☐ มาตรา 48 ทวิ</span>
+                    <span style="margin-left: 12px;">☑ มาตรา 50 (3)(4)(5)</span>
+                </t>
+                <t t-else="">
+                    <span style="margin-left: 12px;">☐ มาตรา 3 เตรส</span>
+                    <span style="margin-left: 12px;">☐ มาตรา 65 จัตวา</span>
+                    <span style="margin-left: 12px;">☑ มาตรา 69 ทวิ</span>
+                </t>
+            </div>
+
+            <!-- Summary lines -->
+            <table class="table table-bordered" style="width: 70%; font-size: 13px; margin-top: 6px;">
+                <tr>
+                    <td>1. รวมยอดเงินได้ทั้งสิ้น</td>
+                    <td class="text-end" style="width: 30%;"><strong t-esc="cover_total_income"/></td>
+                </tr>
+                <tr>
+                    <td>2. รวมยอดภาษีที่นำส่งทั้งสิ้น</td>
+                    <td class="text-end"><strong t-esc="cover_total_remit"/></td>
+                </tr>
+                <tr>
+                    <td>3. เงินเพิ่ม (ถ้ามี)</td>
+                    <td class="text-end"><strong t-esc="cover_surcharge"/></td>
+                </tr>
+                <tr class="fw-bold">
+                    <td>4. รวมยอดภาษีที่นำส่งทั้งสิ้น และเงินเพิ่ม (2. + 3.)</td>
+                    <td class="text-end"><strong t-esc="cover_total"/></td>
+                </tr>
+            </table>
+
+            <!-- ใบแนบ note -->
+            <div style="font-size: 12px; margin-top: 8px;">
+                สำหรับบันทึกข้อมูลจากระบบ TCL ใบแนบ <t t-esc="pnd_form_name"/> ที่แนบมาพร้อมนี้ :
+                จำนวน <strong t-esc="attach_rows"/> ราย จำนวน <strong t-esc="attach_sheets"/> แผ่น
+                หรือสื่อบันทึกในระบบคอมพิวเตอร์ จำนวน ............ ราย จำนวน ............ แผ่น
+            </div>
+
+            <!-- Certification -->
+            <div style="font-size: 12px; margin-top: 24px;">
+                ข้าพเจ้าขอรับรองว่า รายการที่แจ้งไว้ข้างต้นนี้ เป็นรายการที่ถูกต้องและครบถ้วนทุกประการ
+                <div style="margin-top: 16px;">
+                    ลงชื่อ .................................................. ผู้จ่ายเงิน
+                    <br/>( .................................................. )
+                    <br/>ตำแหน่ง ..................................................
+                    <br/>ยื่นวันที่ .......... เดือน .................. พ.ศ. ..........
+                </div>
+            </div>
+        </div>
+    </template>
+    <record id="action_report_pnd3_full" model="ir.actions.report">
+        <field name="name">Thai PND3 Full (ภ.ง.ด.3 + ใบแนบ)</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_pnd3_full</field>
+        <field name="report_file">vivafarm_report.report_pnd3_full</field>
+        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="print_report_name">'PND3_%s_%s' % (object.date_from, object.date_to)</field>
+    </record>
+
+    <record id="action_report_pnd53_full" model="ir.actions.report">
+        <field name="name">Thai PND53 Full (ภ.ง.ด.53 + ใบแนบ)</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_pnd53_full</field>
+        <field name="report_file">vivafarm_report.report_pnd53_full</field>
+        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="print_report_name">'PND53_%s_%s' % (object.date_from, object.date_to)</field>
+    </record>
+</odoo>
