@@ -1,6 +1,7 @@
 from datetime import timedelta
 
-from odoo import api, fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 from odoo.tools import format_amount
 from odoo.tools.misc import format_date
 
@@ -67,6 +68,26 @@ class TaxReportWizard(models.TransientModel):
         return self.env['ir.actions.report']._get_report_from_name(
             report_name
         ).report_action(self)
+
+    def action_print_pnd_full(self):
+        """Print the combined ภ.ง.ด.3/53 PDF (cover + ใบแนบ) for the period.
+
+        Only the PND3/PND53 register types carry the combined form; the
+        footer button is hidden for the other register types via the view's
+        invisible modifier. Returns the report action bound to this wizard.
+        """
+        self.ensure_one()
+        if self.register_type not in ('pnd3', 'pnd53'):
+            raise UserError(_(
+                'The combined ภ.ง.ด. form (cover + ใบแนบ) is available only '
+                'for PND3 (ภ.ง.ด.3) and PND53 (ภ.ง.ด.53). Pick that register '
+                'type, or use Print for the plain register.'))
+        report_name = {
+            'pnd3': 'vivafarm_report.report_pnd3_full',
+            'pnd53': 'vivafarm_report.report_pnd53_full',
+        }[self.register_type]
+        return self.env['ir.actions.report']._get_report_from_name(
+            report_name).report_action(self)
 
 
 class ReportTaxRegister(models.AbstractModel):

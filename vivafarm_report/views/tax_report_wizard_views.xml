@@ -24,6 +24,11 @@
                             type="object"
                             string="Print"
                             class="btn-primary"/>
+                    <button name="action_print_pnd_full"
+                            type="object"
+                            string="Print Full (Cover + ใบแนบ)"
+                            class="btn-primary"
+                            invisible="register_type not in ('pnd3', 'pnd53')"/>
                     <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>
