@@ -20,6 +20,9 @@
             <div class="page">
                 <div style="font-size: 12px; margin-bottom: 2px;">
                     <strong t-esc="copy_label"/>
+                    <t t-if="reprint">
+                        <strong style="color: #b00; margin-left: 12px;">(ใบแทน / REISSUED COPY)</strong>
+                    </t>
                 </div>
                 <h3 t-att-style="'margin-top: 0; margin-bottom: 2px; text-align: left; color: %s;' % (o.company_id.primary_color or '#000000')">
                     <strong style="font-size: 20px;">

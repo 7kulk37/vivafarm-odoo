@@ -33,8 +33,20 @@ class VivaWhtReminder(models.Model):
     state = fields.Selection([
         ('pending', 'Pending'),
         ('remitted', 'Remitted'),
+        ('cancelled', 'Cancelled (cert voided — serial burned, never reused)'),
     ], string='State', default='pending')
     remitted_date = fields.Date(string='Remitted Date')
+    cert_voided = fields.Boolean(
+        string='Cert Voided',
+        copy=False,
+        help='True when the original certificate was mis-certified (wrong '
+             'income type / wrong payee data): the old serial is kept here '
+             'for the audit trail and a NEW serial was allocated on reissue '
+             '(RD 0702/9205 cancel+reissue method). The serial is never '
+             'reused.')
+    voided_reason = fields.Text(
+        string='Void Reason', copy=False,
+        help='Why the original certificate was voided (audit trail).')
     de_minimis_warning = fields.Boolean(
         string='De-minimis Warning',
         help='Set when the 1,000 THB cumulative per-vendor-per-year threshold '
@@ -164,6 +176,54 @@ class VivaWhtReminder(models.Model):
                 'vendor per year — WHT applies from the crossing payment.'
                 % (bill.name, partner.name, cumulative))
         return False, ''
+
+    def action_reprint_cert(self):
+        """ใบแทน reprint — identical content, SAME serial, 'ใบแทน' header
+        (ประกาศฉบับที่ 146). Re-renders the certificate and attaches the
+        replacement PDF to the payment alongside the original attachment
+        naming convention WHT_Cert_<bill>.pdf."""
+        self.ensure_one()
+        pdf = self.env['ir.actions.report']._render_qweb_pdf(
+            'vivafarm_report.report_viva_wht_certificate', [self.bill_id.id],
+            data={'payment_id': self.payment_id.id, 'reprint': True})[0]
+        self.env['ir.attachment'].create({
+            'name': 'WHT_Cert_ใบแทน_%s.pdf' % (self.bill_id.name or self.bill_id.id),
+            'res_model': 'account.payment',
+            'res_id': self.payment_id.id,
+            'type': 'binary',
+            'mimetype': 'application/pdf',
+            'raw': pdf,
+        })
+        return True
+
+    def action_void_and_reissue(self, reason=''):
+        """Mis-certified certificate: void the old serial (kept on record,
+        never reused) and allocate a NEW serial, then re-render the cert
+        (RD 0702/9205 cancel+reissue method). The reminder row keeps both
+        serials: cert_number (new) + the pre-void serial recorded in
+        voided_reason for the audit trail."""
+        self.ensure_one()
+        self.write({
+            'cert_voided': True,
+            'voided_reason': 'Old serial %s. %s' % (self.cert_number, reason),
+        })
+        if self.state == 'pending':
+            self.state = 'pending'  # obligation remains — only the cert was wrong
+        self.cert_number = self.env['ir.sequence'].with_company(
+            self.company_id).next_by_code('viva.wht.cert')
+        # re-render with the new serial
+        pdf = self.env['ir.actions.report']._render_qweb_pdf(
+            'vivafarm_report.report_viva_wht_certificate', [self.bill_id.id],
+            data={'payment_id': self.payment_id.id})[0]
+        self.env['ir.attachment'].create({
+            'name': 'WHT_Cert_%s.pdf' % (self.bill_id.name or self.bill_id.id),
+            'res_model': 'account.payment',
+            'res_id': self.payment_id.id,
+            'type': 'binary',
+            'mimetype': 'application/pdf',
+            'raw': pdf,
+        })
+        return True
 
     def action_mark_remitted(self):
         for rec in self:
