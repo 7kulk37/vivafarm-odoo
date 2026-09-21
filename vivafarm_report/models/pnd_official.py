@@ -25,6 +25,10 @@ from .rd_form_layout import (PRINTED_BRANCH_CELLS, PRINTED_POSTCODE_CELLS,
 PT2MM = 25.4 / 72.0
 PT2PX = 96.0 / 72.0  # wkhtmltopdf on staging ignores mm on absolute pos; px works
 
+def _strip_baht(text):
+    """Official RD forms show amounts only — drop the trailing '฿'."""
+    return (text or '').replace('\u00a0฿', '').replace('฿', '').strip()
+
 _MONTH_TH = {
     1: 'มกราคม', 2: 'กุมภาพันธ์', 3: 'มีนาคม', 4: 'เมษายน',
     5: 'พฤษภาคม', 6: 'มิถุนายน', 7: 'กรกฎาคม', 8: 'สิงหาคม',
@@ -79,15 +83,23 @@ def _digit_spans(vals, key, field, digits, n_segments):
     else:
         centers = [f['x'] + f['w'] * ((i + 0.5) / float(n_segments))
                    for i in range(len(digits))]
+    # slice width per digit: the printed box width where measured (postcode
+    # box is a single small box, not a slice of the widget rect)
+    if field == 'Text1.16' and cells and len(cells) > 1:
+        # postcode: seg = measured slot pitch; font scales with it
+        seg_w = (cells[-1] - cells[0]) / (len(cells) - 1)
+        fs = 8
+    else:
+        seg_w = f['w'] / float(n_segments)
+        fs = 10
     for i, ch in enumerate(digits):
-        seg_w = (f['w'] / float(n_segments))
         style = (
             'position: absolute; left: %spx; top: %spx; width: %spx; '
             'font-family: NotoSansThai, Lato, sans-serif; '
-            'font-size: 10px; text-align: center;' % (
+            'font-size: %spx; text-align: center;' % (
                 round((centers[i] - seg_w / 2) * PT2PX, 1),
                 round(f['y'] * PT2PX + 1, 1),
-                round(seg_w * PT2PX, 1)))
+                round(seg_w * PT2PX, 1), fs))
         vals['boxes'].append({
             'key': '%s_%s_digit_%s' % (key, field, i),
             'left': round((centers[i] - seg_w / 2) * PT2PX, 1),
@@ -96,7 +108,6 @@ def _digit_spans(vals, key, field, digits, n_segments):
             'style': style,
             'text': ch, 'align': 'center',
         })
-
 
 def _box(vals, key, field, text, align='left', x=None, y=None, w=None):
     if x is not None:
@@ -170,10 +181,12 @@ class ReportPndOfficial(models.AbstractModel):
             ('Text1.2', company.name, 'left'),
             ('Text1.19', str(av['n_rows']), 'left'),
             ('Text1.20', str(av['n_sheets']), 'left'),
-            ('Text2.1', pv['total_income'], 'right'),
-            ('Text2.2', pv['total_remit'], 'right'),
-            ('Text2.3', pv['surcharge'], 'right'),
-            ('Text2.4', pv['total'], 'right'),
+            # official form: amounts only, no currency symbol (the _fmt values
+            # arrive as '1,234.50\u00a0฿')
+            ('Text2.1', _strip_baht(pv['total_income']), 'right'),
+            ('Text2.2', _strip_baht(pv['total_remit']), 'right'),
+            ('Text2.3', _strip_baht(pv['surcharge']), 'right'),
+            ('Text2.4', _strip_baht(pv['total']), 'right'),
             ('Text2.23', company.name, 'center'),
         ]
         if pnd_type == 'pnd3':

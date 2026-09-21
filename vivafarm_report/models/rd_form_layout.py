@@ -18,10 +18,10 @@ PRINTED_TAXID_CELLS = {
     'pnd53_cover': [175.05, 191.85, 203.1, 214.5, 225.85, 242.65, 253.95,
                     265.3, 276.7, 288.05, 305.15, 316.45, 333.35],
 }
+# PND3 and PND53 both have a real 5-slot postcode box (dividers measured from
+# the rasters; pitch ~10.7-11.3pt), followed by the dotted line.
 PRINTED_POSTCODE_CELLS = {
-    # PND3: the 5-slot postcode box left of the dotted line (144.2→196.0pt);
-    # PND53: 5-slot box 99.6→156.2pt (dividers measured directly).
-    'pnd3_cover': [149.4, 159.8, 170.2, 180.6, 191.0],
+    'pnd3_cover': [96.1, 106.75, 117.45, 128.05, 138.65],
     'pnd53_cover': [105.2, 116.5, 127.9, 139.25, 150.55],
 }
 
