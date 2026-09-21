@@ -51,13 +51,30 @@
         </t>
     </template>
 
+    <!-- full-page format: the official form IS the page — zero margins, no header -->
+    <record id="paperformat_viva_fullpage" model="report.paperformat">
+        <field name="name">VivaFarm Full-Page A4 (official forms)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+        <!-- critical: wkhtmltopdf smart-shrinking rescales our 794px article to
+             ~76% (measured 0.757) — kill it so the form fills the page -->
+        <field name="disable_shrinking" eval="True"/>
+    </record>
+
     <record id="action_report_pnd_official" model="ir.actions.report">
         <field name="name">Thai PND3 Official Form (แบบราชการ + ข้อมูล)</field>
         <field name="model">tax.report.wizard</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">vivafarm_report.report_pnd_official</field>
         <field name="report_file">vivafarm_report.report_pnd_official</field>
-        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="paperformat_id" ref="paperformat_viva_fullpage"/>
         <field name="print_report_name">'PND3_Official_%s' % (object.date_from)</field>
     </record>
 
@@ -67,7 +84,7 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">vivafarm_report.report_pnd_official53</field>
         <field name="report_file">vivafarm_report.report_pnd_official53</field>
-        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="paperformat_id" ref="paperformat_viva_fullpage"/>
         <field name="print_report_name">'PND53_Official_%s' % (object.date_from)</field>
     </record>
 </odoo>
