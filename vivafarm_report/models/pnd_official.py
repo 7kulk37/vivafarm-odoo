@@ -60,9 +60,10 @@ def _box(vals, key, field, text, align='left', x=None, y=None, w=None):
     else:
         x_px, y_px, w_px = _pos_px(key, field)
     # right-aligned values must stop short of the box border: pad right 3px
-    pad = 'padding-right: 3px; ' if align == 'right' else 'padding-left: 1px; '
+    pad = 'padding-right: 1px; ' if align == 'right' else 'padding-left: 1px; '
     # long digit strings need a smaller font to fit the printed box
     fs = 10 if field == 'Text1.0' else 11
+
     style = 'position: absolute; left: %spx; top: %spx; %s%sfont-family: NotoSansThai, Lato, sans-serif; font-size: %spx; line-height: 1.1; text-align: %s; white-space: nowrap;' % (
         round(x_px + 2, 1), round(y_px + 1, 1),
         ('width: %spx; ' % round(w_px, 1)) if w_px else '', pad, fs, align)
@@ -119,17 +120,15 @@ class ReportPndOfficial(models.AbstractModel):
 
         # --- cover text fields ---
         common = [
-            ('Text1.0', company.vat or '', 'left'),
             ('Text1.1', 'สำนักงานใหญ่', 'left'),
             ('Text1.2', company.name, 'left'),
-            ('Text1.3', addr, 'left'),
             ('Text1.19', str(av['n_rows']), 'left'),
             ('Text1.20', str(av['n_sheets']), 'left'),
             ('Text2.1', pv['total_income'], 'right'),
             ('Text2.2', pv['total_remit'], 'right'),
             ('Text2.3', pv['surcharge'], 'right'),
             ('Text2.4', pv['total'], 'right'),
-            ('Text2.23', company.name, 'left'),
+            ('Text2.23', company.name, 'center'),
         ]
         if pnd_type == 'pnd3':
             fields_map = common + [
@@ -143,6 +142,66 @@ class ReportPndOfficial(models.AbstractModel):
             ]
         for field, text, align in fields_map:
             _box(vals, key, field, text, align)
+
+        # granular address boxes — split the company address into the official
+        # row fields: เลขที่(1.7) หมู่ที่(1.8) ตรอก/ซอย(1.9) ตำบล/แขวง(1.12)
+        # จังหวัด(1.14) รหัสไปรษณีย์(1.15). อาคาร/ชั้น/ห้อง/แยก/ถนน left for
+        # hand-fill when they don't apply.
+        street_parts = (company.street or '').split()
+        house_no = street_parts[0] if street_parts else ''
+        Moo = ''
+        for i, part in enumerate(street_parts):
+            if part.startswith('หมู่'):
+                # 'หมู่ 1' may be one token or two ('หมู่' + '1')
+                tail = part.replace('หมู่', '').strip()
+                if tail:
+                    Moo = tail
+                elif i + 1 < len(street_parts):
+                    Moo = street_parts[i + 1]
+        soi = company.street2 or ''
+        if pnd_type == 'pnd3':
+            addr_boxes = [('Text1.7', house_no), ('Text1.8', Moo),
+                          ('Text1.9', soi), ('Text1.12', company.city or ''),
+                          ('Text1.14', company.state_id.name or ''),
+                          ('Text1.15', company.zip or '')]
+        else:
+            # PND53 cover uses the same official row labels with the same
+            # widget numbering (Text1.7..1.16) — verified identical layout
+            addr_boxes = [('Text1.7', house_no), ('Text1.8', Moo),
+                          ('Text1.9', soi), ('Text1.12', company.city or ''),
+                          ('Text1.14', company.state_id.name or ''),
+                          ('Text1.15', company.zip or '')]
+        for f, t in addr_boxes:
+            if t:
+                _box(vals, key, f, t)
+
+        # tax ID: one positioned digit per official box segment — uniform gaps
+        # regardless of font metrics. The official box has 13 segments spanning
+        # the Text1.0 rect; each digit centered in its 1/13 slice.
+        vat_digits = (company.vat or '').replace(' ', '')
+        if vat_digits:
+            _id = _find(key, 'Text1.0')
+            id_x0, id_y, id_w = _id['x'], _id['y'], _id['w']
+            n = len(vat_digits)
+            for i, ch in enumerate(vat_digits):
+                # center a wider slice on each 1/13 segment center
+                seg_center = id_x0 + id_w * ((i + 0.5) / 13.0)
+                seg_w = id_w / 13.0
+                style = (
+                    'position: absolute; left: %spx; top: %spx; width: %spx; '
+                    'font-family: NotoSansThai, Lato, sans-serif; '
+                    'font-size: 10px; text-align: center;' % (
+                        round((seg_center - seg_w / 2) * PT2PX, 1),
+                        round(id_y * PT2PX + 1, 1),
+                        round(seg_w * PT2PX, 1)))
+                vals['boxes'].append({
+                    'key': '%s_taxid_%s' % (key, i),
+                    'left': round((seg_center - seg_w / 2) * PT2PX, 1),
+                    'top': round(id_y * PT2PX, 1),
+                    'width': round(seg_w * PT2PX, 1),
+                    'style': style,
+                    'text': ch, 'align': 'center',
+                })
 
         # ยื่นวันที่ / เดือน / พ.ศ.
         _box(vals, key, 'Text2.25', str(fdate.day))
@@ -166,9 +225,7 @@ class ReportPndOfficial(models.AbstractModel):
             _mark(vals, key, 'Radio Button2', x=369, y=206)
             # มาตรา 69 ทวิ = RB0 at (380,164); (ม.3เตรส=125, ม.65จัตวา=144)
             _mark(vals, key, 'Radio Button0', x=380, y=164)
-            # month grid (column-major): x=45 → months 1-4, 122 → 5-8? verify:
-            # PND53 rows: y=272 row has (1)ม.ค.(45),(4)เม.ย.(122),(7)ก.ค.(199),(10)ต.ค.(275)
-            # so col-major with 4 rows per column: col=(m)//4, row=(m)%4
+            # month grid: Radio Button10 x∈{45,122,199,275} y∈{272,287,300}
             m = wizard.date_from.month - 1
             col_x = (45, 122, 199, 275)[m // 3]
             row_y = (272, 287, 300)[m % 3]
