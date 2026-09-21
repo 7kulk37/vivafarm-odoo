@@ -328,9 +328,10 @@ class ReportPndOfficial3Attach(models.AbstractModel):
         key = 'pnd3_attach'
         vals = {'boxes': []}
         vals['bg'] = '/vivafarm_report/static/src/forms/pnd3_attach_bg.png'
-        # header: withholdER tax id — one box ending at the x=466 divider
-        _box(vals, key, 'Text1.0', (company.vat or '').replace(' ', ''),
-             'right', x=371.7, y=15.0, w=(466.0 - 371.7))
+        # header: withholdER tax id — one digit per printed box cell
+        # (13 boxes; digit y-band y14.5-25.9 → top ~16.4)
+        _digit_spans_at(vals, key, 16.4, (company.vat or '').replace(' ', ''),
+                        ATTACH3_HDR_TAXID_CELLS)
         _box(vals, key, 'Text1.2', str(sheet + 1), 'center')
         _box(vals, key, 'Text1.3', str(n_sheets), 'center')
         for i, r in enumerate(rows):
@@ -340,12 +341,13 @@ class ReportPndOfficial3Attach(models.AbstractModel):
                 if text:
                     _box(vals, key, 'Text%s.%s' % (g, suffix), text, align)
 
-            # tax ID: single box ending at the x=155 divider (per-row cell)
+            # tax ID: one digit per printed box cell (13 boxes, 1-4-5-2-1
+            # groups; centers measured from the empty form, agent frame)
             if r['vat']:
-                f = _find(key, 'Text%s.%s' % (g, m['vat']))
-                _box(vals, key, 'Text%s.%s' % (g, m['vat']),
-                     (r['vat'] or '').replace(' ', ''), 'right',
-                     x=f['x'], y=f['y'], w=(155.0 - f['x']))
+                vat_digits = (r['vat'] or '').replace(' ', '')
+                centers = list(ATTACH3_ROW_TAXID_CELLS)
+                _digit_spans_at(vals, key, 112.6 + i * 55.5, vat_digits,
+                                centers)
             B(m['name'], r['partner'])
             B(m['addr'], r['address'])
             if r.get('pay_date'):
@@ -354,12 +356,22 @@ class ReportPndOfficial3Attach(models.AbstractModel):
                 B(m['year'], str(r['pay_date'].year + 543), 'center')
             B(m['type'], r['income_label'])
             B(m['rate'], r['rate'], 'center')
-            B(m['amount'], _num(r['amount']))
-            B(m['wht'], _num(r['wht']))
+            # money columns: right-align to the printed column edges
+            # (จำนวนเงิน col ends at 685.4 ref, ภาษี col at 781.8 ref)
+            f_amt = _find(key, 'Text%s.%s' % (g, m['amount']))
+            _box(vals, key, 'Text%s.%s' % (g, m['amount']), _num(r['amount']),
+                 'right', x=f_amt['x'], y=f_amt['y'],
+                 w=(685.4 - f_amt['x']))
+            f_wht = _find(key, 'Text%s.%s' % (g, m['wht']))
+            _box(vals, key, 'Text%s.%s' % (g, m['wht']), _num(r['wht']),
+                 'right', x=f_wht['x'], y=f_wht['y'],
+                 w=(781.8 - f_wht['x']))
             B(m['cond'], r['cond'], 'center')
-        # totals row (Text6.24 / 6.25)
-        _box(vals, key, 'Text6.24', _strip_baht(av['total_amount']), 'right')
-        _box(vals, key, 'Text6.25', _strip_baht(av['total_wht']), 'right')
+        # totals row (Text6.24 / 6.25) — right-align to the column edges
+        _box(vals, key, 'Text6.24', _strip_baht(av['total_amount']), 'right',
+             x=607.0, y=443.0, w=(685.4 - 607.0))
+        _box(vals, key, 'Text6.25', _strip_baht(av['total_wht']), 'right',
+             x=707.6, y=443.0, w=(781.8 - 707.6))
         # footer signature block
         _box(vals, key, 'Text9.1', company.name)
         fdate = fields.Date.context_today(self)
@@ -374,9 +386,9 @@ class ReportPndOfficial3Attach(models.AbstractModel):
         attach = self.env['report.vivafarm_report.report_wht_attach']
         av = attach._get_report_values(wizard.ids, {'pnd_type': 'pnd3'})
         rows = av['rows']
-        n_sheets = max(1, -(-len(rows) // 5))
+        n_sheets = max(1, -(-len(rows) // 6))
         pages = [
-            self._attach_page(wizard, rows[s * 5:(s + 1) * 5], s, n_sheets, av)
+            self._attach_page(wizard, rows[s * 6:(s + 1) * 6], s, n_sheets, av)
             for s in range(n_sheets)
         ] or [{'boxes': [],
                'bg': '/vivafarm_report/static/src/forms/pnd3_attach_bg.png'}]

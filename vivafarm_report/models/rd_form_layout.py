@@ -26,10 +26,13 @@ PRINTED_TAXID_CELLS = {
 ATTACH3_HDR_TAXID_CELLS = [378.39, 396.52, 408.71, 421.01, 433.26, 451.39,
                            463.63, 475.94, 488.13, 500.27, 518.83, 531.02,
                            549.26]
-ATTACH3_ROW_TAXID_CELLS = [63.45, 81.46, 93.57, 105.79, 117.96, 135.97,
-                           148.14, 160.36, 172.47, 184.53, 202.97, 215.08,
-                           233.2]
-ATTACH3_ROW_PITCH = 54.9   # row band 2 starts at y167 (row 1 at y112.2)
+# ใบแนบ header tax-id box: 13 cells, agent-frame centers (SA-1 measured,
+# rendered frame minus the 12pt bg offset)
+ATTACH3_HDR_TAXID_CELLS = [382.6, 400.2, 412.1, 424.1, 435.9, 453.6, 465.5,
+                           477.4, 489.3, 501.3, 519.3, 531.0, 548.7]
+ATTACH3_ROW_TAXID_CELLS = [67.9, 85.5, 97.4, 109.3, 121.2, 138.9, 150.8,
+                           162.7, 174.6, 186.4, 204.4, 216.4, 234.1]
+ATTACH3_ROW_PITCH = 55.5   # row band 2 starts at y168.2 (row 1 at y112.7)
 
 PRINTED_POSTCODE_CELLS = {
     'pnd3_cover': [96.1, 106.75, 117.45, 128.05, 138.65],
