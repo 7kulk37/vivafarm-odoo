@@ -89,6 +89,22 @@ class TaxReportWizard(models.TransientModel):
         return self.env['ir.actions.report']._get_report_from_name(
             report_name).report_action(self)
 
+    def action_print_pnd_official(self):
+        """Print the OFFICIAL rd.go.th form (background image) with our data
+        overlaid at the official AcroForm field positions. PND3/PND53 only.
+        """
+        self.ensure_one()
+        if self.register_type not in ('pnd3', 'pnd53'):
+            raise UserError(_(
+                'The official-form print (แบบราชการ + ข้อมูล) is available only '
+                'for PND3 and PND53.'))
+        report_name = {
+            'pnd3': 'vivafarm_report.report_pnd_official',
+            'pnd53': 'vivafarm_report.report_pnd_official53',
+        }[self.register_type]
+        return self.env['ir.actions.report']._get_report_from_name(
+            report_name).report_action(self)
+
 
 class ReportTaxRegister(models.AbstractModel):
     """Data model for the Thai tax register QWeb report.
