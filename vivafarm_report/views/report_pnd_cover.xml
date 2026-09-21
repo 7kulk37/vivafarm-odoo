@@ -19,8 +19,14 @@
                 <t t-set="pnd_form_name" t-value="'ภ.ง.ด.3'"/>
                 <t t-set="maratras" t-value="'มาตรา 3 เตรส และมาตรา 48 ทวิ และการเสียภาษีตามมาตรา 50 (3)(4)(5) แห่งประมวลรัษฎากร'"/>
                 <t t-set="pnd_tag" t-value="'PND3'"/>
-                <t t-call="vivafarm_report.report_pnd_cover"/>
-                <t t-call="vivafarm_report.report_wht_attach"/>
+                <!-- article wrapper: ir.actions.report._prepare_html re-renders ONLY
+                     .article nodes inside the report layout (assets + company font
+                     css). Pages without it skip the layout → no @font-face → Thai
+                     falls back to DejaVu (unreadable PDF). Same wrapper as invoices. -->
+                <div class="article o_company_1_layout" data-oe-lang="th_TH">
+                    <t t-call="vivafarm_report.report_pnd_cover" t-lang="'th_TH'"/>
+                    <t t-call="vivafarm_report.report_wht_attach_body" t-lang="'th_TH'"/>
+                </div>
             </t>
         </t>
     </template>
@@ -32,8 +38,10 @@
                 <t t-set="pnd_form_name" t-value="'ภ.ง.ด.53'"/>
                 <t t-set="maratras" t-value="'มาตรา 3 เตรส และมาตรา 69 ทวิ และการเสียภาษีตามมาตรา 65 จัตวา แห่งประมวลรัษฎากร'"/>
                 <t t-set="pnd_tag" t-value="'PND53'"/>
-                <t t-call="vivafarm_report.report_pnd_cover"/>
-                <t t-call="vivafarm_report.report_wht_attach"/>
+                <div class="article o_company_1_layout" data-oe-lang="th_TH">
+                    <t t-call="vivafarm_report.report_pnd_cover" t-lang="'th_TH'"/>
+                    <t t-call="vivafarm_report.report_wht_attach_body" t-lang="'th_TH'"/>
+                </div>
             </t>
         </t>
     </template>
@@ -41,7 +49,7 @@
     <!-- The cover page itself (shared by PND3/53; values from the existing
          report_pnd3/report_pnd53 data models, passed as cover_*) -->
     <template id="report_pnd_cover" name="PND Cover Page (official layout)">
-        <div class="page">
+        <div class="page" t-att-class="'o_company_%s_layout' % cover_company.id" style="font-family: NotoSansThai, Lato, sans-serif;">
             <h3 style="margin: 0 0 4px 0; text-align: center;">
                 <t t-esc="'แบบ ' + pnd_form_name"/>
             </h3>
