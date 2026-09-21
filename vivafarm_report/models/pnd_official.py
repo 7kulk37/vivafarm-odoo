@@ -341,6 +341,7 @@ class ReportPndOfficial3Attach(models.AbstractModel):
                 if text:
                     _box(vals, key, 'Text%s.%s' % (g, suffix), text, align)
 
+            B(m['seq'], str(sheet * 6 + i + 1), 'center')
             # tax ID: one digit per printed box cell (13 boxes, 1-4-5-2-1
             # groups; centers measured from the empty form, agent frame)
             if r['vat']:
@@ -351,9 +352,10 @@ class ReportPndOfficial3Attach(models.AbstractModel):
             B(m['name'], r['partner'])
             B(m['addr'], r['address'])
             if r.get('pay_date'):
-                B(m['day'], str(r['pay_date'].day), 'center')
-                B(m['month'], str(r['pay_date'].month), 'center')
-                B(m['year'], str(r['pay_date'].year + 543), 'center')
+                # วัน เดือน ปี ที่จ่าย: single line dd/mm/yyyy (BE year)
+                B(m['day'], '%s/%s/%s' % (r['pay_date'].day,
+                                          r['pay_date'].month,
+                                          r['pay_date'].year + 543), 'center')
             B(m['type'], r['income_label'])
             B(m['rate'], r['rate'], 'center')
             # money columns: right-align to the printed column edges
