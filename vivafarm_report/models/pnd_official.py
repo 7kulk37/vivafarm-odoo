@@ -29,6 +29,19 @@ from .rd_form_layout import (ATTACH3_HDR_TAXID_CELLS,
 PT2MM = 25.4 / 72.0
 PT2PX = 96.0 / 72.0  # wkhtmltopdf on staging ignores mm on absolute pos; px works
 
+# The bg raster is stretched to the 794x1122px article div regardless of the
+# form's native size. PND3 is natively A4 (595.276x841.890pt) so 1.3333 px/pt
+# is exact; ภ.ง.ด.53 is 612.28x858.90pt → its own px/pt per axis. Without this
+# the overlay drifts right/down up to ~14pt at the page bottom (bg squeezed,
+# overlay not). Measured: render = form_pt*0.971 + 12.3 (TIN-strip fit).
+_PXPT = {
+    'pnd53_cover': (794.0 / 612.283, 1122.0 / 858.898),
+}
+
+def _pxpt(key):
+    """Per-axis px/pt for a form key (bg stretched to 794x1122px)."""
+    return _PXPT.get(key, (PT2PX, PT2PX))
+
 def _strip_baht(text):
     """Official RD forms show amounts only — drop the trailing '฿'."""
     return (text or '').replace('\u00a0฿', '').replace('฿', '').strip()
@@ -42,10 +55,11 @@ _MONTH_TH = {
 
 def _pos_px(layout_key, field_name):
     """Return (left_px, top_px, width_px) of an official form field (96dpi)."""
+    pxx, pxy = _pxpt(layout_key)
     for f in RD_FORM_LAYOUT[layout_key]['fields']:
         if f['name'] == field_name:
-            return (round(f['x'] * PT2PX, 1), round(f['y'] * PT2PX, 1),
-                    round(f['w'] * PT2PX, 1))
+            return (round(f['x'] * pxx, 1), round(f['y'] * pxy, 1),
+                    round(f['w'] * pxx, 1))
     raise KeyError('%s / %s' % (layout_key, field_name))
 
 
@@ -96,27 +110,29 @@ def _digit_spans(vals, key, field, digits, n_segments):
     else:
         seg_w = f['w'] / float(n_segments)
         fs = 10
+    pxx, pxy = _pxpt(key)
     for i, ch in enumerate(digits):
         style = (
             'position: absolute; left: %spx; top: %spx; width: %spx; '
             'font-family: NotoSansThai, Lato, sans-serif; '
             'font-size: %spx; text-align: center;' % (
-                round((centers[i] - seg_w / 2) * PT2PX, 1),
-                round(f['y'] * PT2PX + 1, 1),
-                round(seg_w * PT2PX, 1), fs))
+                round((centers[i] - seg_w / 2) * pxx, 1),
+                round(f['y'] * pxy + 1, 1),
+                round(seg_w * pxx, 1), fs))
         vals['boxes'].append({
             'key': '%s_%s_digit_%s' % (key, field, i),
-            'left': round((centers[i] - seg_w / 2) * PT2PX, 1),
-            'top': round(f['y'] * PT2PX, 1),
-            'width': round(seg_w * PT2PX, 1),
+            'left': round((centers[i] - seg_w / 2) * pxx, 1),
+            'top': round(f['y'] * pxy, 1),
+            'width': round(seg_w * pxx, 1),
             'style': style,
             'text': ch, 'align': 'center',
         })
 
 def _box(vals, key, field, text, align='left', x=None, y=None, w=None):
+    pxx, pxy = _pxpt(key)
     if x is not None:
-        x_px, y_px = x * PT2PX, y * PT2PX
-        w_px = w * PT2PX if w else None
+        x_px, y_px = x * pxx, y * pxy
+        w_px = w * pxx if w else None
     else:
         x_px, y_px, w_px = _pos_px(key, field)
     # right-aligned values must stop short of the box border: pad right 3px
@@ -139,9 +155,10 @@ def _box(vals, key, field, text, align='left', x=None, y=None, w=None):
 def _mark(vals, key, field, x=None, y=None):
     """Checkbox tick: centered ☒ over the radio rect (found by rect pos)."""
     f = _find(key, field, x, y)
-    _w, _h = f['w'] * PT2PX, f['h'] * PT2PX
+    pxx, pxy = _pxpt(key)
+    _w, _h = f['w'] * pxx, f['h'] * pxy
     style = 'position: absolute; left: %spx; top: %spx; width: %spx; height: %spx; font-family: NotoSansThai, Lato, sans-serif; font-size: 14px; font-weight: bold; text-align: center;' % (
-        round(f['x'] * PT2PX, 1), round(f['y'] * PT2PX, 1), round(_w, 1), round(_h, 1))
+        round(f['x'] * pxx, 1), round(f['y'] * pxy, 1), round(_w, 1), round(_h, 1))
     vals['boxes'].append({
         'key': '%s_%s_%s_tick' % (key, field, f['x']),
         'left': round(f['x'] * PT2MM, 1),
@@ -192,18 +209,23 @@ class ReportPndOfficial(models.AbstractModel):
                 ('Text1.18', str(year_be), 'left'),
             ]
         else:
+            # ใบแนบ / สื่อบันทึก count blocks are ALTERNATIVES (joined by 'หรือ')
+            # on the official form — fill only the ใบแนบ pair (paper attachment).
             fields_map = common + [
                 ('Text1.17', str(year_be), 'left'),
-                ('Text1.21', str(av['n_rows']), 'left'),
-                ('Text1.22', str(av['n_sheets']), 'left'),
             ]
         for field, text, align in fields_map:
             _box(vals, key, field, text, align)
 
         # summary amounts (Text2.1-2.4): the printed box has a vertical divider
-        # at x=509.2pt splitting บาท | สตางค์ — write the integer part right-
-        # aligned to the divider and the decimals left-aligned after it, so the
-        # decimal dot sits on the divider line.
+        # splitting บาท | สตางค์ — write the integer part right-aligned to the
+        # divider and the decimals left-aligned after it, so the decimal dot
+        # sits on the divider line. Divider/border differ per form:
+        # PND3 cover (595-frame): divider 509.2, satang cell 510.6-526.5;
+        # PND53 cover (612-frame): divider 496.4, satang cell 497.8-512.2.
+        div_x, sat_x0, sat_x1 = (
+            (496.4, 497.8, 512.2) if key == 'pnd53_cover'
+            else (509.2, 510.6, 526.5))
         for field, amount in (('Text2.1', pv['total_income']),
                               ('Text2.2', pv['total_remit']),
                               ('Text2.3', pv['surcharge']),
@@ -212,9 +234,9 @@ class ReportPndOfficial(models.AbstractModel):
             whole, _, satang = text.partition('.')
             f = _find(key, field)
             _box(vals, key, field, whole, 'right',
-                 x=f['x'], y=f['y'], w=(509.2 - f['x']))
+                 x=f['x'], y=f['y'], w=(div_x - 1.4 - f['x']))
             _box(vals, key, field, (satang or '00'), 'left',
-                 x=510.6, y=f['y'], w=(526.5 - 510.6))
+                 x=sat_x0, y=f['y'], w=(sat_x1 - sat_x0))
 
         # granular address boxes — split the company address into the official
         # row fields: เลขที่(1.7) หมู่ที่(1.8) ตำบล/แขวง(1.12) อำเภอ/เขต(1.13)
@@ -272,13 +294,17 @@ class ReportPndOfficial(models.AbstractModel):
         else:
             # PND53: ยื่นปกติ/เพิ่มเติม = RB2(369,206) / RB2(465,206)
             _mark(vals, key, 'Radio Button2', x=369, y=206)
-            # มาตรา 69 ทวิ = RB0 at (380,164); (ม.3เตรส=125, ม.65จัตวา=144)
-            _mark(vals, key, 'Radio Button0', x=380, y=164)
+            # PND53 remits under มาตรา 3 เตรส (RB0 y=125.4); 69 ทวิ (y=164) is
+            # the PND3 section — do NOT tick it here.
+            _mark(vals, key, 'Radio Button0', x=380, y=125)
             # month grid: Radio Button10 x∈{45,122,199,275} y∈{272,287,300}
             m = wizard.date_from.month - 1
             col_x = (45, 122, 199, 275)[m // 3]
             row_y = (272, 287, 300)[m % 3]
             _mark(vals, key, 'Radio Button10', x=col_x, y=row_y)
+            # paper ใบแนบ attached → tick ปรากฏตาม (ใบแนบ ภ.ง.ด.53) = RB3(276.5,
+            # 330.3); the สื่อบันทึก alternative (RB3 y=384.7) stays blank.
+            _mark(vals, key, 'Radio Button3', x=276, y=330)
         return vals
 
     @api.model
