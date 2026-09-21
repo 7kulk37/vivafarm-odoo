@@ -26,3 +26,4 @@ from . import tax_report_wizard
 from . import cost_of_cultivation_wizard
 from . import wht_attach
 from . import pnd_full
+from . import pnd_official

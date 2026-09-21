@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        S14: OFFICIAL-FORM PND pack — the rd.go.th official form (พิมพ์ มี.ค. 2560,
+        AcroForm version) rasterized at 300dpi as the page background, our data
+        absolutely positioned over it at the official field rects (models/
+        rd_form_layout.py, pt→mm ×25.4/72).
+
+        Hand-fill after printing (not auto-filled in V1): granular address boxes,
+        ยื่นเพิ่มเติมครั้งที่, เลขที่หนังสือ, สรรพากรพื้นที่, seal.
+    -->
+
+    <!-- Shared: the data overlay boxes -->
+    <template id="pnd_official_boxes">
+        <t t-foreach="boxes" t-as="b">
+            <div t-att-style="b['style']">
+                <t t-if="b.get('tick')">
+                    <span t-esc="b['text']"/>
+                </t>
+                <t t-else="">
+                    <span t-esc="b['text']"/>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_pnd_official" name="PND Official Form Pack (bg + overlay)">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="w">
+                <div class="article o_company_1_layout" data-oe-lang="th_TH"
+                     style="position: relative; width: 794px; height: 1123px; overflow: hidden; font-family: NotoSansThai, Lato, sans-serif;">
+                    <!-- official form as full-page background -->
+                    <img src="/vivafarm_report/static/src/forms/pnd3_cover_bg.png"
+                         style="position: absolute; left: 0; top: 0; width: 794px; height: 1123px;"/>
+                    <t t-call="vivafarm_report.pnd_official_boxes"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_pnd_official53" name="PND53 Official Form Pack">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="w">
+                <div class="article o_company_1_layout" data-oe-lang="th_TH"
+                     style="position: relative; width: 794px; height: 1123px; overflow: hidden; font-family: NotoSansThai, Lato, sans-serif;">
+                    <img src="/vivafarm_report/static/src/forms/pnd53_cover_bg.png"
+                         style="position: absolute; left: 0; top: 0; width: 794px; height: 1123px;"/>
+                    <t t-call="vivafarm_report.pnd_official_boxes"/>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_pnd_official" model="ir.actions.report">
+        <field name="name">Thai PND3 Official Form (แบบราชการ + ข้อมูล)</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_pnd_official</field>
+        <field name="report_file">vivafarm_report.report_pnd_official</field>
+        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="print_report_name">'PND3_Official_%s' % (object.date_from)</field>
+    </record>
+
+    <record id="action_report_pnd_official53" model="ir.actions.report">
+        <field name="name">Thai PND53 Official Form (แบบราชการ + ข้อมูล)</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_pnd_official53</field>
+        <field name="report_file">vivafarm_report.report_pnd_official53</field>
+        <field name="paperformat_id" ref="paperformat_viva_standard"/>
+        <field name="print_report_name">'PND53_Official_%s' % (object.date_from)</field>
+    </record>
+</odoo>
