@@ -20,6 +20,17 @@ PRINTED_TAXID_CELLS = {
 }
 # PND3 and PND53 both have a real 5-slot postcode box (dividers measured from
 # the rasters; pitch ~10.7-11.3pt), followed by the dotted line.
+# ใบแนบ ภ.ง.ด.3 (attach3): the header tax-id box (371.7→556pt) and the per-row
+# tax-id cells (56.8→239.9pt + row pitch ~54.9pt) use the same X-XXXX-XXXXX-XX-X
+# 13-cell grid as the covers — centers mapped from the cover's measured cells.
+ATTACH3_HDR_TAXID_CELLS = [378.39, 396.52, 408.71, 421.01, 433.26, 451.39,
+                           463.63, 475.94, 488.13, 500.27, 518.83, 531.02,
+                           549.26]
+ATTACH3_ROW_TAXID_CELLS = [63.45, 81.46, 93.57, 105.79, 117.96, 135.97,
+                           148.14, 160.36, 172.47, 184.53, 202.97, 215.08,
+                           233.2]
+ATTACH3_ROW_PITCH = 54.9   # row band 2 starts at y167 (row 1 at y112.2)
+
 PRINTED_POSTCODE_CELLS = {
     'pnd3_cover': [96.1, 106.75, 117.45, 128.05, 138.65],
     'pnd53_cover': [105.2, 116.5, 127.9, 139.25, 150.55],

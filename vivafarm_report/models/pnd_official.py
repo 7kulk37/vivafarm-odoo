@@ -19,7 +19,9 @@ import datetime
 from odoo import api, fields, models
 from odoo.tools import format_amount
 
-from .rd_form_layout import (PRINTED_BRANCH_CELLS, PRINTED_POSTCODE_CELLS,
+from .rd_form_layout import (ATTACH3_HDR_TAXID_CELLS,
+                             ATTACH3_ROW_TAXID_CELLS,
+                             PRINTED_BRANCH_CELLS, PRINTED_POSTCODE_CELLS,
                              PRINTED_TAXID_CELLS, RD_FORM_LAYOUT)
 
 PT2MM = 25.4 / 72.0
@@ -326,20 +328,24 @@ class ReportPndOfficial3Attach(models.AbstractModel):
         key = 'pnd3_attach'
         vals = {'boxes': []}
         vals['bg'] = '/vivafarm_report/static/src/forms/pnd3_attach_bg.png'
-        # header: withholdER tax id / sheet counts
-        _box(vals, key, 'Text1.0', (company.vat or '').replace(' ', ''), 'left')
+        # header: withholdER tax id — one box ending at the x=466 divider
+        _box(vals, key, 'Text1.0', (company.vat or '').replace(' ', ''),
+             'right', x=371.7, y=15.0, w=(466.0 - 371.7))
         _box(vals, key, 'Text1.2', str(sheet + 1), 'center')
         _box(vals, key, 'Text1.3', str(n_sheets), 'center')
         for i, r in enumerate(rows):
             m = self.FIELD_MAP_1 if i == 0 else self.FIELD_MAP_N
             g = i + 1
-
             def B(suffix, text, align='left'):
                 if text:
                     _box(vals, key, 'Text%s.%s' % (g, suffix), text, align)
 
-            B(m['seq'], str(sheet * 5 + i + 1), 'center')
-            B(m['vat'], (r['vat'] or '').replace(' ', ''))
+            # tax ID: single box ending at the x=155 divider (per-row cell)
+            if r['vat']:
+                f = _find(key, 'Text%s.%s' % (g, m['vat']))
+                _box(vals, key, 'Text%s.%s' % (g, m['vat']),
+                     (r['vat'] or '').replace(' ', ''), 'right',
+                     x=f['x'], y=f['y'], w=(155.0 - f['x']))
             B(m['name'], r['partner'])
             B(m['addr'], r['address'])
             if r.get('pay_date'):
@@ -381,6 +387,29 @@ class ReportPndOfficial3Attach(models.AbstractModel):
             'pages': pages,
             'pnd_type': 'pnd3',
         }
+
+
+def _digit_spans_at(vals, key, top_pt, digits, centers):
+    """One digit per printed box cell at explicit y (pt) and centers (pt)."""
+    if not digits or len(centers) < len(digits):
+        return
+    seg_w = (centers[-1] - centers[0]) / max(1, len(centers) - 1)
+    for i, ch in enumerate(digits):
+        style = (
+            'position: absolute; left: %spx; top: %spx; width: %spx; '
+            'font-family: NotoSansThai, Lato, sans-serif; '
+            'font-size: 10px; text-align: center;' % (
+                round((centers[i] - seg_w / 2) * PT2PX, 1),
+                round(top_pt * PT2PX + 1, 1),
+                round(seg_w * PT2PX, 1)))
+        vals['boxes'].append({
+            'key': '%s_taxidrow_%s' % (key, i),
+            'left': round((centers[i] - seg_w / 2) * PT2PX, 1),
+            'top': round(top_pt * PT2PX, 1),
+            'width': round(seg_w * PT2PX, 1),
+            'style': style,
+            'text': ch, 'align': 'center',
+        })
 
 
 def _num(value):
