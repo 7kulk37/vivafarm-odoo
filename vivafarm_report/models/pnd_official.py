@@ -19,7 +19,8 @@ import datetime
 from odoo import api, fields, models
 from odoo.tools import format_amount
 
-from .rd_form_layout import RD_FORM_LAYOUT
+from .rd_form_layout import (PRINTED_BRANCH_CELLS, PRINTED_POSTCODE_CELLS,
+                             PRINTED_TAXID_CELLS, RD_FORM_LAYOUT)
 
 PT2MM = 25.4 / 72.0
 PT2PX = 96.0 / 72.0  # wkhtmltopdf on staging ignores mm on absolute pos; px works
@@ -51,6 +52,50 @@ def _find(layout_key, field_name, x=None, y=None, tol=6):
             continue
         return f
     raise KeyError('%s / %s (x=%s y=%s)' % (layout_key, field_name, x, y))
+
+
+def _digit_spans(vals, key, field, digits, n_segments):
+    """One digit per printed box cell, centered on the measured cell centers.
+
+    The printed X-XXXX-XXXXX-XX-X boxes are NOT uniform subdivisions of the
+    AcroForm widget rect (groups of 1-4-5-2-1 with wider/narrower cells), so
+    uniform N-slicing puts digits on the printed cell borders. The measured
+    PRINTED_*_CELLS tables are the source of truth; fall back to uniform
+    slicing only if the field has no measured cells.
+    """
+    if not digits:
+        return
+    f = _find(key, field)
+    if field == 'Text1.0':
+        cells = PRINTED_TAXID_CELLS.get(key)
+    elif field == 'Text1.1':
+        cells = PRINTED_BRANCH_CELLS.get(key)
+    elif field == 'Text1.16':
+        cells = PRINTED_POSTCODE_CELLS.get(key)
+    else:
+        cells = None  # uniform fallback
+    if cells and len(cells) == len(digits):
+        centers = cells
+    else:
+        centers = [f['x'] + f['w'] * ((i + 0.5) / float(n_segments))
+                   for i in range(len(digits))]
+    for i, ch in enumerate(digits):
+        seg_w = (f['w'] / float(n_segments))
+        style = (
+            'position: absolute; left: %spx; top: %spx; width: %spx; '
+            'font-family: NotoSansThai, Lato, sans-serif; '
+            'font-size: 10px; text-align: center;' % (
+                round((centers[i] - seg_w / 2) * PT2PX, 1),
+                round(f['y'] * PT2PX + 1, 1),
+                round(seg_w * PT2PX, 1)))
+        vals['boxes'].append({
+            'key': '%s_%s_digit_%s' % (key, field, i),
+            'left': round((centers[i] - seg_w / 2) * PT2PX, 1),
+            'top': round(f['y'] * PT2PX, 1),
+            'width': round(seg_w * PT2PX, 1),
+            'style': style,
+            'text': ch, 'align': 'center',
+        })
 
 
 def _box(vals, key, field, text, align='left', x=None, y=None, w=None):
@@ -119,8 +164,9 @@ class ReportPndOfficial(models.AbstractModel):
         fdate = fields.Date.context_today(self)
 
         # --- cover text fields ---
+        # branch: official form prints 5 separate boxes for the สาขา code;
+        # 00000 = สำนักงานใหญ่ (HQ). Render one digit per box like the tax ID.
         common = [
-            ('Text1.1', 'สำนักงานใหญ่', 'left'),
             ('Text1.2', company.name, 'left'),
             ('Text1.19', str(av['n_rows']), 'left'),
             ('Text1.20', str(av['n_sheets']), 'left'),
@@ -144,9 +190,9 @@ class ReportPndOfficial(models.AbstractModel):
             _box(vals, key, field, text, align)
 
         # granular address boxes — split the company address into the official
-        # row fields: เลขที่(1.7) หมู่ที่(1.8) ตรอก/ซอย(1.9) ตำบล/แขวง(1.12)
-        # จังหวัด(1.14) รหัสไปรษณีย์(1.15). อาคาร/ชั้น/ห้อง/แยก/ถนน left for
-        # hand-fill when they don't apply.
+        # row fields: เลขที่(1.7) หมู่ที่(1.8) ตำบล/แขวง(1.12) อำเภอ/เขต(1.13)
+        # จังหวัด(1.14). อาคาร/ชั้น/ห้อง/ตรอกซอย/แยก/ถนน left for hand-fill when
+        # they don't apply. VivaFarm mapping: street2 = แขวง, city = เขต.
         street_parts = (company.street or '').split()
         house_no = street_parts[0] if street_parts else ''
         Moo = ''
@@ -158,50 +204,26 @@ class ReportPndOfficial(models.AbstractModel):
                     Moo = tail
                 elif i + 1 < len(street_parts):
                     Moo = street_parts[i + 1]
-        soi = company.street2 or ''
-        if pnd_type == 'pnd3':
-            addr_boxes = [('Text1.7', house_no), ('Text1.8', Moo),
-                          ('Text1.9', soi), ('Text1.12', company.city or ''),
-                          ('Text1.14', company.state_id.name or ''),
-                          ('Text1.15', company.zip or '')]
-        else:
-            # PND53 cover uses the same official row labels with the same
-            # widget numbering (Text1.7..1.16) — verified identical layout
-            addr_boxes = [('Text1.7', house_no), ('Text1.8', Moo),
-                          ('Text1.9', soi), ('Text1.12', company.city or ''),
-                          ('Text1.14', company.state_id.name or ''),
-                          ('Text1.15', company.zip or '')]
+        addr_boxes = [('Text1.7', house_no), ('Text1.8', Moo),
+                      ('Text1.12', company.street2 or ''),
+                      ('Text1.13', company.city or ''),
+                      ('Text1.14', company.state_id.name or '')]
+        # same widget numbering on both covers (Text1.7..1.16)
         for f, t in addr_boxes:
             if t:
                 _box(vals, key, f, t)
 
+        # postcode: the printed box (144→335pt) reads as 5 digit slots — render
+        # one digit per slot, evenly spread across the box instead of a compact
+        # string sitting on the dotted line.
+        _digit_spans(vals, key, 'Text1.16', (company.zip or '').replace(' ', ''), 5)
+
         # tax ID: one positioned digit per official box segment — uniform gaps
         # regardless of font metrics. The official box has 13 segments spanning
         # the Text1.0 rect; each digit centered in its 1/13 slice.
-        vat_digits = (company.vat or '').replace(' ', '')
-        if vat_digits:
-            _id = _find(key, 'Text1.0')
-            id_x0, id_y, id_w = _id['x'], _id['y'], _id['w']
-            n = len(vat_digits)
-            for i, ch in enumerate(vat_digits):
-                # center a wider slice on each 1/13 segment center
-                seg_center = id_x0 + id_w * ((i + 0.5) / 13.0)
-                seg_w = id_w / 13.0
-                style = (
-                    'position: absolute; left: %spx; top: %spx; width: %spx; '
-                    'font-family: NotoSansThai, Lato, sans-serif; '
-                    'font-size: 10px; text-align: center;' % (
-                        round((seg_center - seg_w / 2) * PT2PX, 1),
-                        round(id_y * PT2PX + 1, 1),
-                        round(seg_w * PT2PX, 1)))
-                vals['boxes'].append({
-                    'key': '%s_taxid_%s' % (key, i),
-                    'left': round((seg_center - seg_w / 2) * PT2PX, 1),
-                    'top': round(id_y * PT2PX, 1),
-                    'width': round(seg_w * PT2PX, 1),
-                    'style': style,
-                    'text': ch, 'align': 'center',
-                })
+        # Same treatment for the 5-box branch code (Text1.1) → 00000.
+        _digit_spans(vals, key, 'Text1.0', (company.vat or '').replace(' ', ''), 13)
+        _digit_spans(vals, key, 'Text1.1', '00000', 5)
 
         # ยื่นวันที่ / เดือน / พ.ศ.
         _box(vals, key, 'Text2.25', str(fdate.day))

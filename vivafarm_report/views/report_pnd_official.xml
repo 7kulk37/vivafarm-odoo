@@ -26,12 +26,22 @@
 
     <template id="report_pnd_official" name="PND Official Form Pack (bg + overlay)">
         <t t-call="web.html_container">
+            <style>
+                /* full-page gov form: kill body padding/margins AND scrollbars —
+                   a 0.5px vertical overflow reserves a 16px scrollbar and shifts
+                   the whole page +12pt right (crop on the right edge) */
+                body.container { padding: 0 !important; margin: 0 !important; }
+                html, body { overflow: hidden !important; height: auto !important; }
+                /* Odoo pads every report body 11mm left/right (.o_body_html) —
+                   kills it so the full-page form sits at 0,0 on the paper */
+                body.o_body_html { padding: 0 !important; }
+            </style>
             <t t-foreach="docs" t-as="w">
                 <div class="article o_company_1_layout" data-oe-lang="th_TH"
-                     style="position: relative; width: 794px; height: 1123px; overflow: hidden; font-family: NotoSansThai, Lato, sans-serif;">
+                     style="position: relative; width: 794px; height: 1122px; overflow: hidden; font-family: NotoSansThai, Lato, sans-serif;">
                     <!-- official form as full-page background -->
                     <img src="/vivafarm_report/static/src/forms/pnd3_cover_bg.png"
-                         style="position: absolute; left: 0; top: 0; width: 794px; height: 1123px;"/>
+                         style="position: absolute; left: 0; top: 0; width: 794px; height: 1122px;"/>
                     <t t-call="vivafarm_report.pnd_official_boxes"/>
                 </div>
             </t>
@@ -40,11 +50,18 @@
 
     <template id="report_pnd_official53" name="PND53 Official Form Pack">
         <t t-call="web.html_container">
+            <style>
+                body.container { padding: 0 !important; margin: 0 !important; }
+                html, body { overflow: hidden !important; height: auto !important; }
+                /* Odoo pads every report body 11mm left/right (.o_body_html) —
+                   kills it so the full-page form sits at 0,0 on the paper */
+                body.o_body_html { padding: 0 !important; }
+            </style>
             <t t-foreach="docs" t-as="w">
                 <div class="article o_company_1_layout" data-oe-lang="th_TH"
-                     style="position: relative; width: 794px; height: 1123px; overflow: hidden; font-family: NotoSansThai, Lato, sans-serif;">
+                     style="position: relative; width: 794px; height: 1122px; overflow: hidden; font-family: NotoSansThai, Lato, sans-serif;">
                     <img src="/vivafarm_report/static/src/forms/pnd53_cover_bg.png"
-                         style="position: absolute; left: 0; top: 0; width: 794px; height: 1123px;"/>
+                         style="position: absolute; left: 0; top: 0; width: 794px; height: 1122px;"/>
                     <t t-call="vivafarm_report.pnd_official_boxes"/>
                 </div>
             </t>

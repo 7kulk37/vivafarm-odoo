@@ -8,6 +8,28 @@ Field names are the official PDF AcroForm widget names. If the RD re-publishes
 a form version, re-extract with pymupdf and replace this dict + the PNGs.
 """
 
+# Printed digit-cell centers (pt) measured from the official form rasters —
+# the printed X-XXXX-XXXXX-XX-X tax ID box and the 5-box branch code are NOT
+# uniform subdivisions of the AcroForm widget rect, so digit placement must use
+# these measured centers instead of the widget width / N.
+PRINTED_TAXID_CELLS = {
+    'pnd3_cover': [166.5, 183.3, 194.6, 206.0, 217.35, 234.15, 245.5, 256.9,
+                   268.2, 279.45, 296.65, 307.95, 324.85],
+    'pnd53_cover': [175.05, 191.85, 203.1, 214.5, 225.85, 242.65, 253.95,
+                    265.3, 276.7, 288.05, 305.15, 316.45, 333.35],
+}
+PRINTED_POSTCODE_CELLS = {
+    # PND3: the 5-slot postcode box left of the dotted line (144.2→196.0pt);
+    # PND53: 5-slot box 99.6→156.2pt (dividers measured directly).
+    'pnd3_cover': [149.4, 159.8, 170.2, 180.6, 191.0],
+    'pnd53_cover': [105.2, 116.5, 127.9, 139.25, 150.55],
+}
+
+PRINTED_BRANCH_CELLS = {
+    'pnd3_cover': [281.75, 292.8, 303.9, 315.0, 326.05],
+    'pnd53_cover': [290.45, 301.5, 312.55, 323.65, 334.75],  # measured
+}
+
 RD_FORM_LAYOUT = {
  "pnd3_cover": {
   "page_w_pt": 595.2760009765625,
