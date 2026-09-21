@@ -88,7 +88,7 @@ def _digit_spans(vals, key, field, digits, n_segments):
     if field == 'Text1.16' and cells and len(cells) > 1:
         # postcode: seg = measured slot pitch; font scales with it
         seg_w = (cells[-1] - cells[0]) / (len(cells) - 1)
-        fs = 8
+        fs = 10
     else:
         seg_w = f['w'] / float(n_segments)
         fs = 10
@@ -181,12 +181,6 @@ class ReportPndOfficial(models.AbstractModel):
             ('Text1.2', company.name, 'left'),
             ('Text1.19', str(av['n_rows']), 'left'),
             ('Text1.20', str(av['n_sheets']), 'left'),
-            # official form: amounts only, no currency symbol (the _fmt values
-            # arrive as '1,234.50\u00a0฿')
-            ('Text2.1', _strip_baht(pv['total_income']), 'right'),
-            ('Text2.2', _strip_baht(pv['total_remit']), 'right'),
-            ('Text2.3', _strip_baht(pv['surcharge']), 'right'),
-            ('Text2.4', _strip_baht(pv['total']), 'right'),
             ('Text2.23', company.name, 'center'),
         ]
         if pnd_type == 'pnd3':
@@ -201,6 +195,22 @@ class ReportPndOfficial(models.AbstractModel):
             ]
         for field, text, align in fields_map:
             _box(vals, key, field, text, align)
+
+        # summary amounts (Text2.1-2.4): the printed box has a vertical divider
+        # at x=509.2pt splitting บาท | สตางค์ — write the integer part right-
+        # aligned to the divider and the decimals left-aligned after it, so the
+        # decimal dot sits on the divider line.
+        for field, amount in (('Text2.1', pv['total_income']),
+                              ('Text2.2', pv['total_remit']),
+                              ('Text2.3', pv['surcharge']),
+                              ('Text2.4', pv['total'])):
+            text = _strip_baht(amount)
+            whole, _, satang = text.partition('.')
+            f = _find(key, field)
+            _box(vals, key, field, whole, 'right',
+                 x=f['x'], y=f['y'], w=(509.2 - f['x']))
+            _box(vals, key, field, (satang or '00'), 'left',
+                 x=510.6, y=f['y'], w=(526.5 - 510.6))
 
         # granular address boxes — split the company address into the official
         # row fields: เลขที่(1.7) หมู่ที่(1.8) ตำบล/แขวง(1.12) อำเภอ/เขต(1.13)
