@@ -40,6 +40,8 @@
                     </group>
                 </group>
                 <group>
+                    <field name="cert_number"/>
+                    <field name="voided_reason"/>
                     <field name="de_minimis_warning"/>
                     <field name="de_minimis_note"/>
                     <field name="wht_correction"/>
@@ -50,6 +52,13 @@
                     <button name="action_mark_remitted" type="object"
                             string="Mark Remitted" class="btn-primary"
                             invisible="state == 'remitted'"/>
+                    <button name="action_reprint_cert" type="object"
+                            string="Reprint (ใบแทน)" class="btn-secondary"
+                            help="Lost or damaged copy — same serial, ใบแทน header"/>
+                    <button name="action_void_and_reissue" type="object"
+                            string="Void &amp; Reissue (new serial)" class="btn-warning"
+                            confirm="Void the current certificate serial and allocate a new one? The old serial is burned and recorded in Voided Reason. Use only when the certificate CONTENT is wrong."
+                            invisible="cert_voided"/>
                 </footer>
             </form>
         </field>
