@@ -34,6 +34,11 @@
                             string="Print Official Form (แบบราชการ)"
                             class="btn-primary"
                             invisible="register_type not in ('pnd3', 'pnd53')"/>
+                    <button name="action_print_pnd_official_attach"
+                            type="object"
+                            string="Print ใบแนบ Official (แบบราชการ)"
+                            class="btn-primary"
+                            invisible="register_type != 'pnd3'"/>
                     <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>

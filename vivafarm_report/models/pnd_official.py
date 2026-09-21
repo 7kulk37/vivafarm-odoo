@@ -302,3 +302,90 @@ class ReportPndOfficial53(models.AbstractModel):
         data = dict(data or {})
         data['pnd_type'] = 'pnd53'
         return super()._get_report_values(docids, data)
+
+
+class ReportPndOfficial3Attach(models.AbstractModel):
+    _name = 'report.vivafarm_report.report_pnd_official_attach'
+    _description = 'Official ใบแนบ ภ.ง.ด.3 (landscape, bg + overlay)'
+
+    # The AcroForm numbering differs between the first data row (mixed with the
+    # header fields 1.0-1.3) and rows 2-5. Suffix = position within the row block
+    # (row = 3 stacked income-type lines + name/address block).
+    FIELD_MAP_1 = {'seq': '27', 'vat': '4', 'branch': '5', 'name': '6',
+                   'addr': '8', 'day': '9', 'month': '15', 'year': '21',
+                   'type': '10', 'rate': '11', 'amount': '12', 'wht': '13',
+                   'cond': '14'}
+    FIELD_MAP_N = {'seq': '27', 'vat': '1', 'branch': '2', 'name': '3',
+                   'addr': '5', 'day': '6', 'month': '12', 'year': '18',
+                   'type': '7', 'rate': '8', 'amount': '9', 'wht': '10',
+                   'cond': '11'}
+
+    @api.model
+    def _attach_page(self, wizard, rows, sheet, n_sheets, av):
+        company = self.env.company
+        key = 'pnd3_attach'
+        vals = {'boxes': []}
+        vals['bg'] = '/vivafarm_report/static/src/forms/pnd3_attach_bg.png'
+        # header: withholdER tax id / sheet counts
+        _box(vals, key, 'Text1.0', (company.vat or '').replace(' ', ''), 'left')
+        _box(vals, key, 'Text1.2', str(sheet + 1), 'center')
+        _box(vals, key, 'Text1.3', str(n_sheets), 'center')
+        for i, r in enumerate(rows):
+            m = self.FIELD_MAP_1 if i == 0 else self.FIELD_MAP_N
+            g = i + 1
+
+            def B(suffix, text, align='left'):
+                if text:
+                    _box(vals, key, 'Text%s.%s' % (g, suffix), text, align)
+
+            B(m['seq'], str(sheet * 5 + i + 1), 'center')
+            B(m['vat'], (r['vat'] or '').replace(' ', ''))
+            B(m['name'], r['partner'])
+            B(m['addr'], r['address'])
+            if r.get('pay_date'):
+                B(m['day'], str(r['pay_date'].day), 'center')
+                B(m['month'], str(r['pay_date'].month), 'center')
+                B(m['year'], str(r['pay_date'].year + 543), 'center')
+            B(m['type'], r['income_label'])
+            B(m['rate'], r['rate'], 'center')
+            B(m['amount'], _num(r['amount']))
+            B(m['wht'], _num(r['wht']))
+            B(m['cond'], r['cond'], 'center')
+        # totals row (Text6.24 / 6.25)
+        _box(vals, key, 'Text6.24', _strip_baht(av['total_amount']), 'right')
+        _box(vals, key, 'Text6.25', _strip_baht(av['total_wht']), 'right')
+        # footer signature block
+        _box(vals, key, 'Text9.1', company.name)
+        fdate = fields.Date.context_today(self)
+        _box(vals, key, 'Text9.3', str(fdate.day))
+        _box(vals, key, 'Text9.4', _MONTH_TH[fdate.month])
+        _box(vals, key, 'Text9.5', str(fdate.year + 543))
+        return vals
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['tax.report.wizard'].browse(docids)
+        attach = self.env['report.vivafarm_report.report_wht_attach']
+        av = attach._get_report_values(wizard.ids, {'pnd_type': 'pnd3'})
+        rows = av['rows']
+        n_sheets = max(1, -(-len(rows) // 5))
+        pages = [
+            self._attach_page(wizard, rows[s * 5:(s + 1) * 5], s, n_sheets, av)
+            for s in range(n_sheets)
+        ] or [{'boxes': [],
+               'bg': '/vivafarm_report/static/src/forms/pnd3_attach_bg.png'}]
+        return {
+            'doc_ids': wizard.ids,
+            'doc_model': self._name,
+            'docs': wizard,
+            'pages': pages,
+            'pnd_type': 'pnd3',
+        }
+
+
+def _num(value):
+    """Plain Thai-form amount: thousands comma + 2 decimals, no symbol."""
+    try:
+        return '{:,.2f}'.format(float(value))
+    except (TypeError, ValueError):
+        return ''

@@ -105,6 +105,17 @@ class TaxReportWizard(models.TransientModel):
         return self.env['ir.actions.report']._get_report_from_name(
             report_name).report_action(self)
 
+    def action_print_pnd_official_attach(self):
+        """Print the OFFICIAL ใบแนบ ภ.ง.ด.3 (landscape, background form) with
+        per-payee rows overlaid at the official AcroForm positions. PND3 only.
+        """
+        self.ensure_one()
+        if self.register_type != 'pnd3':
+            raise UserError(_(
+                'The official ใบแนบ ภ.ง.ด.3 print is available only for PND3.'))
+        return self.env['ir.actions.report']._get_report_from_name(
+            'vivafarm_report.report_pnd_official_attach').report_action(self)
+
 
 class ReportTaxRegister(models.AbstractModel):
     """Data model for the Thai tax register QWeb report.

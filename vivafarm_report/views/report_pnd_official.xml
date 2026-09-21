@@ -104,4 +104,49 @@
         <field name="paperformat_id" ref="paperformat_viva_fullpage"/>
         <field name="print_report_name">'PND53_Official_%s' % (object.date_from)</field>
     </record>
+
+    <record id="paperformat_viva_fullpage_landscape" model="report.paperformat">
+        <field name="name">VivaFarm Full-Page A4 Landscape (official forms)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">96</field>
+        <field name="disable_shrinking" eval="True"/>
+    </record>
+
+    <template id="report_pnd_official_attach"
+              name="Official ใบแนบ ภ.ง.ด.3 (landscape bg + overlay)">
+        <t t-call="web.html_container">
+            <style>
+                body.container { padding: 0 !important; margin: 0 !important; }
+                html, body { overflow: hidden !important; height: auto !important; }
+                body.o_body_html { padding: 0 !important; }
+            </style>
+            <t t-foreach="pages" t-as="pg">
+                <div class="article o_company_1_layout" data-oe-lang="th_TH"
+                     style="position: relative; width: 1122px; height: 793px; overflow: hidden; font-family: NotoSansThai, Lato, sans-serif;">
+                    <img t-att-src="pg['bg']"
+                         style="position: absolute; left: 0; top: 0; width: 1122px; height: 793px;"/>
+                    <t t-foreach="pg['boxes']" t-as="b">
+                        <div t-att-style="b['style']"><span t-esc="b['text']"/></div>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_pnd_official_attach" model="ir.actions.report">
+        <field name="name">Thai ใบแนบ ภ.ง.ด.3 Official (แบบราชการ)</field>
+        <field name="model">tax.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">vivafarm_report.report_pnd_official_attach</field>
+        <field name="report_file">vivafarm_report.report_pnd_official_attach</field>
+        <field name="paperformat_id" ref="paperformat_viva_fullpage_landscape"/>
+        <field name="print_report_name">'PND3_Attach_Official_%s' % (object.date_from)</field>
+    </record>
 </odoo>
