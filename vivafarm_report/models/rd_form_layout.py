@@ -34,6 +34,16 @@ ATTACH3_ROW_TAXID_CELLS = [67.9, 85.5, 97.4, 109.3, 121.2, 138.9, 150.8,
                            162.7, 174.6, 186.4, 204.4, 216.4, 234.1]
 ATTACH3_ROW_PITCH = 55.5   # row band 2 starts at y168.2 (row 1 at y112.7)
 
+# ใบแนบ ภ.ง.ด.53 (attach53): header tax-id box + per-row tax-id strips,
+# 13 cells each, centers pixel-measured from 290360_attach53.pdf (agent frame).
+# Header strip 377.4→554.6pt (1-4-5-2-1); row strip 61.3→241.5pt (1-2-1-3-5-1),
+# identical x in every row; row tops 111.4/163.8/216.2/269.2/321.5/373.9.
+ATTACH53_HDR_TAXID_CELLS = [382.95, 398.75, 410.55, 422.55, 434.5, 453.4,
+                            465.5, 477.1, 488.3, 499.9, 517.55, 529.1, 549.3]
+ATTACH53_ROW_TAXID_CELLS = [66.85, 83.45, 94.95, 111.5, 128.55, 140.45, 152.4,
+                            171.05, 182.75, 194.5, 206.35, 218.1, 236.2]
+ATTACH53_ROW_TOPS = [111.4, 163.8, 216.2, 269.2, 321.5, 373.9]
+
 PRINTED_POSTCODE_CELLS = {
     'pnd3_cover': [96.1, 106.75, 117.45, 128.05, 138.65],
     'pnd53_cover': [105.2, 116.5, 127.9, 139.25, 150.55],

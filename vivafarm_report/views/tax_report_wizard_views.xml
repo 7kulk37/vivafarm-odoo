@@ -38,7 +38,7 @@
                             type="object"
                             string="Print ใบแนบ Official (แบบราชการ)"
                             class="btn-primary"
-                            invisible="register_type != 'pnd3'"/>
+                            invisible="register_type not in ('pnd3', 'pnd53')"/>
                     <button special="cancel" string="Cancel" class="btn-secondary"/>
                 </footer>
             </form>

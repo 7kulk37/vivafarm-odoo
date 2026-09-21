@@ -106,15 +106,20 @@ class TaxReportWizard(models.TransientModel):
             report_name).report_action(self)
 
     def action_print_pnd_official_attach(self):
-        """Print the OFFICIAL ใบแนบ ภ.ง.ด.3 (landscape, background form) with
-        per-payee rows overlaid at the official AcroForm positions. PND3 only.
+        """Print the OFFICIAL ใบแนบ (landscape, background form) with
+        per-payee rows overlaid at the official AcroForm positions.
         """
         self.ensure_one()
-        if self.register_type != 'pnd3':
+        if self.register_type not in ('pnd3', 'pnd53'):
             raise UserError(_(
-                'The official ใบแนบ ภ.ง.ด.3 print is available only for PND3.'))
+                'The official ใบแนบ print is available only for PND3 and '
+                'PND53.'))
+        report_name = {
+            'pnd3': 'vivafarm_report.report_pnd_official_attach',
+            'pnd53': 'vivafarm_report.report_pnd_official_attach53',
+        }[self.register_type]
         return self.env['ir.actions.report']._get_report_from_name(
-            'vivafarm_report.report_pnd_official_attach').report_action(self)
+            report_name).report_action(self)
 
 
 class ReportTaxRegister(models.AbstractModel):

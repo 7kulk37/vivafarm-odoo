@@ -21,6 +21,8 @@ from odoo.tools import format_amount
 
 from .rd_form_layout import (ATTACH3_HDR_TAXID_CELLS,
                              ATTACH3_ROW_TAXID_CELLS,
+                             ATTACH53_HDR_TAXID_CELLS,
+                             ATTACH53_ROW_TAXID_CELLS, ATTACH53_ROW_TOPS,
                              PRINTED_BRANCH_CELLS, PRINTED_POSTCODE_CELLS,
                              PRINTED_TAXID_CELLS, RD_FORM_LAYOUT)
 
@@ -432,3 +434,103 @@ def _num(value):
         return '{:,.2f}'.format(float(value))
     except (TypeError, ValueError):
         return ''
+
+
+class ReportPndOfficial53Attach(models.AbstractModel):
+    _name = 'report.vivafarm_report.report_pnd_official_attach53'
+    _description = 'Official ใบแนบ ภ.ง.ด.53 (landscape, bg + overlay)'
+
+    # Same suffix scheme for every group g (1-6): .4 seq, .5 TIN box strip,
+    # .6 ชื่อ, .7/.8 ที่อยู่, .9 สาขาที่, .10 วัน/เดือน/ปีที่จ่าย,
+    # .11 ประเภทเงินได้, .12 อัตรา, .13 จำนวนเงินที่จ่าย, .14 ภาษีที่หัก,
+    # .15 เงื่อนไข. Totals row: Text6.28 / Text6.29. Footer: Text9.1-9.5.
+    SEQ = '4'
+    NAME = '6'
+    ADDR1 = '7'
+    DATE = '10'
+    TYPE = '11'
+    RATE = '12'
+    PAYAMT = '13'
+    TAX = '14'
+    COND = '15'
+
+    @api.model
+    def _attach53_page(self, wizard, rows, sheet, n_sheets, av):
+        company = self.env.company
+        key = 'pnd53_attach'
+        vals = {'boxes': []}
+        vals['bg'] = '/vivafarm_report/static/src/forms/pnd53_attach_bg.png'
+        # header: withholdER tax id — one digit per printed box cell
+        _digit_spans_at(vals, key, 15.6, (company.vat or '').replace(' ', ''),
+                        ATTACH53_HDR_TAXID_CELLS)
+        _box(vals, key, 'Text1.2', str(sheet + 1), 'center')
+        _box(vals, key, 'Text1.3', str(n_sheets), 'center')
+        for i, r in enumerate(rows):
+            g = i + 1
+            top = ATTACH53_ROW_TOPS[i]
+
+            def B(suffix, text, align='left'):
+                if text:
+                    _box(vals, key, 'Text%s.%s' % (g, suffix), text, align)
+
+            B(self.SEQ, str(sheet * 6 + i + 1), 'center')
+            # payee TIN: one digit per printed box cell (13 boxes)
+            if r['vat']:
+                _digit_spans_at(vals, key, top + 0.1,
+                                (r['vat'] or '').replace(' ', ''),
+                                ATTACH53_ROW_TAXID_CELLS)
+            B(self.NAME, r['partner'])
+            B(self.ADDR1, r['address'])
+            if r.get('pay_date'):
+                # วัน เดือน ปี ที่จ่าย: single line dd/mm/yyyy (BE year)
+                B(self.DATE, '%s/%s/%s' % (r['pay_date'].day,
+                                           r['pay_date'].month,
+                                           r['pay_date'].year + 543),
+                  'center')
+            B(self.TYPE, r['income_label'])
+            B(self.RATE, r['rate'], 'center')
+            # money columns: right-align to the printed column rules
+            # (จำนวนเงินที่จ่าย rule at 686.4 ref, ภาษี rule at 783.9 ref;
+            # ~1.4pt inside, same convention as the PND3 attach)
+            f_amt = _find(key, 'Text%s.%s' % (g, self.PAYAMT))
+            _box(vals, key, 'Text%s.%s' % (g, self.PAYAMT), _num(r['amount']),
+                 'right', x=f_amt['x'], y=f_amt['y'],
+                 w=(685.0 - f_amt['x']))
+            f_wht = _find(key, 'Text%s.%s' % (g, self.TAX))
+            _box(vals, key, 'Text%s.%s' % (g, self.TAX), _num(r['wht']),
+                 'right', x=f_wht['x'], y=f_wht['y'],
+                 w=(782.4 - f_wht['x']))
+            B(self.COND, r['cond'], 'center')
+        # totals row (Text6.28 / 6.29) — right-align to the column rules
+        _box(vals, key, 'Text6.28', _strip_baht(av['total_amount']), 'right',
+             x=605.3, y=426.8, w=(685.0 - 605.3))
+        _box(vals, key, 'Text6.29', _strip_baht(av['total_wht']), 'right',
+             x=708.4, y=426.8, w=(782.4 - 708.4))
+        # footer signature block
+        _box(vals, key, 'Text9.1', company.name)
+        fdate = fields.Date.context_today(self)
+        _box(vals, key, 'Text9.3', str(fdate.day))
+        _box(vals, key, 'Text9.4', _MONTH_TH[fdate.month])
+        _box(vals, key, 'Text9.5', str(fdate.year + 543))
+        return vals
+
+    @api.model
+    def _get_report_values(self, docids, data=None):
+        wizard = self.env['tax.report.wizard'].browse(docids)
+        attach = self.env['report.vivafarm_report.report_wht_attach']
+        av = attach._get_report_values(wizard.ids, {'pnd_type': 'pnd53'})
+        rows = av['rows']
+        n_sheets = max(1, -(-len(rows) // 6))
+        pages = [
+            self._attach53_page(wizard, rows[s * 6:(s + 1) * 6], s, n_sheets,
+                                av)
+            for s in range(n_sheets)
+        ] or [{'boxes': [],
+               'bg': '/vivafarm_report/static/src/forms/pnd53_attach_bg.png'}]
+        return {
+            'doc_ids': wizard.ids,
+            'doc_model': self._name,
+            'docs': wizard,
+            'pages': pages,
+            'pnd_type': 'pnd53',
+        }
