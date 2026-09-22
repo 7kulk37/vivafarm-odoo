@@ -11,10 +11,10 @@
                     <button name="action_view_vouchers" type="object"
                             string="View Vouchers" class="btn-primary"
                             icon="fa-list"/>
-                    <button name="527"
+                    <button name="vivafarm_petty_cash.action_vivafarm_petty_cash_topup"
                             type="action" string="Top-Up"
                             icon="fa-plus"/>
-                    <button name="528"
+                    <button name="vivafarm_petty_cash.action_vivafarm_petty_cash_replenish"
                             type="action" string="Replenish"
                             icon="fa-refresh"/>
                 </header>
