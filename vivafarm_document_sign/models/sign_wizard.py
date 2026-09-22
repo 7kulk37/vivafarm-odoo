@@ -166,10 +166,15 @@ class VivaSignWizard(models.TransientModel):
         # move.invoice_pdf_report_file — not a fresh render — so without this,
         # emails/portal would serve an UNSIGNED render and the byte-identity
         # guarantee (print == email == verified) breaks.
-        self.move_id.write({
-            'invoice_pdf_report_file':
-                base64.b64encode(signed.signed_attachment_id.datas),
-        })
+        # EH stacks (eh_account_base) block direct writes to this always-
+        # server-owned field; the sanctioned corridor lives on vivafarm_report
+        # (vivafarm_report dependency) and carries EH's own capability.
+        # Binary field expects base64 text (one layer) — the attachment's .datas
+        # already IS that; an extra b64encode stores b64-of-b64 and the field
+        # reads back as base64 text, not a PDF (bug caught by the sha identity
+        # check, 2026-09-22).
+        self.move_id.viva_set_invoice_legal_pdf(
+            signed.signed_attachment_id.datas)
 
         return {
             'type': 'ir.actions.client',
