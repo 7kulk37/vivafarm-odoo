@@ -129,7 +129,6 @@
                                 <td class="text-center"><t t-esc="wht_index + 1"/></td>
                                 <td>
                                     <span t-esc="wht['income_type_label_th'] if lang == 'th_TH' else wht['income_type_label']"/>
-                                    <span t-esc="wht['tax']"/>
                                 </td>
                                 <td><span t-esc="payment_date_th if lang == 'th_TH' else payment_date"/></td>
                                 <td class="text-end"><span t-esc="wht['base_fmt']"/></td>

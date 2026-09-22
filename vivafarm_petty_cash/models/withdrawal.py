@@ -11,7 +11,7 @@ actual journal entry (Dr 111102 / Cr 111203); the paper trail and the
 posting stay separate until a real case needs them linked.
 """
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class VivafarmPettyCashWithdrawal(models.Model):
@@ -144,7 +144,17 @@ class VivafarmPettyCashWithdrawal(models.Model):
         return True
 
     def action_cancel(self):
+        # Audit 2026-09-22 (round-2 deferral): guard the states. A PAID
+        # withdrawal is cash actually handed out — cancelling it would
+        # silently erase the paper trail; reverse via a receipt voucher
+        # (cash back in) instead. Only draft/approved are cancellable.
         for w in self:
+            if w.state in ('paid', 'cancelled'):
+                raise UserError(_(
+                    'Withdrawal %s is %s and cannot be cancelled. A paid '
+                    'withdrawal is reversed by a receipt voucher (cash back '
+                    'into the float), not by cancelling.'
+                ) % (w.name or w.id, w.state))
             w.write({'state': 'cancelled'})
         return True
 

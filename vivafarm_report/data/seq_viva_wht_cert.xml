@@ -6,5 +6,10 @@
         <field name="prefix">VWHC/%(year)s/</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
+        <!-- Audit 2026-09-22 (round-2 deferral): yearly reset. With
+             use_date_range the %(year)s token follows the allocation
+             sequence_date (the payment date) and each year gets its own
+             number series restarting at 1. -->
+        <field name="use_date_range" eval="True"/>
     </record>
 </odoo>

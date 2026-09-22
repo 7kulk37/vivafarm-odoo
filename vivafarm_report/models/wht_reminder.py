@@ -123,7 +123,8 @@ class VivaWhtReminder(models.Model):
         # ประกาศฉบับที่ 62 ข้อ 2: certificates carry a sequential number —
         # allocate it BEFORE the render so the template prints it.
         reminder.cert_number = self.env['ir.sequence'].with_company(
-            reminder.company_id).next_by_code('viva.wht.cert')
+            reminder.company_id).next_by_code(
+            'viva.wht.cert', sequence_date=payment.date)
         try:
             # Render by report NAME (string), not the action record — the
             # l10n_th _pre_render_qweb_pdf override calls _get_report on the
@@ -210,7 +211,8 @@ class VivaWhtReminder(models.Model):
         if self.state == 'pending':
             self.state = 'pending'  # obligation remains — only the cert was wrong
         self.cert_number = self.env['ir.sequence'].with_company(
-            self.company_id).next_by_code('viva.wht.cert')
+            self.company_id).next_by_code(
+            'viva.wht.cert', sequence_date=self.payment_date)
         # re-render with the new serial
         pdf = self.env['ir.actions.report']._render_qweb_pdf(
             'vivafarm_report.report_viva_wht_certificate', [self.bill_id.id],
