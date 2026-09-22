@@ -799,12 +799,15 @@ class Cultivation(models.Model):
                 for l in m.line_ids.filtered(lambda x: x.account_id.code == '113400'):
                     total_input_cost += l.debit - l.credit
 
-        # Include direct labor in product cost (labor_share computed above).
-        # CL-05: labor is capitalized into WIP at worker-log confirm, so the
-        # FG cost = material + this batch's labor share. The labor accrual
-        # (Dr 113400) is already in WIP; adding labor_share to the FG cost
-        # makes WIP→FG carry the full conversion cost.
-        fg_cost = total_input_cost + labor_share
+        # Labor is expensed to the period at Done (not capitalized into FG):
+        # the LABOR-ALLOC JE moves this batch's labor share out of WIP
+        # (Cr 113400) into the direct-labor P&L account (Dr 511200), so the
+        # packed valuation and the Cost of Cultivation report both carry
+        # material-only FG value with labor reported separately. Guards
+        # inside _post_labor_alloc_je: idempotent per batch, skips zero
+        # share, skips when the chart lacks the accounts.
+        self._post_labor_alloc_je(labor_share)
+        fg_cost = total_input_cost
 
         if produce_moves:
             produce_dest = packed_loc
@@ -819,8 +822,8 @@ class Cultivation(models.Model):
 
             # Under AVCO the production-output move is valued from the packed
             # product's standard_price at validation, so set it to the exact
-            # full conversion cost per kg (material + labor) BEFORE validating.
-            # This makes the output layer carry the real batch cost and WIP→FG exact.
+            # MATERIAL batch cost per kg BEFORE validating. Labor is not in
+            # this value — the LABOR-ALLOC JE already expensed it (Dr 511200).
             if fg_cost and self.packed_kg:
                 self.packed_product_id.product_tmpl_id.standard_price = fg_cost / self.packed_kg
 
@@ -880,8 +883,54 @@ class Cultivation(models.Model):
 
         # Thai accounting: the production-output move transfers WIP value to FG
         # (Dr 113100 / Cr 113400) at the AVCO layer cost — the packed product's
-        # standard_price was set to the exact material batch cost before validation.
+        # standard_price was set to the exact MATERIAL batch cost before
+        # validation; this batch's labor share left WIP via the LABOR-ALLOC JE
+        # (Dr 511200 / Cr 113400).
         return self._reopen()
+
+    def _post_labor_alloc_je(self, labor_share):
+        """Post the LABOR-ALLOC-<id> JE: Dr 511200 / Cr 113400 (labor share).
+
+        CL-05 revised: labor is expensed as a period cost at Done instead of
+        being capitalized into FG. Guards:
+        - idempotent: skip when a posted LABOR-ALLOC JE already exists for
+          this batch (re-validation safety — never double-post);
+        - skip when labor_share <= 0 (no wage accrual, owner/family-only
+          batches);
+        - skip silently when the chart lacks 511200/113400 or the stock
+          journal (a partial chart must not break harvest).
+        """
+        self.ensure_one()
+        if labor_share <= 0:
+            return
+        existing = self.env['account.move'].search([
+            ('ref', '=', f'LABOR-ALLOC-{self.id}'),
+            ('state', '=', 'posted'),
+        ], limit=1)
+        if existing:
+            return
+        lab_acc = self.env['account.account'].search(
+            [('code', '=', '511200')], limit=1)
+        wip_acc = self.env['account.account'].search(
+            [('code', '=', '113400')], limit=1)
+        journal = self.env.company.account_stock_journal_id
+        if not lab_acc or not wip_acc or not journal:
+            return
+        date = self.harvest_date.date() if self.harvest_date else fields.Date.today()
+        je = self.env['account.move'].create({
+            'journal_id': journal.id,
+            'date': date,
+            'ref': f'LABOR-ALLOC-{self.id}',
+            'line_ids': [
+                (0, 0, {'account_id': lab_acc.id,
+                        'debit': labor_share, 'credit': 0.0,
+                        'name': f'Direct labor - batch {self.name}'}),
+                (0, 0, {'account_id': wip_acc.id,
+                        'debit': 0.0, 'credit': labor_share,
+                        'name': f'Direct labor - batch {self.name}'}),
+            ],
+        })
+        je.action_post()
 
     def _write_off_zero_yield(self, total_units):
         """CL-23: write off a zero-yield batch's full WIP to a period loss.
