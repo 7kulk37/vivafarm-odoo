@@ -104,6 +104,9 @@ class VivaWhtReminder(models.Model):
         full_wht = sum(-l.balance for l in wht_lines)
         # VS-10: partial payments — WHT is incurred on each payment slice
         # (มาตรา 50 — withhold at every payment). Scale by the paid ratio.
+        # Total-proportional is exact for uniform VAT; for mixed bills the slice
+        # WHT is an approximation (the payment record carries no per-line
+        # allocation) — documented in docs/SOP/01-PURCHASE/02-vendor-wht.md.
         ratio = 1.0
         if bill.amount_total:
             ratio = min(1.0, payment.amount / bill.amount_total)
