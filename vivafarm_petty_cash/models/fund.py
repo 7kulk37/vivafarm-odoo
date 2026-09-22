@@ -113,13 +113,18 @@ class VivafarmPettyCashFund(models.Model):
         for f in self:
             f.voucher_count = len(f.voucher_ids)
 
-    @api.depends('voucher_ids.state', 'voucher_ids.amount')
+    @api.depends('voucher_ids.state', 'voucher_ids.amount', 'voucher_ids.voucher_type')
     def _compute_current_balance(self):
         for f in self:
-            open_vouchers = f.voucher_ids.filtered(
+            # Only PAYMENT vouchers are cash out of the drawer. Receipts are
+            # cash IN (they belong to the count, not the disbursement) and
+            # general vouchers are non-cash. Audit 2026-09-22 (round-1):
+            # counting them understated the expected drawer balance.
+            open_payments = f.voucher_ids.filtered(
                 lambda v: v.state in ('draft', 'submitted')
+                and v.voucher_type == 'payment'
             )
-            f.disbursed_total = sum(open_vouchers.mapped('amount'))
+            f.disbursed_total = sum(open_payments.mapped('amount'))
             f.current_balance = f.float_ceiling - f.disbursed_total
 
     @api.constrains('float_ceiling', 'max_voucher_amount', 'receipt_required_above')

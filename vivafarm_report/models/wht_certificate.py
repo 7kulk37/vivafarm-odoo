@@ -12,9 +12,9 @@ class ReportVivaWhtCertificate(models.AbstractModel):
     The income type is derived from the WHT tax NAME by explicit prefix
     matching (the l10n_th tax names follow '3% WH R / A / T / S ...'):
       R -> Rent (ค่าเช่า, Section 40(5))
-      A -> Advertising (ค่าบริการโฆษณา, Section 40(8))
-      T -> Transport (ค่าขนส่ง, Section 40(8))
-      S / fallback -> Service (ค่าบริการ, Section 40(8))
+      A -> Advertising (ค่าโฆษณา, Section 40(7) เตรส)
+      T -> Transport (ค่าขนส่ง, Section 40(6) เตรส)
+      S / fallback -> Service (ค่าบริการ, Section 40(2) เตรส)
     Prefix matching (not substring) so a tax name like '3% WH C S' cannot
     be misclassified by a stray 'R'/'A'/'T' character in a later word.
     """
@@ -46,9 +46,14 @@ class ReportVivaWhtCertificate(models.AbstractModel):
         """
         labels = {
             'rent': ('Rent (Section 40(5))', 'ค่าเช่า (มาตรา 40(5))'),
-            'advertising': ('Advertising (Section 40(8))', 'ค่าบริการโฆษณา (มาตรา 40(8))'),
-            'transport': ('Transport (Section 40(8))', 'ค่าขนส่ง (มาตรา 40(8))'),
-            'service': ('Service (Section 40(8))', 'ค่าบริการ (มาตรา 40(8))'),
+            # Thai Revenue Code income types for juristic payees:
+            #   service fees → 40(2) เตรส (3%), transport → 40(6) เตรส (1%),
+            #   advertising/other → 40(7) เตรส (2%). 40(8) is contract work
+            #   (จ้างเหมา) — none of these three. Audit 2026-09-22 (round-1):
+            #   the certificate printed 40(8) for all non-rent rows.
+            'advertising': ('Advertising (Section 40(7) เตรส)', 'ค่าโฆษณา (มาตรา 40(7) เตรส)'),
+            'transport': ('Transport (Section 40(6) เตรส)', 'ค่าขนส่ง (มาตรา 40(6) เตรส)'),
+            'service': ('Service (Section 40(2) เตรส)', 'ค่าบริการ (มาตรา 40(2) เตรส)'),
         }
         currency = move.currency_id or self.env.company.currency_id
         lines = move.line_ids.filtered(

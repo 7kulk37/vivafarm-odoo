@@ -86,7 +86,7 @@ class VivafarmPettyCashReplenishWizard(models.TransientModel):
         'vivafarm.petty.cash.voucher',
         string='Vouchers to Replenish',
         required=True,
-        domain="[('fund_id', '=', fund_id), ('state', 'in', ('draft', 'submitted'))]",
+        domain="[('fund_id', '=', fund_id), ('state', 'in', ('draft', 'submitted')), ('voucher_type', '=', 'payment')]",
     )
     counted_balance = fields.Monetary(
         string='Physical Count (optional)',
@@ -128,6 +128,7 @@ class VivafarmPettyCashReplenishWizard(models.TransientModel):
             all_open = w.env['vivafarm.petty.cash.voucher'].search([
                 ('fund_id', '=', w.fund_id.id),
                 ('state', 'in', ('draft', 'submitted')),
+                ('voucher_type', '=', 'payment'),
             ]) if w.fund_id else w.env['vivafarm.petty.cash.voucher']
             # vouchers already in the selection are 'being reconciled now';
             # other open vouchers stay in the drawer until replenished.
@@ -144,6 +145,7 @@ class VivafarmPettyCashReplenishWizard(models.TransientModel):
             self.voucher_ids = self.env['vivafarm.petty.cash.voucher'].search([
                 ('fund_id', '=', self.fund_id.id),
                 ('state', 'in', ('draft', 'submitted')),
+                ('voucher_type', '=', 'payment'),
             ])
 
     def action_confirm(self):
@@ -169,6 +171,17 @@ class VivafarmPettyCashReplenishWizard(models.TransientModel):
                 raise UserError(_(
                     'Voucher %s is already replenished.'
                 ) % v.name)
+            # Audit 2026-09-22 (round-1): only PAYMENT vouchers are
+            # replenished. A receipt is cash IN (no expense account) and a
+            # general voucher is non-cash — including either here posts a
+            # move line with no amount and crashes (CheckViolation) or
+            # distorts the drawer balance.
+            if v.voucher_type != 'payment':
+                raise UserError(_(
+                    'Voucher %s is a %s voucher — only payment vouchers '
+                    '(ใบสำคัญจ่าย) are replenished. Receipts (รับ) are cash '
+                    'in and general vouchers (ทั่วไป) are non-cash.'
+                ) % (v.name, v.voucher_type))
 
         fund = self.fund_id
         bank_journal = self.env['account.journal'].search([
@@ -225,34 +238,41 @@ class VivafarmPettyCashReplenishWizard(models.TransientModel):
             'name': f'Petty cash top-up: {fund.name}',
         }))
         # 6) Variance reclass: the variance is cash found/missing in the drawer.
-        #    Reclassify from petty cash to the variance account.
+        #    The variance account (639900) is an EXPENSE account, so:
+        #    OVER (cash found) → CREDIT 639900 (reverses the over-accrued
+        #    expense: the drawer holds cash that was already expensed);
+        #    SHORT (cash missing) → DEBIT 639900 (recognize the loss).
+        #    Audit 2026-09-22 (round-1): the original legs were inverted —
+        #    an over debited the expense account and a short credited it.
         if variance_amt != 0:
             if variance_amt > 0:
-                # Over: extra cash in drawer. Move from petty to variance (income).
+                # Over: extra cash in drawer. Credit variance (expense down),
+                # debit petty cash so the float equals the physical count.
                 line_ids.append((0, 0, {
                     'account_id': fund.account_id.id,
-                    'debit': 0.0,
-                    'credit': variance_amt,
-                    'name': f'Petty cash over: {fund.name}',
-                }))
-                line_ids.append((0, 0, {
-                    'account_id': fund.variance_account_id.id,
                     'debit': variance_amt,
                     'credit': 0.0,
                     'name': f'Petty cash over: {fund.name}',
                 }))
+                line_ids.append((0, 0, {
+                    'account_id': fund.variance_account_id.id,
+                    'debit': 0.0,
+                    'credit': variance_amt,
+                    'name': f'Petty cash over: {fund.name}',
+                }))
             else:
-                # Short: missing cash. Move from variance to petty.
+                # Short: missing cash. Debit variance (expense up),
+                # credit petty cash.
                 line_ids.append((0, 0, {
                     'account_id': fund.account_id.id,
-                    'debit': -variance_amt,
-                    'credit': 0.0,
+                    'debit': 0.0,
+                    'credit': -variance_amt,
                     'name': f'Petty cash short: {fund.name}',
                 }))
                 line_ids.append((0, 0, {
                     'account_id': fund.variance_account_id.id,
-                    'debit': 0.0,
-                    'credit': -variance_amt,
+                    'debit': -variance_amt,
+                    'credit': 0.0,
                     'name': f'Petty cash short: {fund.name}',
                 }))
 
