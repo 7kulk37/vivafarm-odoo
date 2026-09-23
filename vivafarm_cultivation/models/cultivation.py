@@ -606,6 +606,14 @@ class Cultivation(models.Model):
         if not labor_product:
             return 0.0
         daily_rate = labor_product.standard_price or 0.0
+        if not daily_rate and self.harvest_date:
+            # Fresh-DB seam (2026-09-23): setup prices DLA before any
+            # cultivation has a harvest_date, so the confirm-time recalc
+            # sees total_days=0 and stores 0.0 — Done's guard then skips
+            # LABOR-ALLOC and the wage total strands in WIP (113400).
+            # By Done time harvest_date exists: recalc once, then re-read.
+            self.env['farm.worker.log']._recalculate_direct_labor_rate()
+            daily_rate = labor_product.standard_price or 0.0
         if not daily_rate:
             return 0.0
         start = self.plant_date
