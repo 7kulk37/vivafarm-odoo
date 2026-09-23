@@ -34,17 +34,26 @@ class ReportPnd1(models.AbstractModel):
     ]
 
     @api.model
-    def _compute_pit(self, annual_income):
-        """Progressive PIT on annual income (2026 table)."""
+    def _compute_pit(self, annual_income, other_allowances=0.0):
+        """Progressive PIT on the annual TAXABLE base (ม.48).
+
+        Legal base: gross − ม.40(1) expense deduction (50% of income,
+        capped at 100,000฿) − 60,000฿ personal allowance (ม.47/1 ทวิ)
+        − any other declared allowances (insurance/PGF/donations).
+        Returns 0 whenever the base falls under the 150k free threshold.
+        """
+        expense = min(annual_income * 0.5, 100000.0)
+        base = max(
+            annual_income - expense - 60000.0 - max(other_allowances, 0.0), 0.0)
         tax = 0.0
         prev = 0
         for limit, rate in self.PIT_BRACKETS:
-            if annual_income <= prev:
+            if base <= prev:
                 break
-            taxable = min(annual_income, limit) - prev
+            taxable = min(base, limit) - prev
             tax += taxable * rate
             prev = limit
-            if annual_income <= limit:
+            if base <= limit:
                 break
         return tax
 
