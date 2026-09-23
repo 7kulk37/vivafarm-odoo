@@ -17,8 +17,12 @@
     <!-- ใบแนบ body: one page per wizard doc (shared by standalone + wrapper) -->
     <template id="report_wht_attach_body"
               name="Thai WHT Attachment Schedule (body)">
+        <!-- P-11 fix (2026-09-23): paperformat_viva_standard has margin_left/right=0,
+             so this full-width table ran to the paper edge (ink x1=590.9/595pt —
+             under 5pt clearance). Template-local side padding instead of a
+             paperformat change, which would shift every calibrated standard report. -->
         <t t-foreach="docs" t-as="w">
-            <div class="page" t-att-class="'o_company_%s_layout' % company.id" style="font-family: NotoSansThai, Lato, sans-serif;">
+            <div class="page" t-att-class="'o_company_%s_layout' % company.id" style="font-family: NotoSansThai, Lato, sans-serif; padding-left: 28px; padding-right: 28px;">
                 <h3 style="margin-top: 0; text-align: center;">
                     <t t-if="pnd_type == 'pnd3'">ใบแนบ ภ.ง.ด.3</t>
                     <t t-else="">ใบแนบ ภ.ง.ด.53</t>
