@@ -60,9 +60,13 @@
             <div class="page">
                 <!-- Title: rendered by the LAYOUT header frame (state-aware:
                      Delivery Note until signed, Delivery Confirmation after
-                     the customer acknowledges receipt). -->
+                     the customer acknowledges receipt). Field-guarded: the
+                     signed_document_id field comes from vivafarm_document_sign
+                     (optional, NOT a vivafarm_report dependency) — without the
+                     guard, any DB without docsign crashes the whole DN report
+                     (2026-09-23 sop_test rebuild finding). -->
                 <t t-set="layout_document_title">
-                    <span t-if="o.signed_document_id">
+                    <span t-if="'signed_document_id' in o._fields and o.signed_document_id">
                         <t t-if="lang == 'th_TH'">ใบส่งสินค้า: </t>
                         <t t-else="">Delivery Order: </t>
                     </span>
