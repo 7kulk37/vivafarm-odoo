@@ -1,2 +1,2 @@
 from . import models
-from . import hooks
+from .hooks import _reclass_wage_accrual_current
